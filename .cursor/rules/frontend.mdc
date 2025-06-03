@@ -1,0 +1,133 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Your Mission
+Build a modern, responsive, and fully functional frontend that connects with the backend from the beginning. The system must enable management of cold chambers, seed products, and their warehouse locations through an intuitive and efficient interface.
+
+Mandatory Technical Guidelines
+Tech Stack (REQUIRED)
+React 18+ with TypeScript
+
+React Router DOM v6 for routing
+
+Material-UI (MUI) or Tailwind CSS for UI
+
+React Hook Form + Yup for form handling and validation
+
+Axios for HTTP requests
+
+Context API + useReducer for global state
+
+Jest + React Testing Library for tests
+
+Required Architecture
+Hooks-First Approach: All HTTP requests must be implemented only within custom hooks.
+
+No Duplicate Requests: Avoid duplicated API calls in components.
+
+Component Composition: Use small, reusable, and composable components.
+
+Service Layer: API interactions must be centralized in a separate service layer.
+
+Context API for Global State: Use Context API (with useReducer) only for global state management.
+
+CRITICAL RULE — Centralized Requests
+NEVER make HTTP requests directly inside components.
+ALWAYS use custom hooks for all data fetching and mutations.
+
+Standard Component Requirements
+Build or reuse standardized UI components with the following features:
+
+DataTable: Must include pagination, filters, and sorting.
+
+FormInput: Should display validation messages and real-time feedback.
+
+Modal: Should have backdrop blur, focus trap, and smooth animations.
+
+Loading: Use skeleton loaders instead of simple spinners.
+
+StatsCard: Interactive cards with icons and hover animations.
+
+Quality Checklist
+Before considering a feature "complete", ALWAYS ensure:
+
+Custom hook implemented and tested
+
+Corresponding API service created and functional
+
+Component renders correctly
+
+Loading and error states handled
+
+Form validations implemented with Yup
+
+Mobile and desktop responsiveness verified
+
+No TypeScript errors or warnings
+
+All tests passing
+
+Backend integration confirmed and functional
+
+UX/UI Requirements
+Performance
+Enable lazy loading for all pages
+
+Use debounce (300ms) for search fields
+
+Use list virtualization for lists with more than 100 items
+
+Implement a 5-minute cache for API requests
+
+Accessibility
+Add ARIA labels to all interactive elements
+
+Manage focus correctly inside modals
+
+Ensure color contrast meets WCAG AA standards
+
+Make the entire UI keyboard-navigable
+
+Visual Feedback
+Show loading states for all user-triggered actions
+
+Display success/error toasts for all operations
+
+Require confirmation for destructive actions
+
+Show upload progress indicators where applicable
+
+Frontend Workflow
+Always begin by asking:
+“Which page or component should I implement next?”
+
+Check the planning file:
+Review [planejamento-frontend.md](mdc:docs/planejamento-frontend.md) for functional and visual specifications.
+
+Test backend integration:
+Ensure the backend endpoint is working before implementation.
+
+Follow the correct implementation order:
+Service → Hook → Component → Tests
+
+Test full functionality before closing task:
+Perform full end-to-end flow testing to ensure the feature works correctly with backend integration.
+
+Communication Protocols
+The AI must ALWAYS provide:
+
+Current development status
+
+Pages/components that are ready
+
+Any integration issues found
+
+Tests performed and results
+
+Available preview/test URLs
+
+NEVER implement a feature if the backend API is not working or not available.
+
+Always verify API responses before proceeding with UI implementation.

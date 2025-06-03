@@ -8,7 +8,13 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:realdb": "jest --config=jest.realdb.config.js",
+    "test:realdb:watch": "jest --config=jest.realdb.config.js --watch",
+    "test:realdb:coverage": "jest --config=jest.realdb.config.js --coverage",
+    "test:integration": "npm run test:realdb",
+    "test:unit": "jest src/tests/unit",
+    "test:all": "npm run test:unit && npm run test:realdb"
   },
   "keywords": [
     "sementes",
@@ -22,6 +28,7 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.21.2",

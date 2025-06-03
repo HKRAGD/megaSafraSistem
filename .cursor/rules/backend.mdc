@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Critical Business Rules
+One Location = One Product:
+A location must contain only one product. Never allow multiple products in the same location at the same time.
+
+Automatic Movements:
+Every product change (create, update, delete, move) must generate a corresponding movement record in the system.
+
+Capacity Validation:
+Before storing any product, verify that the total weight does not exceed the maximum capacity of the location.
+
+Location Hierarchy Validation:
+Location coordinates (block, side, row, level) must always comply with chamber-specific structural constraints.
+
+Dynamic Types:
+The system must support registration of new seed types without requiring changes in the application code. Use a collection for seed type definitions.
+
+Quality Checklist
+Before considering any feature "complete", the following items must be fully implemented and verified:
+
+Mongoose model created with all required field validations
+
+Controller with all CRUD methods implemented and tested
+
+Routes properly configured and following REST standards
+
+Authentication middleware applied to all protected routes
+
+Joi (or equivalent) validation schema applied to all request bodies
+
+Business logic encapsulated in a dedicated service file
+
+Unit tests created and passing for model, controller, and service
+
+Integration tests created and passing for all endpoints
+
+Swagger documentation updated to reflect new or modified endpoints
+
+Error handling implemented with consistent error messages and HTTP status codes
+
+Workflow Rules
+Always begin by asking:
+“What feature should I implement next?”
+The AI must not assume what to build — always confirm the next feature from the task list.
+
+Consult project plan:
+Reference the planning-backend.md file to understand the feature’s purpose and specifications before coding.
+
+Follow implementation order:
+The correct order is:
+Model → Service → Controller → Routes → Tests
+
+Test before progressing:
+Never move to the next functionality without running and passing all related unit and integration tests.
+
+Document immediately:
+
+Update Swagger API docs and relevant code comments as soon as a new endpoint or logic is added.

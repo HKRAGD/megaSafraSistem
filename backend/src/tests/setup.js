@@ -10,6 +10,7 @@ const path = require('path');
 // Configurar variáveis de ambiente para testes
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret-key-for-models-tests';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-models-tests';
 process.env.BCRYPT_ROUNDS = '4'; // Rounds baixos para testes rápidos
 
 let mongod;
@@ -57,12 +58,16 @@ afterEach(async () => {
   }
 });
 
+// Contador para garantir unicidade
+let testCounter = 0;
+
 // Helpers globais para criação de dados de teste
 global.createTestUser = async (overrides = {}) => {
   const User = require(path.join(__dirname, '../models/User'));
+  testCounter++;
   const userData = {
-    name: 'Usuário Teste',
-    email: `test${Date.now()}@test.com`,
+    name: `Usuário Teste ${testCounter}`,
+    email: `test${testCounter}@test.com`,
     password: 'password123',
     role: 'admin',
     ...overrides
@@ -72,11 +77,12 @@ global.createTestUser = async (overrides = {}) => {
 
 global.createTestSeedType = async (overrides = {}) => {
   const SeedType = require(path.join(__dirname, '../models/SeedType'));
+  testCounter++;
   const seedTypeData = {
-    name: `Tipo Semente ${Date.now()}`,
+    name: `Tipo Semente ${testCounter}`,
     description: 'Tipo de semente para testes',
-    optimalTemperature: { min: 10, max: 15 },
-    optimalHumidity: { min: 40, max: 60 },
+    optimalTemperature: 15,
+    optimalHumidity: 50,
     storageDuration: 365,
     ...overrides
   };
@@ -85,8 +91,9 @@ global.createTestSeedType = async (overrides = {}) => {
 
 global.createTestChamber = async (overrides = {}) => {
   const Chamber = require(path.join(__dirname, '../models/Chamber'));
+  testCounter++;
   const chamberData = {
-    name: `Câmara Teste ${Date.now()}`,
+    name: `Câmara Teste ${testCounter}`,
     dimensions: { quadras: 5, lados: 4, filas: 6, andares: 3 },
     status: 'active',
     ...overrides
@@ -96,6 +103,7 @@ global.createTestChamber = async (overrides = {}) => {
 
 global.createTestLocation = async (overrides = {}) => {
   const Location = require(path.join(__dirname, '../models/Location'));
+  testCounter++;
   
   let chamber;
   if (overrides.chamberId) {
@@ -106,8 +114,11 @@ global.createTestLocation = async (overrides = {}) => {
   
   const locationData = {
     chamberId: chamber._id,
+    code: `T${testCounter}-Q1-L1-F1-A1`,
     coordinates: { quadra: 1, lado: 1, fila: 1, andar: 1 },
     maxCapacityKg: 1000,
+    currentWeightKg: 0,
+    isOccupied: false,
     ...overrides
   };
   return await Location.create(locationData);
@@ -115,6 +126,7 @@ global.createTestLocation = async (overrides = {}) => {
 
 global.createTestProduct = async (overrides = {}) => {
   const Product = require(path.join(__dirname, '../models/Product'));
+  testCounter++;
   
   let seedType, location;
   
@@ -131,13 +143,15 @@ global.createTestProduct = async (overrides = {}) => {
   }
   
   const productData = {
-    name: `Produto Teste ${Date.now()}`,
-    lot: `LOT-${Date.now()}`,
+    name: `Produto Teste ${testCounter}`,
+    lot: `LOT-${testCounter}`,
     seedTypeId: seedType._id,
     quantity: 10,
     storageType: 'saco',
     weightPerUnit: 50,
     locationId: location._id,
+    status: 'stored',
+    expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 ano
     ...overrides
   };
   return await Product.create(productData);
@@ -145,8 +159,9 @@ global.createTestProduct = async (overrides = {}) => {
 
 global.createTestMovement = async (overrides = {}) => {
   const Movement = require(path.join(__dirname, '../models/Movement'));
+  testCounter++;
   
-  let user, product, location;
+  let user, product, fromLocation, toLocation;
   
   if (overrides.userId) {
     user = { _id: overrides.userId };
@@ -160,22 +175,36 @@ global.createTestMovement = async (overrides = {}) => {
     product = await global.createTestProduct();
   }
   
+  if (overrides.fromLocationId) {
+    fromLocation = { _id: overrides.fromLocationId };
+  }
+  
   if (overrides.toLocationId) {
-    location = { _id: overrides.toLocationId };
+    toLocation = { _id: overrides.toLocationId };
   } else {
-    location = await global.createTestLocation();
+    toLocation = await global.createTestLocation();
   }
   
   const movementData = {
     type: 'entry',
     productId: product._id,
     userId: user._id,
-    toLocationId: location._id,
+    toLocationId: toLocation._id,
     quantity: 10,
     weight: 500,
     reason: 'Movimento de teste',
+    timestamp: new Date(),
+    metadata: {
+      verified: true,
+      confidence: 90
+    },
     ...overrides
   };
+  
+  if (fromLocation) {
+    movementData.fromLocationId = fromLocation._id;
+  }
+  
   return await Movement.create(movementData);
 };
 

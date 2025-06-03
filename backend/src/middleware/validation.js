@@ -276,7 +276,16 @@ const movementSchemas = {
     quantity: Joi.number().min(0).required(),
     weight: Joi.number().min(0).required(),
     reason: Joi.string().trim().min(3).max(200).required(),
-    notes: Joi.string().trim().max(1000).allow('')
+    notes: Joi.string().trim().max(1000).allow(''),
+    batchId: Joi.string().trim().max(50).allow('')
+  }),
+
+  getByProduct: Joi.object({
+    productId: objectIdSchema.required()
+  }),
+
+  getByLocation: Joi.object({
+    locationId: objectIdSchema.required()
   })
 };
 
