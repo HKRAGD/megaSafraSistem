@@ -4,7 +4,6 @@ const chamberSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Nome da câmara é obrigatório'],
-    unique: true,
     trim: true,
     minlength: [2, 'Nome deve ter pelo menos 2 caracteres'],
     maxlength: [100, 'Nome deve ter no máximo 100 caracteres']

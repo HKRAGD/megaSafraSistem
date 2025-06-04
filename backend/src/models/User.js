@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email é obrigatório'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [

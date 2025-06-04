@@ -46,7 +46,6 @@ const locationSchema = new mongoose.Schema({
   },
   code: {
     type: String,
-    unique: true,
     trim: true
   },
   isOccupied: {

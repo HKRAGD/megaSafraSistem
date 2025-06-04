@@ -12,8 +12,7 @@ const movementSchema = new mongoose.Schema({
     enum: {
       values: ['entry', 'exit', 'transfer', 'adjustment'],
       message: 'Tipo deve ser: entry, exit, transfer ou adjustment'
-    },
-    index: true
+    }
   },
   fromLocationId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -85,8 +84,7 @@ const movementSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
     default: Date.now,
-    required: [true, 'Timestamp é obrigatório'],
-    index: true
+    required: [true, 'Timestamp é obrigatório']
   },
   // Campos para auditoria e controle
   metadata: {
@@ -108,13 +106,11 @@ const movementSchema = new mongoose.Schema({
     batchId: {
       type: String,
       trim: true,
-      maxlength: [50, 'Batch ID muito longo'],
-      index: true // Para operações em lote
+      maxlength: [50, 'Batch ID muito longo']
     },
     isAutomatic: {
       type: Boolean,
-      default: false,
-      index: true
+      default: false
     },
     previousValues: {
       type: mongoose.Schema.Types.Mixed // Para armazenar valores anteriores em adjustments
@@ -127,8 +123,7 @@ const movementSchema = new mongoose.Schema({
       values: ['pending', 'completed', 'failed', 'cancelled'],
       message: 'Status deve ser: pending, completed, failed ou cancelled'
     },
-    default: 'completed',
-    index: true
+    default: 'completed'
   },
   // Campos para validação e controle
   verification: {

@@ -13,8 +13,7 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Lote é obrigatório'],
     trim: true,
     minlength: [1, 'Lote deve ter pelo menos 1 caractere'],
-    maxlength: [50, 'Lote deve ter no máximo 50 caracteres'],
-    index: true
+    maxlength: [50, 'Lote deve ter no máximo 50 caracteres']
   },
   seedTypeId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -110,8 +109,7 @@ const productSchema = new mongoose.Schema({
     },
     qualityGrade: {
       type: String,
-      enum: ['A', 'B', 'C', 'D'],
-      index: true
+      enum: ['A', 'B', 'C', 'D']
     }
   },
   // Metadados de controle
@@ -351,7 +349,7 @@ productSchema.methods.moveTo = async function(newLocationId, userId, reason = 'M
 };
 
 // Método de instância para remover produto
-productSchema.methods.remove = async function(userId, reason = 'Remoção manual') {
+productSchema.method('remove', async function(userId, reason = 'Remoção manual') {
   this.status = 'removed';
   this.metadata.lastModifiedBy = userId;
   this.metadata.lastMovementDate = new Date();
@@ -359,7 +357,7 @@ productSchema.methods.remove = async function(userId, reason = 'Remoção manual
   await this.save();
   
   return this;
-};
+}, { suppressWarning: true });
 
 // Método de instância para reservar produto
 productSchema.methods.reserve = async function(userId, reason = 'Reserva manual') {
