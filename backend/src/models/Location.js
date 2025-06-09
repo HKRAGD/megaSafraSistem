@@ -109,7 +109,8 @@ const locationSchema = new mongoose.Schema({
 
 // Índices para performance e unicidade
 locationSchema.index({ chamberId: 1, 'coordinates.quadra': 1, 'coordinates.lado': 1, 'coordinates.fila': 1, 'coordinates.andar': 1 }, { unique: true });
-locationSchema.index({ code: 1 }, { unique: true });
+// CORREÇÃO: Code deve ser único apenas dentro da câmara, não globalmente
+locationSchema.index({ chamberId: 1, code: 1 }, { unique: true });
 locationSchema.index({ chamberId: 1 });
 locationSchema.index({ isOccupied: 1 });
 locationSchema.index({ currentWeightKg: 1 });

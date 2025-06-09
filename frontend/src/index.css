@@ -1,0 +1,88 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Previne problemas de overflow */
+  overflow-x: hidden;
+  height: 100%;
+}
+
+html {
+  height: 100%;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+#root {
+  height: 100%;
+  /* Garante que o root container ocupe toda a altura */
+  display: flex;
+  flex-direction: column;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Estilos para melhorar a scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Correção para modais e overlays */
+.MuiModal-root {
+  /* Garante que modais apareçam acima de tudo */
+  z-index: 1300 !important;
+}
+
+.MuiDrawer-modal {
+  /* Específico para drawer temporário */
+  z-index: 1200 !important;
+}
+
+/* Previne problemas de drawer duplicado */
+.MuiDrawer-root {
+  /* Força que apenas um drawer seja visível por vez */
+  position: relative;
+}
+
+.MuiDrawer-paper {
+  /* Garante que drawers não se sobreponham */
+  transition: transform 0.3s ease-in-out, visibility 0.3s ease-in-out !important;
+}
+
+/* Correção específica para drawer persistente */
+.MuiDrawer-root .MuiDrawer-paper[style*="transform: translateX(-"] {
+  /* Força ocultação completa quando translateX negativo */
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Previne problemas de layout em dispositivos móveis */
+@media (max-width: 768px) {
+  body {
+    /* Previne zoom indesejado em iOS */
+    -webkit-text-size-adjust: 100%;
+    /* Melhora performance de scroll em mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+}

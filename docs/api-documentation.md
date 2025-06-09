@@ -19,7 +19,7 @@
 - **Backend**: Node.js + Express.js
 - **Banco de Dados**: MongoDB + Mongoose
 - **Autenticação**: JWT (Access Token + Refresh Token)
-- **Base URL**: `http://localhost:3000/api` (desenvolvimento)
+- **Base URL**: `http://localhost:3001/api` (desenvolvimento)
 
 ### Arquitetura da API
 - **Padrão REST** com recursos organizados por entidades

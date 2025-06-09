@@ -233,19 +233,27 @@ movementSchema.pre('save', function(next) {
 
 // Middleware para evitar movimentações duplicadas
 movementSchema.pre('save', async function(next) {
-  if (this.isNew && !this.metadata?.isAutomatic) {
-    // Verificar se já existe uma movimentação idêntica nos últimos 5 minutos
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  // Verificar se é movimentação automática (pode ser duplicada)
+  const isAutomatic = this.metadata?.isAutomatic || this.metadata?.automatic;
+  
+  if (this.isNew && !isAutomatic) {
+    // Verificar se já existe uma movimentação EXATAMENTE idêntica nos últimos 2 minutos
+    // CORREÇÃO: Reduzido tempo e incluir todas as localizações na verificação
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
     
-    const existingMovement = await this.constructor.findOne({
+    const duplicateQuery = {
       productId: this.productId,
       type: this.type,
       quantity: this.quantity,
       weight: this.weight,
       userId: this.userId,
-      timestamp: { $gte: fiveMinutesAgo },
+      fromLocationId: this.fromLocationId,
+      toLocationId: this.toLocationId,
+      timestamp: { $gte: twoMinutesAgo },
       status: { $ne: 'cancelled' }
-    });
+    };
+    
+    const existingMovement = await this.constructor.findOne(duplicateQuery);
     
     if (existingMovement) {
       return next(new Error('Movimentação duplicada detectada'));

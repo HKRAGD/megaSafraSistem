@@ -357,6 +357,8 @@ const getCapacityReport = async (req, res) => {
  */
 const getExecutiveReport = async (req, res) => {
   try {
+    console.log('🔍 DEBUG ExecutiveReport - Iniciando geração do relatório executivo');
+    
     const {
       period = 30,
       includeComparisons = true,
@@ -373,8 +375,15 @@ const getExecutiveReport = async (req, res) => {
       includeForecasts: includeForecasts === 'true'
     };
 
+    console.log('🔍 DEBUG ExecutiveReport - Opções:', options);
+
     // Gerar dashboard executivo usando reportService
     const executiveReport = await reportService.generateExecutiveDashboard(options);
+    
+    console.log('🔍 DEBUG ExecutiveReport - Dados do reportService:', JSON.stringify(executiveReport.data, null, 2));
+    console.log('🔍 DEBUG ExecutiveReport - KPIs:', executiveReport.data.kpis);
+    console.log('🔍 DEBUG ExecutiveReport - Alerts:', executiveReport.data.alerts);
+    console.log('🔍 DEBUG ExecutiveReport - TopData:', executiveReport.data.topData);
 
     // Análises adicionais para relatório executivo
     const performanceIndicators = await generatePerformanceIndicators(period);
@@ -395,26 +404,30 @@ const getExecutiveReport = async (req, res) => {
       });
     }
 
+    const responseData = {
+      ...executiveReport.data,
+      performanceIndicators,
+      riskAssessment,
+      strategicRecommendations,
+      options,
+      generatedBy: req.user?.name || 'Sistema',
+      userRole: req.user?.role
+    };
+
+    console.log('🔍 DEBUG ExecutiveReport - Resposta final:', JSON.stringify(responseData, null, 2));
+
     res.status(200).json({
       success: true,
       message: 'Relatório executivo gerado com sucesso',
-      data: {
-        ...executiveReport.data,
-        performanceIndicators,
-        riskAssessment,
-        strategicRecommendations,
-        options,
-        generatedBy: req.user?.name || 'Sistema',
-        userRole: req.user?.role
-      }
+      data: responseData
     });
 
   } catch (error) {
-    console.error('Erro ao gerar relatório executivo:', error);
+    console.error('❌ Erro ao gerar relatório executivo:', error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Erro interno do servidor ao gerar relatório executivo',
+      error: error.message
     });
   }
 };

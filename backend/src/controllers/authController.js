@@ -257,21 +257,29 @@ const logout = asyncHandler(async (req, res, next) => {
  */
 const getSecurityInfo = asyncHandler(async (req, res, next) => {
   try {
-    // Usar authService para análise de padrões de login
-    const loginPatterns = await authService.analyzeLoginPatterns(req.user._id, '30d');
-    
-    // Gerar relatório de segurança personalizado
-    const securityReport = await authService.generateSecurityReport({
-      userId: req.user._id,
-      timeframe: '30d',
-      includeRecommendations: true
-    });
+    // Dados básicos do usuário para recuperação de sessão
+    const user = {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      isActive: req.user.isActive,
+      createdAt: req.user.createdAt
+    };
+
+    // Informações básicas de segurança
+    const securityInfo = {
+      sessionId: req.sessionId || 'unknown',
+      loginAttempts: 0,
+      lastLogin: req.user.updatedAt || req.user.createdAt,
+      activeSessions: 1
+    };
 
     res.status(200).json({
       success: true,
       data: {
-        loginPatterns,
-        securityReport: securityReport.data,
+        user, // Incluir dados do usuário para recuperação de sessão
+        ...securityInfo,
         lastUpdate: new Date()
       }
     });

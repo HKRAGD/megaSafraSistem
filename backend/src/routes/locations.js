@@ -28,7 +28,6 @@ router.get('/', locationController.getLocations);
 router.get('/chamber/:chamberId', locationController.getLocationsByChamber);
 router.get('/available', locationController.getAvailableLocations);
 router.get('/stats', locationController.getLocationStats);
-router.get('/:id', locationController.getLocation);
 
 // Rotas de análise avançada (admin e operador)
 router.get('/occupancy-analysis', 
@@ -39,6 +38,9 @@ router.get('/occupancy-analysis',
 router.get('/:id/adjacent', 
   locationController.getAdjacentLocations
 );
+
+// Rota específica por ID - SEMPRE POR ÚLTIMO
+router.get('/:id', locationController.getLocation);
 
 // Rotas de criação e modificação (admin e operador)
 router.post('/generate', 

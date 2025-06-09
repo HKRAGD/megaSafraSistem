@@ -569,6 +569,104 @@ const generateProductCode = asyncHandler(async (req, res, next) => {
   }
 });
 
+/**
+ * @desc    Saída parcial ou total de produto
+ * @route   POST /api/products/:id/partial-exit
+ * @access  Private (Admin/Operator)
+ * 
+ * NOVO ENDPOINT: Permite retirar quantidade específica do estoque
+ */
+const partialExit = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { quantity, reason = 'Saída manual de estoque' } = req.body;
+
+  if (!quantity || quantity <= 0) {
+    return next(new AppError('Quantidade deve ser maior que zero', 400));
+  }
+
+  try {
+    const result = await productService.partialExit(id, quantity, req.user._id, {
+      reason,
+      validateQuantity: true
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Saída registrada com sucesso',
+      data: result.data
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 400));
+  }
+});
+
+/**
+ * @desc    Movimentação parcial de produto
+ * @route   POST /api/products/:id/partial-move
+ * @access  Private (Admin/Operator)
+ * 
+ * NOVO ENDPOINT: Move quantidade específica para nova localização
+ */
+const partialMove = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { quantity, newLocationId, reason = 'Movimentação parcial' } = req.body;
+
+  if (!quantity || quantity <= 0) {
+    return next(new AppError('Quantidade deve ser maior que zero', 400));
+  }
+
+  if (!newLocationId) {
+    return next(new AppError('Nova localização é obrigatória', 400));
+  }
+
+  try {
+    const result = await productService.partialMove(id, quantity, newLocationId, req.user._id, {
+      reason,
+      validateCapacity: true
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Movimentação parcial realizada com sucesso',
+      data: result.data
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 400));
+  }
+});
+
+/**
+ * @desc    Adicionar estoque a produto existente
+ * @route   POST /api/products/:id/add-stock
+ * @access  Private (Admin/Operator)
+ * 
+ * NOVO ENDPOINT: Adiciona quantidade ao produto existente
+ */
+const addStock = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { quantity, reason = 'Adição de estoque', weightPerUnit } = req.body;
+
+  if (!quantity || quantity <= 0) {
+    return next(new AppError('Quantidade deve ser maior que zero', 400));
+  }
+
+  try {
+    const result = await productService.addStock(id, quantity, req.user._id, {
+      reason,
+      validateCapacity: true,
+      weightPerUnit
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Estoque adicionado com sucesso',
+      data: result.data
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 400));
+  }
+});
+
 module.exports = {
   getProducts,
   getProduct,
@@ -580,5 +678,9 @@ module.exports = {
   findOptimalLocation,
   validateProductData,
   getDistributionAnalysis,
-  generateProductCode
+  generateProductCode,
+  // Novos endpoints de movimentação avançada
+  partialExit,
+  partialMove,
+  addStock
 }; 

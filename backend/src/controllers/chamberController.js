@@ -442,14 +442,40 @@ const updateChamber = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // 4. Não permitir alteração de dimensões se existem localizações
+  // 4. Verificar alteração de dimensões e lidar com localizações existentes
   if (req.body.dimensions) {
     const Location = require('../models/Location');
-    const hasLocations = await Location.countDocuments({ chamberId: id }) > 0;
+    const Product = require('../models/Product');
     
-    if (hasLocations) {
-      return next(new AppError('Não é possível alterar dimensões de câmara que já possui localizações. Remova todas as localizações primeiro.', 400));
+    // Verificar se há produtos armazenados
+    const occupiedLocations = await Location.find({
+      chamberId: id,
+      isOccupied: true
+    });
+
+    if (occupiedLocations.length > 0) {
+      // Verificar se há produtos ativos
+      const activeProducts = await Product.countDocuments({
+        locationId: { $in: occupiedLocations.map(loc => loc._id) },
+        status: { $in: ['stored', 'reserved'] }
+      });
+
+      if (activeProducts > 0) {
+        return next(new AppError(
+          `Não é possível alterar dimensões. Existem ${activeProducts} produto(s) ativo(s) armazenado(s) na câmara. Remova ou mova os produtos primeiro.`,
+          400
+        ));
+      }
     }
+
+    // Se não há produtos ativos, remover todas as localizações vazias
+    await Location.deleteMany({
+      chamberId: id,
+      isOccupied: false
+    });
+
+    // Log da operação
+    console.log(`🗑️ Localizações vazias removidas da câmara ${chamber.name} para permitir alteração de dimensões`);
   }
 
   // 5. Preparar dados para atualização
@@ -527,12 +553,13 @@ const updateChamber = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Desativar câmara com análise final
- * @route   DELETE /api/chambers/:id
+ * @desc    Excluir câmara permanentemente ou desativar
+ * @route   DELETE /api/chambers/:id?permanent=true
  * @access  Private (Admin only)
  */
 const deleteChamber = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
+  const { permanent = 'false' } = req.query;
 
   // 1. Verificar se câmara existe
   const chamber = await Chamber.findById(id);
@@ -559,7 +586,7 @@ const deleteChamber = asyncHandler(async (req, res, next) => {
 
     if (activeProducts > 0) {
       return next(new AppError(
-        `Não é possível desativar esta câmara. Existem ${activeProducts} produto(s) ativo(s) armazenado(s) nela`,
+        `Não é possível ${permanent === 'true' ? 'excluir' : 'desativar'} esta câmara. Existem ${activeProducts} produto(s) ativo(s) armazenado(s) nela`,
         400
       ));
     }
@@ -584,27 +611,50 @@ const deleteChamber = asyncHandler(async (req, res, next) => {
     console.warn('Erro ao gerar relatório final:', error.message);
   }
 
-  // 4. Desativar câmara (soft delete)
-  const deactivatedChamber = await Chamber.findByIdAndUpdate(
-    id,
-    { status: 'inactive' },
-    { new: true }
-  );
+  if (permanent === 'true') {
+    // 4. Exclusão permanente
+    // Primeiro, remover todas as localizações da câmara
+    const deletedLocations = await Location.deleteMany({ chamberId: id });
+    
+    // Depois, remover a câmara
+    await Chamber.findByIdAndDelete(id);
 
-  // 5. Resposta de sucesso
-  res.status(200).json({
-    success: true,
-    message: 'Câmara desativada com sucesso',
-    data: {
-      chamber: {
-        id: deactivatedChamber._id,
-        name: deactivatedChamber.name,
-        status: deactivatedChamber.status,
-        updatedAt: deactivatedChamber.updatedAt
-      },
-      finalReport
-    }
-  });
+    console.log(`🗑️ Câmara "${chamber.name}" e ${deletedLocations.deletedCount} localizações removidas permanentemente`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Câmara removida permanentemente',
+      data: {
+        chamber: {
+          id: chamber._id,
+          name: chamber.name,
+          deletedLocations: deletedLocations.deletedCount
+        },
+        finalReport
+      }
+    });
+  } else {
+    // 4. Desativar câmara (soft delete)
+    const deactivatedChamber = await Chamber.findByIdAndUpdate(
+      id,
+      { status: 'inactive' },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Câmara desativada com sucesso',
+      data: {
+        chamber: {
+          id: deactivatedChamber._id,
+          name: deactivatedChamber.name,
+          status: deactivatedChamber.status,
+          updatedAt: deactivatedChamber.updatedAt
+        },
+        finalReport
+      }
+    });
+  }
 });
 
 /**

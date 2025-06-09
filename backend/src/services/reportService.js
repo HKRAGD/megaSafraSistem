@@ -77,13 +77,30 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
     }
 
     // 6. Estatísticas consolidadas
+    const locationsOccupied = new Set(products.map(p => p.locationId._id.toString())).size;
+    
+    // Calcular total de localizações para taxa de ocupação
+    const allChambers = new Set(products.map(p => p.locationId.chamberId._id.toString()));
+    let totalLocations = 0;
+    if (allChambers.size > 0) {
+      const chambersData = await Chamber.find({ 
+        _id: { $in: Array.from(allChambers) } 
+      });
+      totalLocations = chambersData.reduce((sum, chamber) => {
+        return sum + (chamber.dimensions.quadras * chamber.dimensions.lados * 
+                     chamber.dimensions.filas * chamber.dimensions.andares);
+      }, 0);
+    }
+    
     const statistics = {
       totalProducts: products.length,
       totalWeight: products.reduce((sum, p) => sum + p.totalWeight, 0),
       totalQuantity: products.reduce((sum, p) => sum + p.quantity, 0),
       uniqueSeedTypes: new Set(products.map(p => p.seedTypeId._id.toString())).size,
       chambersInUse: new Set(products.map(p => p.locationId.chamberId._id.toString())).size,
-      locationsOccupied: new Set(products.map(p => p.locationId._id.toString())).size,
+      locationsOccupied,
+      totalLocations,
+      occupancyRate: totalLocations > 0 ? Math.round((locationsOccupied / totalLocations) * 100) : 0,
       averageStorageTime: await calculateAverageStorageTime(products)
     };
 
@@ -138,7 +155,42 @@ const generateMovementReport = async (filters = {}, options = {}) => {
       chamberId
     } = filters;
 
-    // 1. Usar movementService para análise de padrões
+    // 1. Buscar movimentações reais primeiro
+    const baseQuery = {
+      timestamp: { $gte: startDate, $lte: endDate },
+      status: { $ne: 'cancelled' }
+    };
+
+    if (movementType) baseQuery.type = movementType;
+    if (userId) baseQuery.userId = userId;
+
+    // Se filtro por câmara, buscar localizações dessa câmara
+    if (chamberId) {
+      const locations = await Location.find({ chamberId }).select('_id');
+      const locationIds = locations.map(l => l._id);
+      baseQuery.$or = [
+        { fromLocationId: { $in: locationIds } },
+        { toLocationId: { $in: locationIds } }
+      ];
+    }
+
+    // Buscar movimentações com dados populados
+    const movements = await Movement.find(baseQuery)
+      .populate('productId', 'name lot totalWeight status')
+      .populate('userId', 'name email role')
+      .populate('fromLocationId', 'code coordinates chamberId')
+      .populate('toLocationId', 'code coordinates chamberId')
+      .populate({
+        path: 'fromLocationId',
+        populate: { path: 'chamberId', select: 'name' }
+      })
+      .populate({
+        path: 'toLocationId',
+        populate: { path: 'chamberId', select: 'name' }
+      })
+      .sort({ timestamp: -1 });
+
+    // 2. Usar movementService para análise de padrões
     const patterns = await movementService.analyzeMovementPatterns(filters, {
       includeHourlyPatterns: includePatternAnalysis,
       includeUserPatterns: includeUserActivity,
@@ -146,16 +198,16 @@ const generateMovementReport = async (filters = {}, options = {}) => {
       includeAnomalies: true
     });
 
-    // 2. Análise temporal detalhada
+    // 3. Análise temporal detalhada
     const temporalAnalysis = await generateTemporalAnalysis(filters, groupBy);
 
-    // 3. Métricas de eficiência
+    // 4. Métricas de eficiência
     let efficiencyMetrics = {};
     if (includeEfficiencyMetrics) {
       efficiencyMetrics = await calculateMovementEfficiency(filters);
     }
 
-    // 4. Top movimentações e produtos
+    // 5. Top movimentações e produtos
     const topAnalysis = await generateTopMovementsAnalysis(filters);
 
     const report = {
@@ -166,6 +218,7 @@ const generateMovementReport = async (filters = {}, options = {}) => {
         filters
       },
       summary: patterns.data.summary,
+      movements: movements,
       analysis: {
         patterns: patterns.data.patterns,
         temporal: temporalAnalysis,
@@ -700,16 +753,46 @@ const generateCapacityAlerts = (chamberAnalysis) => {
 };
 
 const calculateMainKPIs = async (startDate, endDate) => {
-  const [products, movements, chambers] = await Promise.all([
+  // Consultas paralelas para melhor performance
+  const [
+    products, 
+    movements, 
+    chambers, 
+    locations,
+    expiringProducts
+  ] = await Promise.all([
     Product.countDocuments({ status: { $in: ['stored', 'reserved'] } }),
     Movement.countDocuments({ timestamp: { $gte: startDate, $lte: endDate } }),
-    Chamber.countDocuments({ status: 'active' })
+    Chamber.countDocuments({ status: 'active' }),
+    Location.find({}),
+    Product.countDocuments({
+      status: { $in: ['stored', 'reserved'] },
+      expirationDate: { 
+        $gte: new Date(),
+        $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // próximos 30 dias
+      }
+    })
   ]);
+
+  // Calcular capacidade total e utilizada
+  const totalCapacity = locations.reduce((sum, loc) => sum + (loc.maxCapacityKg || 0), 0);
+  const usedCapacity = locations.reduce((sum, loc) => sum + (loc.currentWeightKg || 0), 0);
+  const occupancyRate = totalCapacity > 0 ? Math.round((usedCapacity / totalCapacity) * 100) : 0;
+
+  // Calcular localizações ocupadas
+  const occupiedLocations = locations.filter(loc => loc.isOccupied).length;
 
   return {
     totalProducts: products,
     totalMovements: movements,
     activeChambers: chambers,
+    totalLocations: locations.length,
+    occupiedLocations,
+    totalCapacity,
+    usedCapacity,
+    availableCapacity: totalCapacity - usedCapacity,
+    occupancyRate,
+    expiringProducts,
     period: { startDate, endDate }
   };
 };
@@ -764,13 +847,75 @@ const getCriticalAlerts = async () => {
 };
 
 const getTopPerformers = async (startDate, endDate) => {
+  // Top usuários com mais movimentações (com populate para obter nomes)
+  const topUsers = await Movement.aggregate([
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
+    { $group: { _id: '$userId', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    { $unwind: '$user' },
+    {
+      $project: {
+        _id: 1,
+        count: 1,
+        name: '$user.name',
+        email: '$user.email'
+      }
+    }
+  ]);
+
+  // Top câmaras por ocupação e eficiência
+  const chambers = await Chamber.find({ status: 'active' });
+  const chamberPerformance = [];
+
+  for (const chamber of chambers) {
+    const locations = await Location.find({ chamberId: chamber._id });
+    const totalCapacity = locations.reduce((sum, loc) => sum + (loc.maxCapacityKg || 0), 0);
+    const usedCapacity = locations.reduce((sum, loc) => sum + (loc.currentWeightKg || 0), 0);
+    const occupancyRate = totalCapacity > 0 ? Math.round((usedCapacity / totalCapacity) * 100) : 0;
+    
+    // Calcular eficiência baseada em movimentações recentes
+    const recentMovements = await Movement.countDocuments({
+      timestamp: { $gte: startDate, $lte: endDate },
+      $or: [
+        { fromLocationId: { $in: locations.map(l => l._id) } },
+        { toLocationId: { $in: locations.map(l => l._id) } }
+      ]
+    });
+    
+    // Eficiência baseada em ocupação e atividade
+    const efficiency = Math.min(100, Math.round(
+      (occupancyRate * 0.7) + // 70% peso para ocupação
+      (Math.min(recentMovements * 2, 30)) // 30% peso para atividade (máx 30 pontos)
+    ));
+
+    chamberPerformance.push({
+      _id: chamber._id,
+      name: chamber.name,
+      occupancyRate,
+      efficiency,
+      recentMovements,
+      totalCapacity,
+      usedCapacity
+    });
+  }
+
+  // Ordenar câmaras por eficiência
+  const topChambers = chamberPerformance
+    .sort((a, b) => b.efficiency - a.efficiency)
+    .slice(0, 5);
+
   return {
-    topUsers: await Movement.aggregate([
-      { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
-      { $group: { _id: '$userId', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ])
+    topUsers,
+    topChambers
   };
 };
 

@@ -270,16 +270,21 @@ productSchema.post('save', async function(doc, next) {
       }
     }
     
-    // Criar registro de movimentação
+    // Criar registro de movimentação automática
     await Movement.create({
       productId: doc._id,
       type: movementType,
       toLocationId: doc.locationId,
+      fromLocationId: movementType === 'exit' ? doc.locationId : null,
       quantity: doc.quantity,
       weight: doc.totalWeight,
       userId: doc.metadata?.lastModifiedBy || doc.metadata?.createdBy,
       reason,
-      notes: `Movimentação automática: ${reason}`
+      notes: `Movimentação automática: ${reason}`,
+      metadata: {
+        isAutomatic: true,
+        verified: true
+      }
     });
     
   } catch (error) {

@@ -23,15 +23,14 @@ router.use(authenticateToken);
 
 // Rotas de listagem e consulta (qualquer usuário autenticado)
 router.get('/', productController.getProducts);
-router.get('/:id', productController.getProduct);
 
-// Rotas de análise (admin e operador)
+// Rotas de análise (admin e operador) - ANTES do /:id
 router.get('/distribution-analysis', 
   authorizeRole(['admin', 'operator']), 
   productController.getDistributionAnalysis
 );
 
-// Rotas de validação e utilitários (admin e operador)
+// Rotas de validação e utilitários (admin e operador) - ANTES do /:id
 router.post('/validate-data', 
   authorizeRole(['admin', 'operator']), 
   productController.validateProductData
@@ -46,6 +45,9 @@ router.post('/generate-code',
   authorizeRole(['admin', 'operator']), 
   productController.generateProductCode
 );
+
+// Rota específica por ID - SEMPRE POR ÚLTIMO
+router.get('/:id', productController.getProduct);
 
 // Rotas de CRUD (admin e operador)
 router.post('/', 
@@ -70,6 +72,22 @@ router.post('/:id/move',
   authorizeRole(['admin', 'operator']), 
   validateBody(productSchemas.move),
   productController.moveProduct
+);
+
+// Novas rotas de movimentação avançada (admin e operador)
+router.post('/:id/partial-exit', 
+  authorizeRole(['admin', 'operator']), 
+  productController.partialExit
+);
+
+router.post('/:id/partial-move', 
+  authorizeRole(['admin', 'operator']), 
+  productController.partialMove
+);
+
+router.post('/:id/add-stock', 
+  authorizeRole(['admin', 'operator']), 
+  productController.addStock
 );
 
 module.exports = router; 

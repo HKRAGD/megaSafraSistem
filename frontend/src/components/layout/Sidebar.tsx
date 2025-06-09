@@ -1,0 +1,380 @@
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Box,
+  Typography,
+  Collapse,
+  IconButton,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  Inventory as ProductsIcon,
+  LocationOn as LocationsIcon,
+  People as UsersIcon,
+  Assessment as ReportsIcon,
+  History as HistoryIcon,
+  Settings as SettingsIcon,
+  ExpandLess,
+  ExpandMore,
+  Close as CloseIcon,
+} from '@mui/icons-material';
+import { useAuth, usePermissions } from '../../contexts/AuthContext';
+
+// ============================================================================
+// INTERFACES
+// ============================================================================
+
+interface SidebarProps {
+  open: boolean;
+  onToggle: () => void;
+  width: number;
+}
+
+interface MenuItemData {
+  label: string;
+  icon: React.ReactElement;
+  path?: string;
+  children?: MenuItemData[];
+  requiredRole?: string;
+  exact?: boolean;
+}
+
+// ============================================================================
+// DADOS DO MENU
+// ============================================================================
+
+const menuItems: MenuItemData[] = [
+  {
+    label: 'Dashboard',
+    icon: <DashboardIcon />,
+    path: '/dashboard',
+    exact: true,
+  },
+  {
+    label: 'Produtos',
+    icon: <ProductsIcon />,
+    path: '/products',
+  },
+  {
+    label: 'Localizações',
+    icon: <LocationsIcon />,
+    path: '/locations',
+  },
+  {
+    label: 'Relatórios',
+    icon: <ReportsIcon />,
+    path: '/reports',
+  },
+  {
+    label: 'Histórico',
+    icon: <HistoryIcon />,
+    path: '/history',
+  },
+  {
+    label: 'Usuários',
+    icon: <UsersIcon />,
+    path: '/users',
+    requiredRole: 'admin',
+  },
+  {
+    label: 'Configurações',
+    icon: <SettingsIcon />,
+    path: '/settings',
+    requiredRole: 'admin',
+  },
+];
+
+// ============================================================================
+// SIDEBAR COMPONENT
+// ============================================================================
+
+export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle, width }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  const [expandedItems, setExpandedItems] = React.useState<string[]>(['Relatórios']);
+
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
+
+  const handleItemClick = (item: MenuItemData) => {
+    if (item.path) {
+      navigate(item.path);
+      // Fechar sidebar em mobile após navegação
+      if (isMobile) {
+        onToggle();
+      }
+    } else if (item.children) {
+      toggleExpanded(item.label);
+    }
+  };
+
+  const toggleExpanded = (label: string) => {
+    setExpandedItems(prev => 
+      prev.includes(label) 
+        ? prev.filter(item => item !== label)
+        : [...prev, label]
+    );
+  };
+
+  const isItemActive = (item: MenuItemData): boolean => {
+    if (!item.path) return false;
+    
+    if (item.exact) {
+      return location.pathname === item.path;
+    }
+    
+    return location.pathname.startsWith(item.path);
+  };
+
+  const isItemVisible = (item: MenuItemData): boolean => {
+    if (!item.requiredRole) return true;
+    return hasPermission(item.requiredRole as any);
+  };
+
+  // ============================================================================
+  // RENDER MENU ITEM
+  // ============================================================================
+
+  const renderMenuItem = (item: MenuItemData, level = 0) => {
+    if (!isItemVisible(item)) return null;
+
+    const isActive = isItemActive(item);
+    const isExpanded = expandedItems.includes(item.label);
+    const hasChildren = item.children && item.children.length > 0;
+
+    return (
+      <React.Fragment key={item.label}>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => handleItemClick(item)}
+            selected={isActive}
+            sx={{
+              pl: 2 + level * 2,
+              minHeight: 48,
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
+                '& .MuiListItemIcon-root': {
+                  color: 'primary.contrastText',
+                },
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 40,
+                color: isActive ? 'inherit' : 'text.secondary',
+              }}
+            >
+              {item.icon}
+            </ListItemIcon>
+            
+            <ListItemText 
+              primary={item.label}
+              primaryTypographyProps={{
+                fontSize: '0.875rem',
+                fontWeight: isActive ? 600 : 400,
+              }}
+            />
+            
+            {hasChildren && (
+              isExpanded ? <ExpandLess /> : <ExpandMore />
+            )}
+          </ListItemButton>
+        </ListItem>
+
+        {/* Submenu */}
+        {hasChildren && (
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {item.children!.map(child => renderMenuItem(child, level + 1))}
+            </List>
+          </Collapse>
+        )}
+      </React.Fragment>
+    );
+  };
+
+  // ============================================================================
+  // RENDER DRAWER CONTENT
+  // ============================================================================
+
+  const drawerContent = (
+    <Box sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      overflow: 'hidden' // Previne problemas de scroll
+    }}>
+      {/* Header do Sidebar */}
+      <Box
+        sx={{
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: 1,
+          borderColor: 'divider',
+          minHeight: 64, // Altura da TopBar
+          flexShrink: 0, // Não encolhe
+        }}
+      >
+        <Box>
+          <Typography variant="h6" color="primary" fontWeight="bold">
+            Sementes
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Sistema de Câmaras
+          </Typography>
+        </Box>
+        
+        {/* Botão fechar apenas em mobile */}
+        {isMobile && (
+          <IconButton onClick={onToggle} size="small">
+            <CloseIcon />
+          </IconButton>
+        )}
+      </Box>
+
+      {/* Informações do usuário */}
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          flexShrink: 0, // Não encolhe
+        }}
+      >
+        <Typography variant="subtitle2" fontWeight="medium">
+          {user?.name}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {user?.role === 'admin' ? 'Administrador' : 
+           user?.role === 'operator' ? 'Operador' : 'Visualizador'}
+        </Typography>
+      </Box>
+
+      {/* Menu de navegação */}
+      <Box sx={{ 
+        flexGrow: 1, 
+        overflow: 'auto', // Permite scroll apenas no menu
+        scrollbarWidth: 'thin',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          backgroundColor: 'background.paper',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: 'divider',
+          borderRadius: '3px',
+        },
+      }}>
+        <List sx={{ pt: 1, pb: 1 }}>
+          {menuItems.map(item => renderMenuItem(item))}
+        </List>
+      </Box>
+
+      {/* Footer do Sidebar */}
+      <Box
+        sx={{
+          p: 2,
+          borderTop: 1,
+          borderColor: 'divider',
+          textAlign: 'center',
+          flexShrink: 0, // Não encolhe
+        }}
+      >
+        <Typography variant="caption" color="text.secondary">
+          v1.0.0 - Sistema de Gerenciamento
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  // ============================================================================
+  // RENDER COMPONENT
+  // ============================================================================
+
+  return (
+    <>
+      {/* Sidebar para Desktop - Drawer Persistente */}
+      <Drawer
+        variant="persistent"
+        anchor="left"
+        open={open}
+        sx={{
+          display: { xs: 'none', md: open ? 'block' : 'none' },
+          width: open ? width : 0,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width,
+            boxSizing: 'border-box',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            position: 'fixed',
+            height: '100vh',
+            top: 0,
+            left: 0,
+            zIndex: theme.zIndex.drawer,
+            backgroundColor: 'background.paper',
+            // Força ocultação quando fechado
+            visibility: open ? 'visible' : 'hidden',
+            transform: open ? 'translateX(0)' : `translateX(-${width}px)`,
+            // Transições suaves
+            transition: theme.transitions.create(['transform', 'visibility'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+
+      {/* Sidebar para Mobile - Drawer Temporário */}
+      <Drawer
+        variant="temporary"
+        anchor="left"
+        open={open}
+        onClose={onToggle}
+        ModalProps={{
+          keepMounted: true, // Melhor performance em mobile
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': {
+            width,
+            boxSizing: 'border-box',
+            backgroundColor: 'background.paper',
+            zIndex: theme.zIndex.drawer + 100,
+          },
+          // Z-index para o modal backdrop
+          zIndex: theme.zIndex.drawer + 99,
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+    </>
+  );
+};
+
+export default Sidebar; 

@@ -68,8 +68,12 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
 
     // 4. Gerar localizações em lotes para performance
     const { quadras, lados, filas, andares } = chamber.dimensions;
+    const expectedTotal = quadras * lados * filas * andares;
+
     const allLocations = [];
     let processedCount = 0;
+    let skippedCount = 0;
+    let createdCount = 0;
 
     for (let q = 1; q <= quadras; q++) {
       for (let l = 1; l <= lados; l++) {
@@ -78,10 +82,13 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
             const coordinates = { quadra: q, lado: l, fila: f, andar: a };
             const code = `Q${q}-L${l}-F${f}-A${a}`;
             
-            // Verificar se já existe (se não skipExisting)
-            if (!skipExisting) {
-              const existing = await Location.findOne({ chamberId, code });
-              if (existing) continue;
+            processedCount++;
+            
+            // CORREÇÃO: Verificar se localização com este código já existe NESTA CÂMARA
+            const existingLocation = await Location.findOne({ code, chamberId });
+            if (existingLocation) {
+              skippedCount++;
+              continue;
             }
 
             const capacity = getCapacityForLocation(coordinates);
@@ -99,11 +106,32 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
               }
             });
 
-            processedCount++;
+            createdCount++;
 
             // Inserir em lotes para melhor performance
             if (allLocations.length >= batchSize) {
-              await Location.insertMany(allLocations);
+              try {
+                await Location.insertMany(allLocations);
+              } catch (error) {
+                // Se ainda houver erro de duplicata, filtrar e tentar novamente
+                        if (error.code === 11000) {
+          const validLocations = [];
+          for (const location of allLocations) {
+            const existing = await Location.findOne({ 
+              code: location.code, 
+              chamberId: location.chamberId 
+            });
+            if (!existing) {
+              validLocations.push(location);
+            }
+          }
+                  if (validLocations.length > 0) {
+                    await Location.insertMany(validLocations);
+                  }
+                } else {
+                  throw error;
+                }
+              }
               allLocations.length = 0; // Limpar array
             }
           }
@@ -113,16 +141,39 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
 
     // Inserir localizações restantes
     if (allLocations.length > 0) {
-      await Location.insertMany(allLocations);
+      try {
+        await Location.insertMany(allLocations);
+      } catch (error) {
+        // Se ainda houver erro de duplicata, filtrar e tentar novamente
+        if (error.code === 11000) {
+          const validLocations = [];
+          for (const location of allLocations) {
+            const existing = await Location.findOne({ 
+              code: location.code, 
+              chamberId: location.chamberId 
+            });
+            if (!existing) {
+              validLocations.push(location);
+            }
+          }
+          if (validLocations.length > 0) {
+            await Location.insertMany(validLocations);
+          }
+        } else {
+          throw error;
+        }
+      }
     }
+
+    const actualCreated = createdCount;
 
     // 5. Atualizar estatísticas da câmara
     const stats = await Location.getStats(chamberId);
 
-    return {
+    const finalResult = {
       success: true,
-      message: `${processedCount} localizações geradas com sucesso`,
-      locationsCreated: processedCount,
+      message: `${actualCreated} localizações geradas com sucesso`,
+      locationsCreated: actualCreated,
       chamber: {
         id: chamber._id,
         name: chamber.name,
@@ -137,7 +188,11 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
       }
     };
 
+    console.log(`✅ Geradas ${actualCreated} localizações para câmara "${chamber.name}"`);
+    return finalResult;
+
   } catch (error) {
+    console.error('❌ Erro em generateLocationsForChamber:', error.message);
     throw new Error(`Erro ao gerar localizações: ${error.message}`);
   }
 };
@@ -613,10 +668,65 @@ const analyzeOccupancy = async (chamberId = null, options = {}) => {
   }
 };
 
+/**
+ * Buscar localizações de uma câmara específica
+ * @param {String} chamberId - ID da câmara
+ * @param {Object} options - Opções de busca
+ * @returns {Object} Lista de localizações
+ */
+const getLocationsByChamber = async (chamberId, options = {}) => {
+  try {
+    const {
+      includeProducts = false,
+      sort = 'code',
+      limit = null
+    } = options;
+
+    // 1. Verificar se câmara existe
+    const chamber = await Chamber.findById(chamberId);
+    if (!chamber) {
+      throw new Error('Câmara não encontrada');
+    }
+
+    // 2. Construir query
+    let query = Location.find({ chamberId });
+
+    // 3. Populate produtos se solicitado
+    if (includeProducts) {
+      query = query.populate({
+        path: 'productId',
+        select: 'name lot quantity totalWeight status'
+      });
+    }
+
+    // 4. Aplicar ordenação
+    if (sort) {
+      query = query.sort(sort);
+    }
+
+    // 5. Aplicar limite se especificado
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    // 6. Executar query
+    const locations = await query.lean();
+
+    return {
+      success: true,
+      data: locations
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao buscar localizações da câmara: ${error.message}`);
+  }
+};
+
 module.exports = {
   generateLocationsForChamber,
   findAvailableLocations,
   validateLocationCapacity,
   findAdjacentLocations,
-  analyzeOccupancy
+  analyzeOccupancy,
+  getLocationsByChamber
 }; 

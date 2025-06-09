@@ -1066,32 +1066,64 @@ const generateEfficiencyRecommendations = (stats) => {
  */
 const registerSystemEvent = async (eventData) => {
   try {
-    // Criar movimentação de sistema para auditoria
-    const systemMovement = new Movement({
-      type: 'system',
-      userId: eventData.userId || 'system',
-      productId: eventData.productId || null,
-      seedTypeId: eventData.seedTypeId || null,
-      chamberId: eventData.chamberId || null,
-      reason: eventData.type || 'Sistema',
+    // Para eventos de sistema, vamos apenas logar em vez de criar Movement
+    // porque Movement é para rastreamento de produtos específicos
+    console.log(`📋 Evento do sistema: ${eventData.type}`, {
       timestamp: eventData.timestamp || new Date(),
-      metadata: {
-        isAutomatic: true,
-        isSystemEvent: true,
-        eventType: eventData.type,
-        details: eventData.details || {}
-      }
+      details: eventData.details || {},
+      chamberId: eventData.chamberId
     });
-
-    await systemMovement.save();
 
     return {
       success: true,
-      data: systemMovement
+      message: 'Evento do sistema registrado nos logs'
     };
   } catch (error) {
     // Não falhar o processo principal se auditoria falhar
     console.warn('Erro ao registrar evento do sistema:', error.message);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Registra evento de segurança para auditoria
+ * @param {Object} eventData - Dados do evento de segurança
+ * @returns {Object} Resultado do registro
+ */
+const registerSecurityEvent = async (eventData) => {
+  try {
+    // Criar movimentação de segurança para auditoria
+    const securityMovement = new Movement({
+      type: 'security',
+      userId: eventData.userId || 'system',
+      productId: eventData.productId || null,
+      reason: eventData.action || 'Evento de Segurança',
+      timestamp: eventData.timestamp || new Date(),
+      metadata: {
+        isAutomatic: true,
+        isSecurityEvent: true,
+        action: eventData.action,
+        status: eventData.status,
+        ipAddress: eventData.ipAddress,
+        userAgent: eventData.userAgent,
+        sessionId: eventData.sessionId,
+        attempts: eventData.attempts,
+        details: eventData.details || {}
+      }
+    });
+
+    await securityMovement.save();
+
+    return {
+      success: true,
+      data: securityMovement
+    };
+  } catch (error) {
+    // Não falhar o processo principal se auditoria falhar
+    console.warn('Erro ao registrar evento de segurança:', error.message);
     return {
       success: false,
       error: error.message
@@ -1105,5 +1137,6 @@ module.exports = {
   generateAuditReport,
   analyzeProductHistory,
   verifyPendingMovements,
-  registerSystemEvent
+  registerSystemEvent,
+  registerSecurityEvent
 }; 

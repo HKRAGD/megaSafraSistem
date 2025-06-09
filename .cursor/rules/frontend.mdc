@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 Your Mission
 Build a modern, responsive, and fully functional frontend that connects with the backend from the beginning. The system must enable management of cold chambers, seed products, and their warehouse locations through an intuitive and efficient interface.

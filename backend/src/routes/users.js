@@ -27,6 +27,22 @@ const router = express.Router();
 router.get('/', authenticateToken, authorizeRole(['admin', 'operator']), getUsers);
 
 /**
+ * @desc    Obter análise de produtividade de usuário
+ * @route   GET /api/users/:id/productivity
+ * @access  Private (Admin/Own User)
+ * @query   timeframe, includeComparison
+ */
+router.get('/:id/productivity', authenticateToken, canAccessUser, getUserProductivity);
+
+/**
+ * @desc    Obter usuários similares
+ * @route   GET /api/users/:id/similar
+ * @access  Private (Admin only)
+ * @query   minSimilarity
+ */
+router.get('/:id/similar', authenticateToken, authorizeRole(['admin']), getSimilarUsers);
+
+/**
  * @desc    Obter usuário específico com análises opcionais
  * @route   GET /api/users/:id
  * @access  Private (Admin/Own User)
@@ -54,21 +70,5 @@ router.put('/:id', authenticateToken, canAccessUser, updateUser);
  * @access  Private (Admin only)
  */
 router.delete('/:id', authenticateToken, authorizeRole(['admin']), deleteUser);
-
-/**
- * @desc    Obter análise de produtividade de usuário
- * @route   GET /api/users/:id/productivity
- * @access  Private (Admin/Own User)
- * @query   timeframe, includeComparison
- */
-router.get('/:id/productivity', authenticateToken, canAccessUser, getUserProductivity);
-
-/**
- * @desc    Obter usuários similares
- * @route   GET /api/users/:id/similar
- * @access  Private (Admin only)
- * @query   minSimilarity
- */
-router.get('/:id/similar', authenticateToken, authorizeRole(['admin']), getSimilarUsers);
 
 module.exports = router; 

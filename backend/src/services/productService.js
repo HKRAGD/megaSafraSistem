@@ -248,7 +248,7 @@ const moveProduct = async (productId, newLocationId, userId, options = {}) => {
       currentWeightKg: product.totalWeight
     });
 
-    // 8. REGRA CRÍTICA: Gerar movimento automático
+    // 8. REGRA CRÍTICA: Gerar movimento manual (não automático para evitar duplicação)
     const movementData = {
       type: 'transfer',
       productId: product._id,
@@ -261,7 +261,7 @@ const moveProduct = async (productId, newLocationId, userId, options = {}) => {
       timestamp: new Date(),
       metadata: {
         verified: true,
-        automatic: true
+        isAutomatic: false // Marcado como manual para passar pela validação de duplicatas
       }
     };
 
@@ -375,24 +375,8 @@ const removeProduct = async (productId, userId, options = {}) => {
       currentWeightKg: 0
     });
 
-    // 4. REGRA CRÍTICA: Gerar movimento automático de saída
-    const movementData = {
-      type: 'exit',
-      productId: product._id,
-      userId: userId,
-      fromLocationId: locationId,
-      quantity: product.quantity,
-      weight: productWeight,
-      reason: reason,
-      timestamp: new Date(),
-      metadata: {
-        verified: true,
-        automatic: true
-      }
-    };
-
-    const movement = new Movement(movementData);
-    await movement.save();
+    // 4. REGRA CRÍTICA: Movimentação será criada automaticamente pelo middleware do Product
+    // Não criar movimentação manual aqui para evitar duplicação
 
     // 5. Análise de liberação de espaço se solicitada
     let spaceAnalysis = null;
@@ -408,8 +392,9 @@ const removeProduct = async (productId, userId, options = {}) => {
     return {
       success: true,
       data: {
-        movement: movement,
-        spaceAnalysis: spaceAnalysis
+        productId: product._id,
+        spaceAnalysis: spaceAnalysis,
+        message: 'Produto removido com sucesso'
       }
     };
 
@@ -718,6 +703,433 @@ const getProductsByConditions = async (conditions = {}, options = {}) => {
   }
 };
 
+/**
+ * Saída parcial ou total de produto (reduz estoque)
+ * @param {String} productId - ID do produto
+ * @param {Number} quantity - Quantidade a ser retirada
+ * @param {String} userId - ID do usuário
+ * @param {Object} options - Opções da operação
+ * @returns {Object} Resultado da operação
+ */
+const partialExit = async (productId, quantity, userId, options = {}) => {
+  try {
+    const {
+      reason = 'Saída manual de estoque',
+      validateQuantity = true
+    } = options;
+
+    // 1. Buscar produto atual
+    const product = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg');
+
+    if (!product) {
+      throw new Error('Produto não encontrado');
+    }
+
+    if (product.status !== 'stored') {
+      throw new Error(`Produto deve estar armazenado para saída. Status atual: ${product.status}`);
+    }
+
+    // 2. Validar quantidade
+    if (validateQuantity) {
+      if (quantity <= 0) {
+        throw new Error('Quantidade deve ser maior que zero');
+      }
+
+      if (quantity > product.quantity) {
+        throw new Error(`Quantidade solicitada (${quantity}) excede disponível (${product.quantity})`);
+      }
+    }
+
+    // 3. Calcular novos valores
+    const newQuantity = product.quantity - quantity;
+    const weightToRemove = quantity * product.weightPerUnit;
+    const newTotalWeight = newQuantity * product.weightPerUnit;
+
+    // 4. Registrar movimento de saída
+    const movement = new Movement({
+      type: 'exit',
+      productId: product._id,
+      userId: userId,
+      fromLocationId: product.locationId._id,
+      quantity: quantity,
+      weight: weightToRemove,
+      reason,
+      timestamp: new Date(),
+      metadata: {
+        verified: true,
+        automatic: false,
+        operationType: 'partial_exit'
+      }
+    });
+    await movement.save();
+
+    // 5. Atualizar produto
+    if (newQuantity === 0) {
+      // Se saída total, remover produto e liberar localização
+      await Product.findByIdAndUpdate(productId, { 
+        status: 'removed',
+        metadata: {
+          ...product.metadata,
+          lastModifiedBy: userId,
+          lastMovementDate: new Date()
+        }
+      });
+
+      await Location.findByIdAndUpdate(product.locationId._id, {
+        isOccupied: false,
+        currentWeightKg: 0
+      });
+    } else {
+      // Se saída parcial, atualizar quantidades
+      await Product.findByIdAndUpdate(productId, {
+        quantity: newQuantity,
+        totalWeight: newTotalWeight,
+        metadata: {
+          ...product.metadata,
+          lastModifiedBy: userId,
+          lastMovementDate: new Date()
+        }
+      });
+
+      await Location.findByIdAndUpdate(product.locationId._id, {
+        currentWeightKg: newTotalWeight
+      });
+    }
+
+    // 6. Buscar produto atualizado
+    const updatedProduct = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg');
+
+    return {
+      success: true,
+      data: {
+        product: updatedProduct,
+        operation: {
+          type: 'partial_exit',
+          quantityRemoved: quantity,
+          weightRemoved: weightToRemove,
+          remainingQuantity: newQuantity,
+          remainingWeight: newTotalWeight,
+          totalRemoval: newQuantity === 0
+        },
+        movement: {
+          id: movement._id,
+          timestamp: movement.timestamp
+        }
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro na saída parcial: ${error.message}`);
+  }
+};
+
+/**
+ * Movimentação parcial de produto (cria novo produto na nova localização)
+ * @param {String} productId - ID do produto origem
+ * @param {Number} quantity - Quantidade a ser movida
+ * @param {String} newLocationId - Nova localização
+ * @param {String} userId - ID do usuário
+ * @param {Object} options - Opções da operação
+ * @returns {Object} Resultado da operação
+ */
+const partialMove = async (productId, quantity, newLocationId, userId, options = {}) => {
+  try {
+    const {
+      reason = 'Movimentação parcial',
+      validateCapacity = true
+    } = options;
+
+    // 1. Buscar produto atual
+    const product = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg');
+
+    if (!product) {
+      throw new Error('Produto não encontrado');
+    }
+
+    if (product.status !== 'stored') {
+      throw new Error(`Produto deve estar armazenado para movimentação. Status atual: ${product.status}`);
+    }
+
+    // 2. Validar quantidade
+    if (quantity <= 0) {
+      throw new Error('Quantidade deve ser maior que zero');
+    }
+
+    if (quantity >= product.quantity) {
+      throw new Error('Use movimentação total para mover todo o estoque');
+    }
+
+    // 3. Validar nova localização
+    const newLocation = await Location.findById(newLocationId);
+    if (!newLocation) {
+      throw new Error('Nova localização não encontrada');
+    }
+
+    if (newLocation.isOccupied) {
+      throw new Error('Nova localização já está ocupada');
+    }
+
+    // 4. Validar capacidade se solicitado
+    const weightToMove = quantity * product.weightPerUnit;
+    if (validateCapacity) {
+      const capacityValidation = await locationService.validateLocationCapacity(
+        newLocationId, 
+        weightToMove
+      );
+
+      if (!capacityValidation.valid) {
+        throw new Error(`Capacidade insuficiente: ${capacityValidation.reason}`);
+      }
+    }
+
+    // 5. Calcular novos valores para produto origem
+    const newOriginQuantity = product.quantity - quantity;
+    const newOriginWeight = newOriginQuantity * product.weightPerUnit;
+
+    // 6. Registrar movimento de saída do produto origem
+    const exitMovement = new Movement({
+      type: 'transfer',
+      productId: product._id,
+      userId: userId,
+      fromLocationId: product.locationId._id,
+      toLocationId: newLocationId,
+      quantity: quantity,
+      weight: weightToMove,
+      reason: `${reason} - Saída parcial`,
+      timestamp: new Date(),
+      metadata: {
+        verified: true,
+        automatic: false,
+        operationType: 'partial_move_exit'
+      }
+    });
+    await exitMovement.save();
+
+    // 7. Criar novo produto na nova localização
+    const newProductData = {
+      name: product.name,
+      lot: product.lot,
+      seedTypeId: product.seedTypeId._id,
+      quantity: quantity,
+      storageType: product.storageType,
+      weightPerUnit: product.weightPerUnit,
+      totalWeight: weightToMove,
+      locationId: newLocationId,
+      entryDate: new Date(),
+      expirationDate: product.expirationDate,
+      status: 'stored',
+      notes: `Criado por movimentação parcial do produto ${product.name}`,
+      tracking: {
+        ...product.tracking,
+        originProductId: product._id
+      },
+      metadata: {
+        createdBy: userId,
+        lastModifiedBy: userId,
+        lastMovementDate: new Date()
+      }
+    };
+
+    const newProduct = new Product(newProductData);
+    await newProduct.save();
+
+    // 8. Registrar movimento de entrada do novo produto
+    const entryMovement = new Movement({
+      type: 'entry',
+      productId: newProduct._id,
+      userId: userId,
+      toLocationId: newLocationId,
+      quantity: quantity,
+      weight: weightToMove,
+      reason: `${reason} - Entrada parcial`,
+      timestamp: new Date(),
+      metadata: {
+        verified: true,
+        automatic: false,
+        operationType: 'partial_move_entry',
+        originProductId: product._id
+      }
+    });
+    await entryMovement.save();
+
+    // 9. Atualizar produto origem
+    await Product.findByIdAndUpdate(productId, {
+      quantity: newOriginQuantity,
+      totalWeight: newOriginWeight,
+      metadata: {
+        ...product.metadata,
+        lastModifiedBy: userId,
+        lastMovementDate: new Date()
+      }
+    });
+
+    // 10. Atualizar localizações
+    await Location.findByIdAndUpdate(product.locationId._id, {
+      currentWeightKg: newOriginWeight
+    });
+
+    await Location.findByIdAndUpdate(newLocationId, {
+      isOccupied: true,
+      currentWeightKg: weightToMove
+    });
+
+    // 11. Buscar produtos atualizados
+    const updatedOriginProduct = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId');
+
+    const createdProduct = await Product.findById(newProduct._id)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId');
+
+    return {
+      success: true,
+      data: {
+        originProduct: updatedOriginProduct,
+        newProduct: createdProduct,
+        operation: {
+          type: 'partial_move',
+          quantityMoved: quantity,
+          weightMoved: weightToMove,
+          fromLocation: product.locationId.code,
+          toLocation: newLocation.code
+        },
+        movements: {
+          exit: exitMovement._id,
+          entry: entryMovement._id
+        }
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro na movimentação parcial: ${error.message}`);
+  }
+};
+
+/**
+ * Adicionar estoque a produto existente (mesmo tipo e lote)
+ * @param {String} productId - ID do produto existente
+ * @param {Number} quantity - Quantidade a ser adicionada
+ * @param {String} userId - ID do usuário
+ * @param {Object} options - Opções da operação
+ * @returns {Object} Resultado da operação
+ */
+const addStock = async (productId, quantity, userId, options = {}) => {
+  try {
+    const {
+      reason = 'Adição de estoque',
+      validateCapacity = true,
+      weightPerUnit = null // Se não fornecido, usa o mesmo do produto
+    } = options;
+
+    // 1. Buscar produto atual
+    const product = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg');
+
+    if (!product) {
+      throw new Error('Produto não encontrado');
+    }
+
+    if (product.status !== 'stored') {
+      throw new Error(`Produto deve estar armazenado para adicionar estoque. Status atual: ${product.status}`);
+    }
+
+    // 2. Validar quantidade
+    if (quantity <= 0) {
+      throw new Error('Quantidade deve ser maior que zero');
+    }
+
+    // 3. Usar peso por unidade fornecido ou do produto existente
+    const unitWeight = weightPerUnit || product.weightPerUnit;
+    const weightToAdd = quantity * unitWeight;
+
+    // 4. Validar capacidade se solicitado
+    if (validateCapacity) {
+      const currentLocationWeight = product.locationId.currentWeightKg || 0;
+      const newTotalWeight = currentLocationWeight + weightToAdd;
+
+      if (newTotalWeight > product.locationId.maxCapacityKg) {
+        throw new Error(`Capacidade insuficiente. Peso atual: ${currentLocationWeight}kg, Tentando adicionar: ${weightToAdd}kg, Capacidade máxima: ${product.locationId.maxCapacityKg}kg`);
+      }
+    }
+
+    // 5. Calcular novos valores
+    const newQuantity = product.quantity + quantity;
+    const newTotalWeight = product.totalWeight + weightToAdd;
+
+    // 6. Registrar movimento de ajuste
+    const movement = new Movement({
+      type: 'adjustment',
+      productId: product._id,
+      userId: userId,
+      toLocationId: product.locationId._id,
+      quantity: quantity,
+      weight: weightToAdd,
+      reason,
+      timestamp: new Date(),
+      metadata: {
+        verified: true,
+        automatic: false,
+        operationType: 'add_stock',
+        previousQuantity: product.quantity,
+        previousWeight: product.totalWeight
+      }
+    });
+    await movement.save();
+
+    // 7. Atualizar produto
+    await Product.findByIdAndUpdate(productId, {
+      quantity: newQuantity,
+      totalWeight: newTotalWeight,
+      metadata: {
+        ...product.metadata,
+        lastModifiedBy: userId,
+        lastMovementDate: new Date()
+      }
+    });
+
+    // 8. Atualizar localização
+    await Location.findByIdAndUpdate(product.locationId._id, {
+      currentWeightKg: newTotalWeight
+    });
+
+    // 9. Buscar produto atualizado
+    const updatedProduct = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg');
+
+    return {
+      success: true,
+      data: {
+        product: updatedProduct,
+        operation: {
+          type: 'add_stock',
+          quantityAdded: quantity,
+          weightAdded: weightToAdd,
+          previousQuantity: product.quantity,
+          newQuantity: newQuantity,
+          previousWeight: product.totalWeight,
+          newWeight: newTotalWeight
+        },
+        movement: {
+          id: movement._id,
+          timestamp: movement.timestamp
+        }
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao adicionar estoque: ${error.message}`);
+  }
+};
+
 module.exports = {
   createProduct,
   moveProduct,
@@ -726,5 +1138,9 @@ module.exports = {
   validateProductData,
   generateProductCode,
   analyzeProductDistribution,
-  getProductsByConditions
+  getProductsByConditions,
+  // Novas funcionalidades
+  partialExit,
+  partialMove,
+  addStock
 }; 

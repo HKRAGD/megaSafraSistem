@@ -168,6 +168,7 @@ const chamberSchemas = {
     description: Joi.string().trim().max(500).allow(''),
     currentTemperature: Joi.number().min(-50).max(50),
     currentHumidity: Joi.number().min(0).max(100),
+    status: Joi.string().valid('active', 'maintenance', 'inactive').default('active'),
     dimensions: Joi.object({
       quadras: Joi.number().integer().min(1).max(100).required(),
       lados: Joi.number().integer().min(1).max(100).required(),
@@ -183,6 +184,14 @@ const chamberSchemas = {
         humidityMin: Joi.number().min(0).max(100),
         humidityMax: Joi.number().min(0).max(100)
       })
+    }),
+    lastMaintenanceDate: Joi.date().iso(),
+    nextMaintenanceDate: Joi.date().iso(),
+    generateLocations: Joi.boolean().default(true),
+    locationOptions: Joi.object({
+      defaultCapacity: Joi.number().min(1).max(10000),
+      capacityVariation: Joi.boolean(),
+      optimizeAccess: Joi.boolean()
     })
   }),
   
@@ -192,6 +201,12 @@ const chamberSchemas = {
     currentTemperature: Joi.number().min(-50).max(50),
     currentHumidity: Joi.number().min(0).max(100),
     status: Joi.string().valid('active', 'maintenance', 'inactive'),
+    dimensions: Joi.object({
+      quadras: Joi.number().integer().min(1).max(100),
+      lados: Joi.number().integer().min(1).max(100),
+      filas: Joi.number().integer().min(1).max(100),
+      andares: Joi.number().integer().min(1).max(20)
+    }),
     settings: Joi.object({
       targetTemperature: Joi.number().min(-50).max(50),
       targetHumidity: Joi.number().min(0).max(100),
@@ -209,6 +224,13 @@ const chamberSchemas = {
   updateConditions: Joi.object({
     temperature: Joi.number().min(-50).max(50).required(),
     humidity: Joi.number().min(0).max(100).required()
+  }),
+
+  generateLocations: Joi.object({
+    maxCapacityKg: Joi.number().min(1).max(10000).default(1000),
+    overwrite: Joi.boolean().default(false),
+    optimizeAccess: Joi.boolean().default(true),
+    capacityVariation: Joi.boolean().default(true)
   })
 };
 

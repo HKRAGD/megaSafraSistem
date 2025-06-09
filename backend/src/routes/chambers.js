@@ -6,6 +6,7 @@
 
 const express = require('express');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const { validateBody, chamberSchemas } = require('../middleware/validation');
 const { 
   getChambers, 
   getChamber, 
@@ -28,14 +29,6 @@ const router = express.Router();
  * @query   page, limit, sort, search, status, withAlerts, includeCapacity, includeConditions
  */
 router.get('/', authenticateToken, getChambers);
-
-/**
- * @desc    Obter câmara específica com análises detalhadas
- * @route   GET /api/chambers/:id
- * @access  Private (All authenticated users)
- * @query   includeCapacity, includeConditions, timeframe
- */
-router.get('/:id', authenticateToken, getChamber);
 
 /**
  * @desc    Obter análise de capacidade detalhada
@@ -70,25 +63,48 @@ router.get('/:id/maintenance-schedule', authenticateToken, authorizeRole(['admin
 router.get('/:id/layout-optimization', authenticateToken, authorizeRole(['admin']), getLayoutOptimization);
 
 /**
+ * @desc    Obter câmara específica com análises detalhadas
+ * @route   GET /api/chambers/:id
+ * @access  Private (All authenticated users)
+ * @query   includeCapacity, includeConditions, timeframe
+ */
+router.get('/:id', authenticateToken, getChamber);
+
+/**
  * @desc    Criar nova câmara com geração integrada de localizações
  * @route   POST /api/chambers
  * @access  Private (Admin only)
  */
-router.post('/', authenticateToken, authorizeRole(['admin']), createChamber);
+router.post('/', 
+  authenticateToken, 
+  authorizeRole(['admin']), 
+  validateBody(chamberSchemas.create),
+  createChamber
+);
 
 /**
  * @desc    Gerar localizações com análise de otimização
  * @route   POST /api/chambers/:id/generate-locations
  * @access  Private (Admin only)
  */
-router.post('/:id/generate-locations', authenticateToken, authorizeRole(['admin']), generateLocations);
+router.post('/:id/generate-locations', 
+  authenticateToken, 
+  authorizeRole(['admin']), 
+  validateBody(chamberSchemas.generateLocations),
+  generateLocations
+);
 
 /**
  * @desc    Atualizar câmara com validações avançadas
  * @route   PUT /api/chambers/:id
  * @access  Private (Admin/Operator)
  */
-router.put('/:id', authenticateToken, authorizeRole(['admin', 'operator']), updateChamber);
+router.put('/:id', 
+  authenticateToken, 
+  authorizeRole(['admin', 'operator']), 
+  validateBody(chamberSchemas.update),
+  updateChamber
+);
 
 /**
  * @desc    Desativar câmara com análise final

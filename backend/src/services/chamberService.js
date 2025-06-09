@@ -76,21 +76,23 @@ const createChamberWithLocations = async (chamberData, locationOptions = {}) => 
       throw new Error(`Falha na geração de localizações: ${locationResult.error || locationResult.message || 'Erro desconhecido'}`);
     }
 
+    console.log(`✅ Câmara "${chamber.name}" criada com ${locationResult.locationsCreated} localizações`);
+
     // 4. Registrar evento de criação
     await movementService.registerSystemEvent({
       type: 'chamber_created_with_locations',
       chamberId: chamber._id,
       metadata: {
-        locationsCreated: locationResult.data.totalGenerated,
+        locationsCreated: locationResult.locationsCreated,
         chamberDimensions: chamber.dimensions,
         timestamp: new Date()
       }
     });
 
     // 5. Calcular score inicial de eficiência
-    const initialEfficiencyScore = calculateInitialEfficiencyScore(chamber, locationResult.data);
+    const initialEfficiencyScore = calculateInitialEfficiencyScore(chamber, { totalGenerated: locationResult.locationsCreated });
 
-    return {
+    const finalResult = {
       success: true,
       data: {
         chamber: {
@@ -106,18 +108,21 @@ const createChamberWithLocations = async (chamberData, locationOptions = {}) => 
           createdAt: chamber.createdAt
         },
         locations: {
-          totalGenerated: locationResult.data.totalGenerated,
-          created: locationResult.data.locations,
-          summary: locationResult.data.summary
+          totalGenerated: locationResult.locationsCreated,
+          created: locationResult.locationsCreated,
+          summary: locationResult.stats || {}
         },
         estimatedBenefits: {
-          storageCapacity: locationResult.data.totalCapacityKg,
+          storageCapacity: locationResult.stats?.totalCapacity || (locationResult.locationsCreated * (locationOptions.defaultCapacity || 1000)),
           efficiency: initialEfficiencyScore,
-          flexibilityScore: calculateFlexibilityScore(locationResult.data)
+          flexibilityScore: calculateFlexibilityScore({ totalGenerated: locationResult.locationsCreated })
         }
       }
     };
+
+    return finalResult;
   } catch (error) {
+    console.error('❌ Erro em createChamberWithLocations:', error.message);
     throw new Error(`Erro ao criar câmara com localizações: ${error.message}`);
   }
 };

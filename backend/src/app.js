@@ -13,12 +13,12 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
 
 // Logging
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'development') {
   app.use(morgan('combined'));
 }
 
