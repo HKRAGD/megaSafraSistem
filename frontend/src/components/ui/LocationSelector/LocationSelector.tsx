@@ -20,6 +20,7 @@ import { useController, Control, FieldPath, FieldValues } from 'react-hook-form'
 import { Location } from '../../../types';
 import { useLocations } from '../../../hooks/useLocations';
 import { LocationHierarchyDisplay } from '../LocationHierarchyDisplay';
+import { formatarLocalizacaoCompleta, gerarTextoBusca } from '../../../utils/locationUtils';
 
 // ============================================================================
 // INTERFACES
@@ -197,11 +198,11 @@ export const LocationSelector = <
   };
 
   const getLocationDisplayName = (location: Location) => {
-    return `${location.code} - Q${location.coordinates.quadra}L${location.coordinates.lado}F${location.coordinates.fila}A${location.coordinates.andar}`;
+    return formatarLocalizacaoCompleta(location);
   };
 
   const getLocationSearchText = (location: Location) => {
-    return `${location.code} ${location.coordinates.quadra} ${location.coordinates.lado} ${location.coordinates.fila} ${location.coordinates.andar}`.toLowerCase();
+    return gerarTextoBusca(location);
   };
 
   const getCapacityWarning = (location: Location) => {

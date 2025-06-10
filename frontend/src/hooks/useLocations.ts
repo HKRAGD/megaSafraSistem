@@ -5,7 +5,8 @@ import {
   UseDataState,
   LocationWithChamber 
 } from '../types';
-import { locationService } from '../services/locationService';
+import locationService from '../services/locationService';
+import { letraParaNumero } from '../utils/locationUtils';
 
 // ============================================================================
 // INTERFACE DO HOOK
@@ -407,7 +408,14 @@ export const useLocations = (options: UseLocationsOptions = {}): UseLocationsRet
         return a.coordinates.quadra - b.coordinates.quadra;
       }
       if (a.coordinates.lado !== b.coordinates.lado) {
-        return a.coordinates.lado - b.coordinates.lado;
+        // Converter lados para números para comparação
+        const ladoA = typeof a.coordinates.lado === 'string' 
+          ? letraParaNumero(a.coordinates.lado) 
+          : a.coordinates.lado;
+        const ladoB = typeof b.coordinates.lado === 'string' 
+          ? letraParaNumero(b.coordinates.lado) 
+          : b.coordinates.lado;
+        return ladoA - ladoB;
       }
       if (a.coordinates.fila !== b.coordinates.fila) {
         return a.coordinates.fila - b.coordinates.fila;

@@ -125,63 +125,110 @@ export const useAllLocationsWithChambers = (
     clearError();
 
     try {
-      // 1. Buscar TODAS as localizações (não apenas disponíveis)
-      console.log('🔍 Buscando TODAS as localizações...');
-      const locationsResponse = await locationService.getAll(filters);
+      setLoading(true);
+      setError(null);
+
+      // ✅ CORREÇÃO CRÍTICA: Usar getAllUnpaginated para carregar TODAS as localizações
+      // Isso resolve o problema das localizações brancas no mapa 3D
+      console.log('🔄 Carregando TODAS as localizações (sem limitação de paginação)...');
       
-      const apiLocations = locationsResponse.data.locations || [];
-      console.log(`📦 ${apiLocations.length} localizações retornadas da API (ocupadas + disponíveis)`);
+      const [locationsResponse, chambersResponse] = await Promise.all([
+        locationService.getAllUnpaginated(), // ✅ Nova função que busca todas as páginas
+        chamberService.getAll()
+      ]);
+
+      console.log(`📦 ${locationsResponse.data.locations.length} localizações retornadas da API (todas as páginas)`);
+      
+      if (!locationsResponse.success || !chambersResponse.success) {
+        throw new Error('Falha ao carregar dados');
+      }
+
+      const locations = locationsResponse.data.locations;
+      const chambers = chambersResponse.data.chambers || chambersResponse.data; // ✅ Ajuste para diferentes formatos de resposta
 
       // 2. Verificar se as localizações já vêm com dados de câmara
-      const locationsWithPopulatedChambers = apiLocations.filter(
+      const locationsWithPopulatedChambers = locations.filter(
         (loc: any) => typeof loc.chamberId === 'object' && loc.chamberId !== null
       );
 
-      if (locationsWithPopulatedChambers.length === apiLocations.length) {
+      if (locationsWithPopulatedChambers.length === locations.length) {
         // Todas as localizações já vêm com dados de câmara - ótimo!
         console.log('✅ Todas as localizações já têm dados de câmara populados');
-        const processedLocations = processApiLocations(apiLocations);
+        const processedLocations = processApiLocations(locations);
         setAllLocationsWithChambers(processedLocations);
         console.log(`✅ ${processedLocations.length} localizações processadas`);
-      } else {
-        // Algumas localizações não têm dados de câmara - precisamos buscar
-        console.log('⚠️ Algumas localizações não têm dados de câmara, buscando câmaras...');
         
-        // 3. Buscar informações de todas as câmaras
-        const chambersResponse = await chamberService.getAll();
-        const chambers = chambersResponse.data.chambers || [];
-        console.log(`📦 ${chambers.length} câmaras carregadas`);
+        // ✅ DEBUG: Contar ocupadas vs disponíveis
+        const occupied = processedLocations.filter(loc => loc.isOccupied);
+        const available = processedLocations.filter(loc => !loc.isOccupied);
+        console.log(`🔴 ${occupied.length} localizações ocupadas | 🟢 ${available.length} localizações disponíveis`);
         
-        // 4. Criar mapa de câmaras para lookup rápido
-        const chambersMap = new Map(
-          chambers.map((chamber: any) => [
-            chamber._id || chamber.id, 
-            {
-              id: chamber._id || chamber.id,
-              name: chamber.name || 'Unnamed Chamber'
-            }
-          ])
-        );
+        // ✅ DEBUG: Mostrar alguns exemplos de localizações ocupadas
+        if (occupied.length > 0) {
+          console.log('📝 Exemplos de localizações ocupadas:', occupied.slice(0, 3).map(loc => ({
+            code: loc.code,
+            isOccupied: loc.isOccupied,
+            currentWeight: loc.currentWeightKg,
+            chamber: loc.chamber?.name
+          })));
+        }
+        
+        return; // Sair da função aqui
+      }
 
-        // 5. Processar localizações combinando com dados de câmara
-        const processedLocations = apiLocations.map((apiLocation: any) => {
-          const baseLocation = convertToLocationWithChamber(apiLocation);
-          
-          // Se não tem dados de câmara populados, buscar no mapa
-          if (baseLocation.chamber.name === 'Chamber not found') {
-            const chamberData = chambersMap.get(baseLocation.chamberId);
-            if (chamberData) {
-              baseLocation.chamber = chamberData;
-            } else {
-              console.warn(`⚠️ Câmara não encontrada para localização ${baseLocation.code}: ${baseLocation.chamberId}`);
-            }
+      // 3. Se chegou aqui, precisa buscar dados das câmaras manualmente
+      console.log('⚠️ Localizações sem dados de câmara - buscando dados das câmaras...');
+      
+      // Garantir que chambers é um array
+      const chambersArray = Array.isArray(chambers) ? chambers : [];
+      console.log(`📦 ${chambersArray.length} câmaras carregadas`);
+      
+      // 4. Criar mapa de câmaras para lookup rápido
+      const chambersMap = new Map(
+        chambersArray.map((chamber: any) => [
+          chamber.id || chamber._id, 
+          { 
+            id: chamber.id || chamber._id, 
+            name: chamber.name || 'Câmara sem nome' 
           }
-          
-          return baseLocation;
-        });
+        ])
+      );
 
-        setAllLocationsWithChambers(processedLocations);
-        console.log(`✅ ${processedLocations.length} localizações processadas com dados de câmara`);
+      // 4. Processar localizações combinando com dados de câmara
+      const processedLocations = locations.map((apiLocation: any) => {
+        const baseLocation = convertToLocationWithChamber(apiLocation);
+        
+        // Buscar dados da câmara
+        const chamberId = typeof apiLocation.chamberId === 'object' 
+          ? apiLocation.chamberId.id || apiLocation.chamberId._id
+          : apiLocation.chamberId;
+          
+        const chamberData = chambersMap.get(chamberId) || { 
+          id: chamberId, 
+          name: 'Câmara não encontrada' 
+        };
+        
+        baseLocation.chamber = chamberData;
+        
+        return baseLocation;
+      });
+
+      setAllLocationsWithChambers(processedLocations);
+      console.log(`✅ ${processedLocations.length} localizações processadas com dados de câmara`);
+      
+      // ✅ DEBUG: Contar ocupadas vs disponíveis
+      const occupied = processedLocations.filter(loc => loc.isOccupied);
+      const available = processedLocations.filter(loc => !loc.isOccupied);
+      console.log(`🔴 ${occupied.length} localizações ocupadas | 🟢 ${available.length} localizações disponíveis`);
+      
+      // ✅ DEBUG: Mostrar alguns exemplos de localizações ocupadas
+      if (occupied.length > 0) {
+        console.log('📝 Exemplos de localizações ocupadas:', occupied.slice(0, 3).map(loc => ({
+          code: loc.code,
+          isOccupied: loc.isOccupied,
+          currentWeight: loc.currentWeightKg,
+          chamber: loc.chamber?.name
+        })));
       }
 
     } catch (error: any) {

@@ -1,0 +1,9 @@
+{
+  "name": "sistema-sementes",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm start --prefix frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}

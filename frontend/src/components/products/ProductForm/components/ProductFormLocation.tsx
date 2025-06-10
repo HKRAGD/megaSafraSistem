@@ -22,11 +22,12 @@ import {
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { LocationWithChamber, Chamber } from '../../../../types';
 import { CapacityInfo } from '../utils/productFormUtils';
-import LocationMap3D from '../../../ui/LocationMap';
+import LocationMap3DAdvanced from '../../../ui/LocationMap3D/LocationMap3DAdvanced';
 
 interface ProductFormLocationProps {
   form: UseFormReturn<any>;
   availableLocations: LocationWithChamber[];
+  allLocations?: LocationWithChamber[]; // TODAS as localizações para o mapa 3D
   chambers: Chamber[];
   selectedLocation: LocationWithChamber | undefined;
   capacityInfo: CapacityInfo | null;
@@ -37,6 +38,7 @@ interface ProductFormLocationProps {
 export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.memo(({
   form,
   availableLocations,
+  allLocations,
   chambers,
   selectedLocation,
   capacityInfo,
@@ -46,13 +48,9 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
   const { control } = form;
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
-  // Debug: Log dos dados recebidos
-  console.log('🔍 ProductFormLocation Debug:', {
-    availableLocations: availableLocations.length,
-    chambers: chambers.length,
-    selectedLocation: selectedLocation?.code,
-    viewMode,
-  });
+  const handleLocationSelect = (location: LocationWithChamber | null) => {
+    onLocationSelect(location);
+  };
 
   return (
     <Grid size={{ xs: 12 }}>
@@ -86,91 +84,113 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
 
           {/* Mapa 3D ou Lista dependendo do modo selecionado */}
           {viewMode === 'map' ? (
-            <Box>
+            <Box sx={{ 
+              width: '100%',
+              minHeight: '70vh', 
+              maxHeight: '80vh',
+              overflow: 'visible', 
+              position: 'relative',
+              transformStyle: 'preserve-3d',
+              perspective: '1200px',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              bgcolor: 'background.paper'
+            }}>
               {chambers.length > 0 ? (
-                <LocationMap3D
-                  chambers={chambers}
-                  availableLocations={availableLocations}
-                  selectedLocation={selectedLocation}
-                  onLocationSelect={(location) => onLocationSelect(location)}
-                />
+                <Box sx={{ 
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
+                  minHeight: '60vh',
+                  transformStyle: 'preserve-3d',
+                  p: 2
+                }}>
+                  <LocationMap3DAdvanced
+                    chambers={chambers}
+                    allLocations={allLocations || availableLocations}
+                    mode="selection"
+                    selectedLocation={selectedLocation}
+                    onLocationSelect={handleLocationSelect}
+                    availableOnly={true}
+                    height={'55vh'} 
+                    showControls={true}
+                  />
+                </Box>
               ) : (
-                <Alert severity="warning" icon={<InfoIcon />}>
-                  <Typography variant="subtitle2">
-                    Carregando Câmaras
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhuma câmara disponível
                   </Typography>
-                  <Typography variant="body2">
-                    Por favor, aguarde enquanto carregamos as informações das câmaras...
-                  </Typography>
-                </Alert>
+                </Box>
               )}
             </Box>
           ) : (
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12 }}>
-                <Controller
-                  name="locationId"
-                  control={control}
-                  render={({ field }) => (
-                    <Autocomplete
-                      options={availableLocations}
-                      getOptionLabel={(option) => {
-                        const chamberName = option.chamber?.name || 'Câmara não encontrada';
-                        return `${option.code} - ${chamberName}`;
-                      }}
-                      value={selectedLocation || null}
-                      onChange={(_, newValue) => onLocationSelect(newValue)}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Buscar Localização"
-                          error={!!errors.locationId}
-                          helperText={errors.locationId?.message || 'Digite para buscar ou selecione uma localização'}
-                          InputProps={{
-                            ...params.InputProps,
-                            startAdornment: <LocationIcon color="action" sx={{ mr: 1 }} />,
+            <Box sx={{ 
+              height: 400, 
+              overflow: 'auto',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              bgcolor: 'background.paper'
+            }}>
+              {chambers.length > 0 ? (
+                <Grid container spacing={2} sx={{ p: 2 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <Controller
+                      name="locationId"
+                      control={control}
+                      render={({ field }) => (
+                        <Autocomplete
+                          options={availableLocations}
+                          getOptionLabel={(option) => {
+                            const chamberName = option.chamber?.name || 'Câmara não encontrada';
+                            return `${option.code} - ${chamberName}`;
                           }}
+                          value={selectedLocation || null}
+                          onChange={(_, newValue) => handleLocationSelect(newValue)}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Buscar Localização"
+                              error={!!errors.locationId}
+                              helperText={errors.locationId?.message || 'Digite para buscar ou selecione uma localização'}
+                              InputProps={{
+                                ...params.InputProps,
+                                startAdornment: <LocationIcon color="action" sx={{ mr: 1 }} />,
+                              }}
+                            />
+                          )}
+                          renderOption={(props, option) => (
+                            <Box component="li" {...props}>
+                              <Box>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {option.code}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {option.chamber?.name || 'Câmara não encontrada'} - Cap: {option.maxCapacityKg}kg - Usado: {option.currentWeightKg}kg
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          noOptionsText={
+                            availableLocations.length === 0 
+                              ? "Nenhuma localização disponível"
+                              : "Nenhuma localização encontrada"
+                          }
                         />
                       )}
-                      renderOption={(props, option) => (
-                        <Box component="li" {...props}>
-                          <Box>
-                            <Typography variant="body2" fontWeight="medium">
-                              {option.code}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {option.chamber?.name || 'Câmara não encontrada'} - Cap: {option.maxCapacityKg}kg - Usado: {option.currentWeightKg}kg
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-                      noOptionsText={
-                        availableLocations.length === 0 
-                          ? "Nenhuma localização disponível"
-                          : "Nenhuma localização encontrada"
-                      }
                     />
-                  )}
-                />
-              </Grid>
-              
-              {/* Informações sobre localizações disponíveis */}
-              <Grid size={{ xs: 12 }}>
-                <Alert severity="info" icon={<InfoIcon />}>
-                  <Typography variant="subtitle2">
-                    Localizações Disponíveis
+                  </Grid>
+                </Grid>
+              ) : (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhuma câmara disponível
                   </Typography>
-                  <Typography variant="body2">
-                    {availableLocations.length} localizações disponíveis encontradas
-                  </Typography>
-                  {availableLocations.length === 0 && (
-                    <Typography variant="body2" color="warning.main">
-                      ⚠️ Se não há localizações, verifique se existem câmaras criadas e se há localizações geradas.
-                    </Typography>
-                  )}
-                </Alert>
-              </Grid>
-            </Grid>
+                </Box>
+              )}
+            </Box>
           )}
           
           {/* Informações de Capacidade */}

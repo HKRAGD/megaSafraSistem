@@ -28,6 +28,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { useAuth, usePermissions } from '../../contexts/AuthContext';
+import { APP_CONFIG } from '../../config/app';
 
 // ============================================================================
 // INTERFACES
@@ -237,13 +238,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle, width }) => {
           flexShrink: 0, // Não encolhe
         }}
       >
-        <Box>
-          <Typography variant="h6" color="primary" fontWeight="bold">
-            Sementes
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Sistema de Câmaras
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <img 
+            src={APP_CONFIG.LOGO_VERTICAL} 
+            alt={APP_CONFIG.APP_NAME} 
+            style={{ 
+              height: '28px',
+              width: 'auto'
+            }}
+          />
+          <Box>
+            <Typography variant="h6" color="primary" fontWeight="bold" sx={{ lineHeight: 1 }}>
+              {APP_CONFIG.APP_NAME}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+              Sistem
+            </Typography>
+          </Box>
         </Box>
         
         {/* Botão fechar apenas em mobile */}
@@ -304,7 +315,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle, width }) => {
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          v1.0.0 - Sistema de Gerenciamento
+          v{APP_CONFIG.APP_VERSION} - {APP_CONFIG.APP_FULL_NAME}
         </Typography>
       </Box>
     </Box>

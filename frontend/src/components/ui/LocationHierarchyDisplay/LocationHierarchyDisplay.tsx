@@ -19,6 +19,7 @@ import {
   Navigation as NavigationIcon,
 } from '@mui/icons-material';
 import { Location, Chamber } from '../../../types';
+import { numeroParaLetra } from '../../../utils/locationUtils';
 
 // ============================================================================
 // INTERFACES
@@ -36,7 +37,7 @@ interface LocationHierarchyDisplayProps {
 
 interface HierarchyCoordinate {
   label: string;
-  value: number;
+  value: string | number;
   color: string;
   icon: React.ReactNode;
 }
@@ -82,7 +83,9 @@ export const LocationHierarchyDisplay: React.FC<LocationHierarchyDisplayProps> =
     },
     {
       label: 'Lado',
-      value: location.coordinates.lado,
+      value: typeof location.coordinates.lado === 'number' 
+        ? numeroParaLetra(location.coordinates.lado)
+        : location.coordinates.lado,
       color: '#388e3c',
       icon: <NavigationIcon fontSize="small" />,
     },

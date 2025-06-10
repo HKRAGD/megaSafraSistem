@@ -117,7 +117,7 @@ export const calculateCapacityPercentage = (currentWeight: number, maxCapacity: 
  */
 export const generateLocationCode = (coordinates: {
   quadra: number;
-  lado: number;
+  lado: string | number;
   fila: number;
   andar: number;
 }): string => {
@@ -225,7 +225,7 @@ export const calculateStorageTime = calculateStorageDays;
 /**
  * Alias para generateLocationCode (compatibilidade)
  */
-export const getLocationCode = (location?: { coordinates: { quadra: number; lado: number; fila: number; andar: number; } }): string => {
+export const getLocationCode = (location?: { coordinates: { quadra: number; lado: string | number; fila: number; andar: number; } }): string => {
   if (!location?.coordinates) return 'N/A';
   return generateLocationCode(location.coordinates);
 }; 

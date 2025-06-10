@@ -20,6 +20,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { Chamber, LocationWithChamber } from '../../../types';
+import { numeroParaLetra, letraParaNumero } from '../../../utils/locationUtils';
 
 interface LocationMap3DProps {
   chambers: Chamber[];
@@ -35,7 +36,7 @@ interface LocationCube {
   isSelected: boolean;
   coordinates: {
     quadra: number;
-    lado: number;
+    lado: string | number;
     fila: number;
     andar: number;
   };
@@ -79,12 +80,16 @@ export const LocationMap3D: React.FC<LocationMap3DProps> = ({
         grid[q][l] = [];
         for (let f = 1; f <= filas; f++) {
           // Buscar localização correspondente
-          const location = chamberLocations.find(loc => 
-            loc.coordinates.quadra === q &&
-            loc.coordinates.lado === l &&
-            loc.coordinates.fila === f &&
-            loc.coordinates.andar === selectedAndar
-          );
+          const location = chamberLocations.find(loc => {
+            const locLado = typeof loc.coordinates.lado === 'string' 
+              ? letraParaNumero(loc.coordinates.lado)
+              : loc.coordinates.lado;
+            
+            return loc.coordinates.quadra === q &&
+              locLado === l &&
+              loc.coordinates.fila === f &&
+              loc.coordinates.andar === selectedAndar;
+          });
 
           if (location) {
             // Para localizações ocupadas, só permita seleção se estiver na lista de disponíveis

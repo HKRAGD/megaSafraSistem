@@ -17,12 +17,18 @@ const locationSchema = new mongoose.Schema({
       }
     },
     lado: {
-      type: Number,
+      type: String,
       required: [true, 'Lado é obrigatório'],
-      min: [1, 'Lado deve ser pelo menos 1'],
+      uppercase: true,
+      enum: {
+        values: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
+        message: 'Lado deve ser uma letra de A a T'
+      },
       validate: {
-        validator: Number.isInteger,
-        message: 'Lado deve ser um número inteiro'
+        validator: function(value) {
+          return /^[A-T]$/.test(value);
+        },
+        message: 'Lado deve ser uma letra maiúscula de A a T'
       }
     },
     fila: {

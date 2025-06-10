@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { loginSchema, LoginFormData } from '../../utils/validationSchemas';
+import { APP_CONFIG } from '../../config/app';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -95,16 +96,15 @@ export const LoginPage: React.FC = () => {
               mb: 3,
             }}
           >
-            <Avatar
-              sx={{
-                m: 1,
-                bgcolor: 'primary.main',
-                width: 56,
-                height: 56,
+            <img 
+              src={APP_CONFIG.LOGO_VERTICAL} 
+              alt={APP_CONFIG.APP_FULL_NAME} 
+              style={{ 
+                height: '80px',
+                width: 'auto',
+                marginBottom: '16px'
               }}
-            >
-              <LockIcon sx={{ fontSize: 28 }} />
-            </Avatar>
+            />
             
             <Typography
               component="h1"
@@ -113,7 +113,7 @@ export const LoginPage: React.FC = () => {
               color="primary"
               gutterBottom
             >
-              Sistema de Sementes
+              {APP_CONFIG.APP_FULL_NAME}
             </Typography>
             
             <Typography
@@ -121,7 +121,7 @@ export const LoginPage: React.FC = () => {
               color="text.secondary"
               textAlign="center"
             >
-              Faça login para acessar o sistema de gerenciamento de câmaras refrigeradas
+              Faça login para acessar o {APP_CONFIG.APP_DESCRIPTION.toLowerCase()}
             </Typography>
           </Box>
 
@@ -256,7 +256,7 @@ export const LoginPage: React.FC = () => {
 
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Versão 1.0.0 - Sistema de Gerenciamento de Câmaras Refrigeradas
+                Versão {APP_CONFIG.APP_VERSION} - {APP_CONFIG.APP_FULL_NAME}
               </Typography>
             </Box>
           </Box>

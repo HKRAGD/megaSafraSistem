@@ -1,23 +1,64 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 // ============================================================================
-// API CLIENT CONFIGURATION
+// API CLIENT CONFIGURATION - AUTO DETECTION LOCAL/PUBLIC
 // ============================================================================
 
 /**
+ * Detecta automaticamente se está sendo acessado via rede local ou externa
+ * e configura a URL base da API correspondente
+ */
+function getApiBaseUrl(): string {
+  const currentHost = window.location.hostname;
+  
+  // IPs configurados
+  const localIP = process.env.REACT_APP_LOCAL_IP || '192.168.1.89';
+  const publicIP = process.env.REACT_APP_PUBLIC_IP || '168.90.248.160';
+  
+  // URLs da API
+  const localApiUrl = process.env.REACT_APP_API_URL_LOCAL || `http://${localIP}:3001/api`;
+  const publicApiUrl = process.env.REACT_APP_API_URL_PUBLIC || `http://${publicIP}:3001/api`;
+  const fallbackUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  
+  console.log('🌐 Detecção automática de rede:');
+  console.log(`   📍 Host atual: ${currentHost}`);
+  console.log(`   🏠 IP Local: ${localIP}`);
+  console.log(`   🌍 IP Público: ${publicIP}`);
+  
+  // Se está sendo acessado pelo IP local, usar API local
+  if (currentHost === localIP || currentHost === 'localhost' || currentHost === '127.0.0.1') {
+    console.log(`   ✅ Acesso LOCAL detectado - usando: ${localApiUrl}`);
+    return localApiUrl;
+  }
+  
+  // Se está sendo acessado pelo IP público, usar API pública  
+  if (currentHost === publicIP && publicIP !== 'SEU_IP_PUBLICO_AQUI') {
+    console.log(`   ✅ Acesso PÚBLICO detectado - usando: ${publicApiUrl}`);
+    return publicApiUrl;
+  }
+  
+  // Fallback para desenvolvimento
+  console.log(`   ⚠️ Host não reconhecido, usando fallback: ${fallbackUrl}`);
+  return fallbackUrl;
+}
+
+/**
  * Configuração base do cliente HTTP para comunicação com o backend
- * Base URL conforme documentação da API: http://localhost:3001/api
+ * DETECÇÃO AUTOMÁTICA: Local vs Externa
  * 
  * REGRA CRÍTICA: NUNCA usar localStorage/sessionStorage, apenas React state
  */
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+  baseURL: getApiBaseUrl(),
   timeout: 30000, // 30 segundos
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
 });
+
+// Log da configuração inicial
+console.log(`🚀 API Cliente configurado para: ${api.defaults.baseURL}`);
 
 // ============================================================================
 // TOKEN MANAGEMENT - APENAS VIA REACT STATE

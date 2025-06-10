@@ -20,6 +20,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { APP_CONFIG } from '../../config/app';
 
 // ============================================================================
 // INTERFACES
@@ -111,31 +112,56 @@ export const TopBar: React.FC<TopBarProps> = ({
           <MenuIcon />
         </IconButton>
 
-        {/* Título da aplicação */}
-        <Typography 
-          variant="h6" 
-          noWrap 
-          component="div" 
-          sx={{ 
-            flexGrow: 1,
-            display: { xs: 'none', sm: 'block' }
-          }}
-        >
-          Sistema de Câmaras Refrigeradas
-        </Typography>
+        {/* Logo e Título da aplicação */}
+        <Box sx={{ 
+          display: { xs: 'none', sm: 'flex' },
+          alignItems: 'center',
+          flexGrow: 1,
+          gap: 2
+        }}>
+          <img 
+            src={APP_CONFIG.LOGO_HORIZONTAL} 
+            alt={APP_CONFIG.APP_FULL_NAME} 
+            style={{ 
+              height: '32px',
+              width: 'auto',
+              maxWidth: '140px'
+            }}
+          />
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div"
+            sx={{ color: 'inherit' }}
+          >
+            {APP_CONFIG.APP_FULL_NAME}
+          </Typography>
+        </Box>
 
         {/* Título compacto para mobile */}
-        <Typography 
-          variant="h6" 
-          noWrap 
-          component="div" 
-          sx={{ 
-            flexGrow: 1,
-            display: { xs: 'block', sm: 'none' }
-          }}
-        >
-          Sementes
-        </Typography>
+        <Box sx={{ 
+          display: { xs: 'flex', sm: 'none' },
+          alignItems: 'center',
+          flexGrow: 1,
+          gap: 1
+        }}>
+          <img 
+            src={APP_CONFIG.LOGO_VERTICAL} 
+            alt={APP_CONFIG.APP_NAME} 
+            style={{ 
+              height: '24px',
+              width: 'auto'
+            }}
+          />
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div"
+            sx={{ color: 'inherit' }}
+          >
+            {APP_CONFIG.APP_NAME}
+          </Typography>
+        </Box>
 
         {/* Área de ações */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

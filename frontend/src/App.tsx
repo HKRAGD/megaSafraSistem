@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { Loading } from './components/common/Loading';
+import { APP_CONFIG } from './config/app';
 
 // Import debug script para desenvolvimento
 if (process.env.NODE_ENV === 'development') {
@@ -72,6 +73,11 @@ const theme = createTheme({
 });
 
 function App() {
+  // Atualizar título da página
+  React.useEffect(() => {
+    document.title = APP_CONFIG.APP_FULL_NAME;
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

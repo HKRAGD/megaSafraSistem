@@ -94,8 +94,8 @@ export const mockLocations: Location[] = [
   {
     id: '1',
     chamberId: '1',
-    coordinates: { quadra: 1, lado: 1, fila: 1, andar: 1 },
-    code: 'Q1-L1-F1-A1',
+    coordinates: { quadra: 1, lado: 'A', fila: 1, andar: 1 },
+    code: 'Q1-LA-F1-A1',
     isOccupied: true,
     maxCapacityKg: 1000,
     currentWeightKg: 750,
@@ -105,8 +105,8 @@ export const mockLocations: Location[] = [
   {
     id: '2',
     chamberId: '1',
-    coordinates: { quadra: 1, lado: 1, fila: 1, andar: 2 },
-    code: 'Q1-L1-F1-A2',
+    coordinates: { quadra: 1, lado: 'A', fila: 1, andar: 2 },
+    code: 'Q1-LA-F1-A2',
     isOccupied: false,
     maxCapacityKg: 1000,
     currentWeightKg: 0,

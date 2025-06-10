@@ -104,7 +104,7 @@ export const chamberSchema = yup.object({
       .number()
       .integer('Lados deve ser um número inteiro')
       .min(1, 'Deve ter pelo menos 1 lado')
-      .max(100, 'Máximo 100 lados')
+      .max(20, 'Máximo 20 lados (A-T)')
       .required('Lados é obrigatório'),
     filas: yup
       .number()

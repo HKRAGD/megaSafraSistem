@@ -99,7 +99,7 @@ export const Modal: React.FC<ModalProps> = ({
           }}
         >
           {title && (
-            <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
               {title}
             </Typography>
           )}

@@ -16,6 +16,7 @@ interface UseProductFormLogicProps {
   seedTypes: SeedType[];
   chambers: Chamber[];
   availableLocations: LocationWithChamber[];
+  allLocations?: LocationWithChamber[]; // TODAS as localizações para o mapa 3D
   onSubmit: (data: CreateProductFormData | UpdateProductFormData) => void;
   onCancel: () => void;
   isEditing?: boolean;
@@ -26,6 +27,7 @@ export const useProductFormLogic = ({
   seedTypes,
   chambers,
   availableLocations,
+  allLocations,
   onSubmit,
   onCancel,
   isEditing = false,
@@ -108,6 +110,7 @@ export const useProductFormLogic = ({
     seedTypes,
     chambers,
     availableLocations,
+    allLocations,
     isEditing,
     
     // Form state

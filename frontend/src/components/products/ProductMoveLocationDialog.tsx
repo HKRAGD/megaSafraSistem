@@ -39,6 +39,7 @@ import {
   Scale as WeightIcon,
 } from '@mui/icons-material';
 import { Location, Chamber, Product } from '../../types';
+import { numeroParaLetra } from '../../utils/locationUtils';
 
 interface ProductMoveLocationDialogProps {
   open: boolean;
@@ -202,7 +203,7 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
           </Typography>
 
           <Typography variant="body2" gutterBottom>
-            Coordenadas: Q{location.coordinates.quadra}-L{location.coordinates.lado}-F{location.coordinates.fila}-A{location.coordinates.andar}
+                            Coordenadas: Q{location.coordinates.quadra}-L{typeof location.coordinates.lado === 'number' ? numeroParaLetra(location.coordinates.lado) : location.coordinates.lado}-F{location.coordinates.fila}-A{location.coordinates.andar}
           </Typography>
 
           <Box sx={{ mt: 2 }}>
@@ -250,7 +251,7 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
               <Box>
                 <Typography variant="body2" component="span">
                   {getChamberName(location.chamberId)} - 
-                  Q{location.coordinates.quadra}-L{location.coordinates.lado}-F{location.coordinates.fila}-A{location.coordinates.andar}
+                  Q{location.coordinates.quadra}-L{typeof location.coordinates.lado === 'number' ? numeroParaLetra(location.coordinates.lado) : location.coordinates.lado}-F{location.coordinates.fila}-A{location.coordinates.andar}
                 </Typography>
                 <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <LinearProgress

@@ -22,6 +22,7 @@ import {
   RadioButtonUnchecked as AvailableIcon,
 } from '@mui/icons-material';
 import { Chamber, Location } from '../../types';
+import { numeroParaLetra, letraParaNumero } from '../../utils/locationUtils';
 
 interface LocationMapProps {
   chamber: Chamber;
@@ -68,7 +69,11 @@ export const LocationMap: React.FC<LocationMapProps> = ({
   const locationMap = useMemo(() => {
     const map = new Map<string, Location>();
     locations.forEach(location => {
-      const key = `${location.coordinates.quadra}-${location.coordinates.lado}-${location.coordinates.fila}-${location.coordinates.andar}`;
+      // Converter lado para número se for string para usar como chave
+      const ladoNum = typeof location.coordinates.lado === 'string' 
+        ? letraParaNumero(location.coordinates.lado)
+        : location.coordinates.lado;
+      const key = `${location.coordinates.quadra}-${ladoNum}-${location.coordinates.fila}-${location.coordinates.andar}`;
       map.set(key, location);
     });
     return map;

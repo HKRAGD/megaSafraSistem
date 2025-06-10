@@ -8,17 +8,50 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-// Middleware de segurança
-app.use(helmet());
-
-// CORS
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
+// Middleware de segurança aprimorado para acesso público
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
 }));
 
-// Logging
-if (process.env.NODE_ENV !== 'development') {
+// CORS configurado para múltiplas origens (local + pública)
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:3000'];
+
+console.log('🔒 CORS configurado para as origens:', corsOrigins);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requisições sem origin (ex: mobile apps, Postman)
+    if (!origin) return callback(null, true);
+    
+    // Verificar se origin está na lista permitida
+    if (corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Log para debug
+    console.log(`❌ CORS bloqueado para origem: ${origin}`);
+    console.log(`✅ Origens permitidas: ${corsOrigins.join(', ')}`);
+    
+    const msg = `CORS: Origem ${origin} não permitida`;
+    return callback(new Error(msg), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
+// Logging aprimorado
+if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
@@ -27,13 +60,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Rota de health check
+// Rota de health check com informações de acesso
 app.get('/', (req, res) => {
   res.json({
-    message: '🌱 Sistema de Gerenciamento de Câmaras Refrigeradas - API',
+    message: '🌱 Sistema Mega Safra - Câmaras Refrigeradas API',
     version: '1.0.0',
     status: 'running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    access: {
+      local: process.env.API_URL_LOCAL || 'http://localhost:3001/api',
+      public: process.env.API_URL_PUBLIC || 'Configurar PUBLIC_IP no .env',
+      cors_origins: corsOrigins
+    }
   });
 });
 
@@ -41,9 +79,11 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'Sistema Sementes API',
+    service: 'Sistema Mega Safra API',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    database: 'mega-safra-01'
   });
 });
 

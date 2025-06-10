@@ -80,7 +80,7 @@ export interface Location {
   chamberId: string;
   coordinates: {
     quadra: number;
-    lado: number;
+    lado: string; // Agora aceita letras A-T
     fila: number;
     andar: number;
   };
@@ -547,7 +547,7 @@ export interface LocationFilters {
   maxCapacity?: number;
   coordinates?: {
     quadra?: number;
-    lado?: number;
+    lado?: string; // Aceita letras A-T
     fila?: number;
     andar?: number;
   };
@@ -666,7 +666,7 @@ export interface StatsCardProps {
 
 export type Coordinates = {
   quadra: number;
-  lado: number;
+  lado: string; // Letras A-T
   fila: number;
   andar: number;
 };

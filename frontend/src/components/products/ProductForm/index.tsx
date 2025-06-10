@@ -21,6 +21,7 @@ interface ProductFormProps {
   seedTypes: SeedType[];
   chambers: Chamber[];
   availableLocations: LocationWithChamber[];
+  allLocations?: LocationWithChamber[]; // TODAS as localizações para o mapa 3D
   onSubmit: (data: CreateProductFormData | UpdateProductFormData) => void;
   onCancel: () => void;
   isEditing?: boolean;
@@ -61,6 +62,7 @@ export const ProductForm: React.FC<ProductFormProps> = React.memo((props) => {
             form={formLogic.form}
             chambers={formLogic.chambers}
             availableLocations={formLogic.availableLocations}
+            allLocations={formLogic.allLocations}
             selectedLocation={formLogic.selectedLocation}
             capacityInfo={formLogic.capacityInfo}
             onLocationSelect={formLogic.handleLocationSelect}

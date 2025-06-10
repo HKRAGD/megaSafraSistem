@@ -35,6 +35,7 @@ import {
 } from '@mui/icons-material';
 import { Location, Chamber } from '../../types';
 import { useProducts } from '../../hooks/useProducts';
+import { numeroParaLetra } from '../../utils/locationUtils';
 
 interface LocationDetailsProps {
   location: Location;
@@ -161,7 +162,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
                 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="primary.main">
-                    {location.coordinates.lado}
+                    {typeof location.coordinates.lado === 'number' ? numeroParaLetra(location.coordinates.lado) : location.coordinates.lado}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Lado

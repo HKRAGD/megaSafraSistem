@@ -34,6 +34,7 @@ import { useSeedTypes } from '../../hooks/useSeedTypes';
 import { useChambers } from '../../hooks/useChambers';
 import { useLocations } from '../../hooks/useLocations';
 import { useLocationsWithChambers } from '../../hooks/useLocationsWithChambers';
+import { useAllLocationsWithChambers } from '../../hooks/useAllLocationsWithChambers';
 import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { DataTable } from '../../components/common/DataTable';
@@ -131,6 +132,17 @@ export const ProductsPage: React.FC = () => {
     initialFilters: {}
   });
 
+  // Hook para buscar TODAS as localizações (ocupadas + disponíveis) para o mapa 3D
+  const { 
+    allLocationsWithChambers,
+    loading: allLocationsLoading,
+    error: allLocationsError,
+    refreshData: refreshAllLocations
+  } = useAllLocationsWithChambers({
+    autoFetch: false, // Controlar manualmente
+    initialFilters: {}
+  });
+
   // ============================================================================
   // ESTADO LOCAL
   // ============================================================================
@@ -167,9 +179,26 @@ export const ProductsPage: React.FC = () => {
       await fetchProducts(filters);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
-      showToast('Erro ao carregar produtos', 'error');
     }
   }, [fetchProducts, filters]);
+
+  // Carregar localizações quando necessário (para formulário)
+  const loadLocationsForForm = useCallback(async () => {
+    try {
+      await Promise.all([
+        refreshLocationsWithChambers(), // Apenas disponíveis para seleção
+        refreshAllLocations() // Todas para o mapa 3D
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar localizações:', error);
+    }
+  }, [refreshLocationsWithChambers, refreshAllLocations]);
+
+  const handleOpenCreateModal = () => {
+    setShowCreateModal(true);
+    // Carregar localizações quando abrir o modal
+    loadLocationsForForm();
+  };
 
   useEffect(() => {
     loadProducts();
@@ -184,16 +213,6 @@ export const ProductsPage: React.FC = () => {
   useEffect(() => {
     fetchAvailableLocations();
   }, [fetchAvailableLocations]);
-
-  // Carregar localizações com câmaras apenas quando abrir o modal
-  const handleOpenCreateModal = useCallback(() => {
-    setShowCreateModal(true);
-    
-    // Carregar localizações com dados de câmara quando necessário
-    if (availableLocationsWithChambers.length === 0) {
-      refreshLocationsWithChambers();
-    }
-  }, [availableLocationsWithChambers.length, refreshLocationsWithChambers]);
 
   // ============================================================================
   // HANDLERS
@@ -688,11 +707,13 @@ export const ProductsPage: React.FC = () => {
           const hasSeedTypes = Array.isArray(seedTypes) && seedTypes.length > 0;
           const hasChambers = Array.isArray(chambers) && chambers.length > 0;
           const hasLocations = availableLocationsWithChambers.length > 0;
+          const hasAllLocations = allLocationsWithChambers.length > 0;
           
           // Mostrar loading apenas se estivermos carregando E não temos dados ainda
           if ((seedTypesLoading && !hasSeedTypes) || 
               (chambersLoading && !hasChambers) || 
-              (locationsWithChambersLoading && !hasLocations)) {
+              (locationsWithChambersLoading && !hasLocations) ||
+              (allLocationsLoading && !hasAllLocations)) {
             return (
               <Box sx={{ p: 3, textAlign: 'center' }}>
                 <CircularProgress />
@@ -702,23 +723,24 @@ export const ProductsPage: React.FC = () => {
                 <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
                   Tipos: {hasSeedTypes ? '✅' : '⏳'} | 
                   Câmaras: {hasChambers ? '✅' : '⏳'} | 
-                  Localizações: {hasLocations ? '✅' : '⏳'}
+                  Localizações: {hasLocations ? '✅' : '⏳'} |
+                  Mapa: {hasAllLocations ? '✅' : '⏳'}
                 </Typography>
               </Box>
             );
           }
 
           // Verificar se houve erro ao carregar dados críticos
-          if (locationsWithChambersError) {
+          if (locationsWithChambersError || allLocationsError) {
             return (
               <Box sx={{ p: 3 }}>
                 <Alert severity="error" sx={{ mb: 2 }}>
-                  Erro ao carregar localizações: {locationsWithChambersError}
+                  Erro ao carregar localizações: {locationsWithChambersError || allLocationsError}
                 </Alert>
                 <Button
                   variant="outlined"
-                  onClick={() => refreshLocationsWithChambers()}
-                  disabled={locationsWithChambersLoading}
+                  onClick={() => loadLocationsForForm()}
+                  disabled={locationsWithChambersLoading || allLocationsLoading}
                 >
                   Tentar Novamente
                 </Button>
@@ -742,6 +764,9 @@ export const ProductsPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">
                   • Localizações Disponíveis: {hasLocations ? '✅ Carregado' : '❌ Não encontrado'}
                 </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Mapa Completo: {hasAllLocations ? '✅ Carregado' : '❌ Não encontrado'}
+                </Typography>
               </Box>
             );
           }
@@ -752,6 +777,7 @@ export const ProductsPage: React.FC = () => {
               seedTypes={Array.isArray(seedTypes) ? seedTypes : []}
               chambers={Array.isArray(chambers) ? chambers : []}
               availableLocations={availableLocationsWithChambers}
+              allLocations={allLocationsWithChambers}
               onSubmit={async (data) => {
                 try {
                   await createProduct(data as CreateProductFormData);

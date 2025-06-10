@@ -61,7 +61,8 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
                            coordinates.andar <= 5 ? 1.0 : 0.8;
       
       // Localizações centrais podem ter capacidade ligeiramente maior
-      const centerModifier = coordinates.quadra > 1 && coordinates.lado > 1 ? 1.1 : 1.0;
+      // Note: lado agora é string, então comparamos com 'A'
+      const centerModifier = coordinates.quadra > 1 && coordinates.lado !== 'A' ? 1.1 : 1.0;
       
       return Math.round(defaultCapacity * levelModifier * centerModifier);
     };
@@ -69,6 +70,9 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
     // 4. Gerar localizações em lotes para performance
     const { quadras, lados, filas, andares } = chamber.dimensions;
     const expectedTotal = quadras * lados * filas * andares;
+    
+    // Importar helpers para conversão
+    const { numeroParaLetra, gerarCodigoLocalizacao } = require('../utils/helpers');
 
     const allLocations = [];
     let processedCount = 0;
@@ -79,8 +83,10 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
       for (let l = 1; l <= lados; l++) {
         for (let f = 1; f <= filas; f++) {
           for (let a = 1; a <= andares; a++) {
-            const coordinates = { quadra: q, lado: l, fila: f, andar: a };
-            const code = `Q${q}-L${l}-F${f}-A${a}`;
+            // Converter número do lado para letra
+            const letraLado = numeroParaLetra(l);
+            const coordinates = { quadra: q, lado: letraLado, fila: f, andar: a };
+            const code = gerarCodigoLocalizacao(coordinates);
             
             processedCount++;
             
@@ -100,7 +106,7 @@ const generateLocationsForChamber = async (chamberId, options = {}) => {
               maxCapacityKg: capacity,
               metadata: {
                 accessLevel: a <= 2 ? 'ground' : a <= 5 ? 'elevated' : 'high',
-                zone: `Q${q}-L${l}`,
+                zone: `Q${q}-L${letraLado}`,
                 generatedAt: new Date(),
                 defaultCapacity: capacity
               }
@@ -455,13 +461,31 @@ const findAdjacentLocations = async (locationId, options = {}) => {
 
     const { quadra, lado, fila, andar } = refLocation.coordinates;
     const chamberId = refLocation.chamberId;
+    
+    // Importar helper de conversão
+    const { letraParaNumero, numeroParaLetra } = require('../utils/helpers');
+    
+    // Converter lado de letra para número para cálculos matemáticos
+    const ladoNumero = typeof lado === 'string' ? letraParaNumero(lado) : lado;
+    const ladoMinimo = Math.max(1, ladoNumero - radius);
+    const ladoMaximo = ladoNumero + radius;
+    
+    // Gerar array de letras válidas para o range
+    const ladosValidos = [];
+    for (let i = ladoMinimo; i <= ladoMaximo; i++) {
+      try {
+        ladosValidos.push(numeroParaLetra(i));
+      } catch (e) {
+        // Ignorar números fora do range A-T
+      }
+    }
 
     // 2. Definir range de coordenadas adjacentes
     const adjacentQuery = {
       chamberId,
       _id: { $ne: locationId }, // Excluir a própria localização
       'coordinates.quadra': { $gte: quadra - radius, $lte: quadra + radius },
-      'coordinates.lado': { $gte: lado - radius, $lte: lado + radius },
+      'coordinates.lado': { $in: ladosValidos },
       'coordinates.fila': { $gte: fila - radius, $lte: fila + radius },
       'coordinates.andar': { $gte: andar - radius, $lte: andar + radius }
     };
@@ -487,8 +511,12 @@ const findAdjacentLocations = async (locationId, options = {}) => {
 
     // 4. Calcular distância Manhattan para cada localização
     const locationsWithDistance = adjacentLocations.map(loc => {
+      // Converter lado da localização para número para cálculo de distância
+      const locLadoNumero = typeof loc.coordinates.lado === 'string' ? 
+        letraParaNumero(loc.coordinates.lado) : loc.coordinates.lado;
+      
       const distance = Math.abs(loc.coordinates.quadra - quadra) +
-                      Math.abs(loc.coordinates.lado - lado) +
+                      Math.abs(locLadoNumero - ladoNumero) +
                       Math.abs(loc.coordinates.fila - fila) +
                       Math.abs(loc.coordinates.andar - andar);
 
@@ -497,7 +525,7 @@ const findAdjacentLocations = async (locationId, options = {}) => {
         distance,
         relativePosition: {
           quadra: loc.coordinates.quadra - quadra,
-          lado: loc.coordinates.lado - lado,
+          lado: locLadoNumero - ladoNumero,
           fila: loc.coordinates.fila - fila,
           andar: loc.coordinates.andar - andar
         }
