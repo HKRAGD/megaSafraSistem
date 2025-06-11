@@ -194,8 +194,16 @@ export interface DashboardApiResponse {
   };
   kpis: {
     totalProducts: number;
+    totalWeight: number;
     totalMovements: number;
     activeChambers: number;
+    totalLocations: number;
+    occupiedLocations: number;
+    totalCapacity: number;
+    usedCapacity: number;
+    availableCapacity: number;
+    occupancyRate: number;
+    expiringProducts: number;
     period: {
       startDate: string;
       endDate: string;

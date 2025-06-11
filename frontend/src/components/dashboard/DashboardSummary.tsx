@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material';
 import { StatsCard } from '../ui';
 import { useDashboard } from '../../hooks/useDashboard';
+import { formatWeightInTons } from '../../utils/displayHelpers';
 
 export const DashboardSummary: React.FC = () => {
   const { summary, loading, refreshDashboard } = useDashboard();
@@ -55,7 +56,7 @@ export const DashboardSummary: React.FC = () => {
     },
     {
       title: 'Peso Total',
-      value: summary?.totalWeight ? `${(summary.totalWeight / 1000).toFixed(1)}t` : '0t',
+      value: formatWeightInTons(summary?.totalWeight || 0),
       icon: AssessmentIcon,
       iconColor: 'info' as const,
       subtitle: 'armazenado',

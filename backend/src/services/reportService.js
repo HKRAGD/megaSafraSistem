@@ -755,11 +755,12 @@ const generateCapacityAlerts = (chamberAnalysis) => {
 const calculateMainKPIs = async (startDate, endDate) => {
   // Consultas paralelas para melhor performance
   const [
-    products, 
+    productsCount, 
     movements, 
     chambers, 
     locations,
-    expiringProducts
+    expiringProducts,
+    productsWithWeight
   ] = await Promise.all([
     Product.countDocuments({ status: { $in: ['stored', 'reserved'] } }),
     Movement.countDocuments({ timestamp: { $gte: startDate, $lte: endDate } }),
@@ -771,7 +772,12 @@ const calculateMainKPIs = async (startDate, endDate) => {
         $gte: new Date(),
         $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // próximos 30 dias
       }
-    })
+    }),
+    // Buscar produtos para calcular peso total
+    Product.find(
+      { status: { $in: ['stored', 'reserved'] } },
+      { totalWeight: 1 }
+    )
   ]);
 
   // Calcular capacidade total e utilizada
@@ -782,8 +788,12 @@ const calculateMainKPIs = async (startDate, endDate) => {
   // Calcular localizações ocupadas
   const occupiedLocations = locations.filter(loc => loc.isOccupied).length;
 
+  // Calcular peso total dos produtos armazenados
+  const totalWeight = productsWithWeight.reduce((sum, product) => sum + (product.totalWeight || 0), 0);
+
   return {
-    totalProducts: products,
+    totalProducts: productsCount,
+    totalWeight: totalWeight, // ✅ Agora incluindo o peso total dos produtos
     totalMovements: movements,
     activeChambers: chambers,
     totalLocations: locations.length,

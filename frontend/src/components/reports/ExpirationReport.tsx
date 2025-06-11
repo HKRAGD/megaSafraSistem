@@ -22,6 +22,7 @@ import {
   TableChart as ExcelIcon,
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
+import { formatWeight } from '../../utils/displayHelpers';
 
 export const ExpirationReport: React.FC = () => {
   const { 
@@ -135,7 +136,7 @@ export const ExpirationReport: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell align="right">{product.quantity}</TableCell>
-                      <TableCell align="right">{product.totalWeight || product.weight || 0}</TableCell>
+                      <TableCell align="right">{formatWeight(product.totalWeight || product.weight || 0)}</TableCell>
                       <TableCell>
                         <Chip 
                           label={product.daysToExpire <= 7 ? 'Crítico' : 'Atenção'}

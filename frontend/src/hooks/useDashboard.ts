@@ -51,10 +51,10 @@ export const useDashboard = (): UseDashboardReturn => {
         totalProducts: apiData.kpis?.totalProducts || 0,
         totalChambers: apiData.systemStatus?.totalChambers || 0,
         totalLocations: apiData.systemStatus?.totalLocations || 0,
-        occupiedLocations: 0, // Calcular baseado nos dados disponíveis
-        totalWeight: 0, // Não fornecido pela API atual, usar 0 ou buscar de outra fonte
-        availableCapacity: 0, // Não fornecido pela API atual, usar 0 ou buscar de outra fonte
-        productsNearExpiration: 0, // Não fornecido pela API atual, usar 0 ou buscar de outra fonte
+        occupiedLocations: apiData.kpis?.occupiedLocations || 0,
+        totalWeight: apiData.kpis?.totalWeight || 0, // ✅ Agora usando o valor real da API
+        availableCapacity: apiData.kpis?.availableCapacity || 0,
+        productsNearExpiration: apiData.kpis?.expiringProducts || 0,
         alertsCount: apiData.criticalAlerts?.total || 0,
       };
       

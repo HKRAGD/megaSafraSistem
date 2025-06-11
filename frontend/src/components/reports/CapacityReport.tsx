@@ -57,8 +57,10 @@ export const CapacityReport: React.FC = () => {
     return 'success';
   };
 
-  const formatWeight = (weight: number) => {
-    return (weight / 1000).toFixed(1) + 't'; // Converter kg para toneladas
+  const formatWeight = (weight: number | null | undefined) => {
+    if (weight === null || weight === undefined) return '0.0t';
+    if (isNaN(weight)) return '0.0t';
+    return (Math.round((weight / 1000 + Number.EPSILON) * 10) / 10).toFixed(1) + 't';
   };
 
   const formatPercentage = (rate: number) => {

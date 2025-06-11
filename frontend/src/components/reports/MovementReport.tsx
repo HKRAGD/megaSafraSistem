@@ -28,6 +28,7 @@ import {
   TableChart as ExcelIcon,
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
+import { formatWeight } from '../../utils/displayHelpers';
 
 // Funções auxiliares para mapear dados relacionais
 const getProductName = (movement: any) => {
@@ -365,7 +366,7 @@ export const MovementReport: React.FC = () => {
                         {getToLocationCode(movement)}
                       </TableCell>
                       <TableCell align="right">{movement.quantity}</TableCell>
-                      <TableCell align="right">{movement.weight}</TableCell>
+                      <TableCell align="right">{formatWeight(movement.weight)}</TableCell>
                       <TableCell>{getUserName(movement)}</TableCell>
                       <TableCell>{movement.reason}</TableCell>
                     </TableRow>
