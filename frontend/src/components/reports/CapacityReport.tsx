@@ -58,9 +58,23 @@ export const CapacityReport: React.FC = () => {
   };
 
   const formatWeight = (weight: number | null | undefined) => {
-    if (weight === null || weight === undefined) return '0.0t';
-    if (isNaN(weight)) return '0.0t';
-    return (Math.round((weight / 1000 + Number.EPSILON) * 10) / 10).toFixed(1) + 't';
+    if (weight === null || weight === undefined || isNaN(weight)) return '0,00t';
+    
+    const weightInTons = weight / 1000;
+    
+    // Se for muito pequeno, mostrar em kg
+    if (weightInTons < 0.1) {
+      return weight.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 0 
+      }) + ' kg';
+    }
+    
+    // Mostrar toneladas
+    return weightInTons.toLocaleString('pt-BR', { 
+      minimumFractionDigits: 1, 
+      maximumFractionDigits: 1 
+    }) + 't';
   };
 
   const formatPercentage = (rate: number) => {

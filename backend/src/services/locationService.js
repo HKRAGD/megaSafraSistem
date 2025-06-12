@@ -18,7 +18,7 @@ const Product = require('../models/Product');
 const generateLocationsForChamber = async (chamberId, options = {}) => {
   try {
     const {
-      defaultCapacity = 1000,
+      defaultCapacity = 1500,
       capacityVariation = false,
       skipExisting = true,
       batchSize = 100

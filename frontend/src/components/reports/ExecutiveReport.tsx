@@ -25,7 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
 import { Loading } from '../common/Loading';
-import { formatWeightInTons } from '../../utils/displayHelpers';
+import { formatWeightSmart } from '../../utils/displayHelpers';
 
 interface ExecutiveMetrics {
   totalProducts: number;
@@ -341,7 +341,7 @@ export const ExecutiveReport: React.FC = () => {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 2 }}>
               <Box sx={{ flex: '1 1 calc(33.333% - 16px)', textAlign: 'center' }}>
                 <Typography variant="h3" color="primary">
-                  {formatWeightInTons(metrics.usedCapacityKg || 0)}
+                  {formatWeightSmart(metrics.usedCapacityKg || 0)}
                 </Typography>
                 <Typography color="textSecondary">
                   Capacidade Utilizada
@@ -349,7 +349,7 @@ export const ExecutiveReport: React.FC = () => {
               </Box>
               <Box sx={{ flex: '1 1 calc(33.333% - 16px)', textAlign: 'center' }}>
                 <Typography variant="h3" color="textSecondary">
-                  {formatWeightInTons(metrics.totalCapacityKg || 0)}
+                  {formatWeightSmart(metrics.totalCapacityKg || 0)}
                 </Typography>
                 <Typography color="textSecondary">
                   Capacidade Total
@@ -357,7 +357,7 @@ export const ExecutiveReport: React.FC = () => {
               </Box>
               <Box sx={{ flex: '1 1 calc(33.333% - 16px)', textAlign: 'center' }}>
                 <Typography variant="h3" color="success.main">
-                  {formatWeightInTons((metrics.totalCapacityKg || 0) - (metrics.usedCapacityKg || 0))}
+                  {formatWeightSmart((metrics.totalCapacityKg || 0) - (metrics.usedCapacityKg || 0))}
                 </Typography>
                 <Typography color="textSecondary">
                   Capacidade Livre

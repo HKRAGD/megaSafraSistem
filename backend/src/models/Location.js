@@ -60,7 +60,7 @@ const locationSchema = new mongoose.Schema({
   },
   maxCapacityKg: {
     type: Number,
-    default: 1000,
+    default: 1500,
     min: [1, 'Capacidade máxima deve ser pelo menos 1kg'],
     max: [50000, 'Capacidade máxima não pode exceder 50.000kg'],
     validate: {
@@ -283,7 +283,7 @@ locationSchema.statics.findNearCapacity = function(threshold = 80) {
 };
 
 // Método estático para gerar localizações para uma câmara
-locationSchema.statics.generateForChamber = async function(chamberId, defaultCapacity = 1000) {
+locationSchema.statics.generateForChamber = async function(chamberId, defaultCapacity = 1500) {
   const Chamber = mongoose.model('Chamber');
   const chamber = await Chamber.findById(chamberId);
   

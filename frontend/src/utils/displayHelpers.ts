@@ -50,28 +50,82 @@ export const formatWeight = (weight: number | string | null | undefined): string
 };
 
 /**
- * Formata peso com unidade "kg"
+ * Formata peso com unidade "kg" e separadores de milhares
  */
 export const formatWeightWithUnit = (weight: number | string | null | undefined): string => {
-  return `${formatWeight(weight)}kg`;
+  if (weight === null || weight === undefined || weight === '') {
+    return '0,00 kg';
+  }
+  
+  const numericWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
+  
+  if (isNaN(numericWeight)) {
+    return '0,00 kg';
+  }
+  
+  // Formatar com separadores de milhares e vírgula decimal (padrão BR)
+  const formattedWeight = (Math.round((numericWeight + Number.EPSILON) * 100) / 100)
+    .toLocaleString('pt-BR', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  
+  return `${formattedWeight} kg`;
 };
 
 /**
- * Formata peso para toneladas (divide por 1000)
+ * Formata peso para toneladas de forma mais elegante
  */
 export const formatWeightInTons = (weightInKg: number | string | null | undefined): string => {
   if (weightInKg === null || weightInKg === undefined || weightInKg === '') {
-    return '0.00t';
+    return '0,00 toneladas';
   }
   
   const numericWeight = typeof weightInKg === 'string' ? parseFloat(weightInKg) : weightInKg;
   
   if (isNaN(numericWeight)) {
-    return '0.00t';
+    return '0,00 toneladas';
   }
   
   const weightInTons = numericWeight / 1000;
-  return `${(Math.round((weightInTons + Number.EPSILON) * 100) / 100).toFixed(2)}t`;
+  
+  // Se for muito pouco, mostrar em kg
+  if (weightInTons < 0.1) {
+    return formatWeightWithUnit(numericWeight);
+  }
+  
+  // Formatar toneladas com separadores de milhares e padrão BR
+  const formattedTons = (Math.round((weightInTons + Number.EPSILON) * 100) / 100)
+    .toLocaleString('pt-BR', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  
+  return `${formattedTons} toneladas`;
+};
+
+/**
+ * Formata peso de forma inteligente - mais conservadora para toneladas
+ */
+export const formatWeightSmart = (weightInKg: number | string | null | undefined): string => {
+  if (weightInKg === null || weightInKg === undefined || weightInKg === '') {
+    return '0,00 kg';
+  }
+  
+  const numericWeight = typeof weightInKg === 'string' ? parseFloat(weightInKg) : weightInKg;
+  
+  if (isNaN(numericWeight)) {
+    return '0,00 kg';
+  }
+  
+  // Sempre mostrar em kg com separadores de milhares (padrão BR)
+  const formattedWeight = (Math.round((numericWeight + Number.EPSILON) * 100) / 100)
+    .toLocaleString('pt-BR', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  
+  return `${formattedWeight} kg`;
 };
 
 /**
@@ -153,4 +207,41 @@ export const toSafeReactChild = (value: any, fallback: string = 'N/A'): React.Re
   if (isSafeReactChild(value)) return value;
   if (typeof value === 'object') return getDisplayValue(value, fallback);
   return String(value);
+};
+
+/**
+ * Formata peso de forma compacta para dashboard - mostra toneladas apenas para valores muito grandes
+ */
+export const formatWeightCompact = (weightInKg: number | string | null | undefined): string => {
+  if (weightInKg === null || weightInKg === undefined || weightInKg === '') {
+    return '0 kg';
+  }
+  
+  const numericWeight = typeof weightInKg === 'string' ? parseFloat(weightInKg) : weightInKg;
+  
+  if (isNaN(numericWeight)) {
+    return '0 kg';
+  }
+  
+  // Debug temporário
+  console.log('🔍 formatWeightCompact - Valor recebido:', numericWeight, 'kg');
+  
+  // Para valores muito grandes (>= 50.000kg), mostrar em toneladas
+  if (numericWeight >= 50000) {
+    const weightInTons = numericWeight / 1000;
+    const formattedTons = (Math.round((weightInTons + Number.EPSILON) * 10) / 10)
+      .toLocaleString('pt-BR', { 
+        minimumFractionDigits: 1, 
+        maximumFractionDigits: 1 
+      });
+    console.log('📊 Convertido para toneladas:', formattedTons, 'ton');
+    return `${formattedTons} ton`;
+  }
+  
+  // Para valores menores, mostrar em kg sem casas decimais
+  const formattedWeight = Math.round(numericWeight)
+    .toLocaleString('pt-BR');
+  
+  console.log('📊 Mantido em kg:', formattedWeight, 'kg');
+  return `${formattedWeight} kg`;
 }; 

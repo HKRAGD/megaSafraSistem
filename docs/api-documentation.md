@@ -140,7 +140,7 @@ interface Chamber {
   currentHumidity?: number;        // 0-100%
   dimensions: {
     quadras: number;               // 1-100
-    lados: number;                 // 1-100
+    lados: string;                 // A-Z
     filas: number;                 // 1-100
     andares: number;               // 1-20
   };
@@ -173,13 +173,13 @@ interface Location {
   chamberId: string;               // ref: Chamber
   coordinates: {
     quadra: number;
-    lado: number;
+    lado: string;
     fila: number;
     andar: number;
   };
-  code: string;                    // auto-gerado: "Q1-L2-F3-A4"
+  code: string;                    // auto-gerado: "Q1-LA-F3-A4"
   isOccupied: boolean;
-  maxCapacityKg: number;           // padrão: 1000kg
+  maxCapacityKg: number;           // padrão: 1500kg
   currentWeightKg: number;
   createdAt: Date;
   updatedAt: Date;
@@ -195,7 +195,7 @@ interface Product {
   seedTypeId: string;              // ref: SeedType
   quantity: number;                // inteiro ≥ 1
   storageType: 'saco' | 'bag';
-  weightPerUnit: number;           // 0.001-1000kg
+  weightPerUnit: number;           // 0.001-1500kg
   totalWeight: number;             // calculado automaticamente
   locationId: string;              // ref: Location
   entryDate: Date;
@@ -944,7 +944,7 @@ export const productSchema = yup.object({
     .required('Quantidade é obrigatória'),
   weightPerUnit: yup.number()
     .min(0.001, 'Peso deve ser pelo menos 0.001kg')
-    .max(1000, 'Peso não pode exceder 1000kg')
+    .max(1500, 'Peso não pode exceder 1500kg')
     .required('Peso por unidade é obrigatório'),
   locationId: yup.string()
     .required('Localização é obrigatória'),

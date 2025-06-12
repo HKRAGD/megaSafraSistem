@@ -227,7 +227,7 @@ const chamberSchemas = {
   }),
 
   generateLocations: Joi.object({
-    maxCapacityKg: Joi.number().min(1).max(10000).default(1000),
+    maxCapacityKg: Joi.number().min(1).max(10000).default(1500),
     overwrite: Joi.boolean().default(false),
     optimizeAccess: Joi.boolean().default(true),
     capacityVariation: Joi.boolean().default(true)

@@ -97,7 +97,7 @@ export const mockLocations: Location[] = [
     coordinates: { quadra: 1, lado: 'A', fila: 1, andar: 1 },
     code: 'Q1-LA-F1-A1',
     isOccupied: true,
-    maxCapacityKg: 1000,
+    maxCapacityKg: 1500,
     currentWeightKg: 750,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
@@ -108,7 +108,7 @@ export const mockLocations: Location[] = [
     coordinates: { quadra: 1, lado: 'A', fila: 1, andar: 2 },
     code: 'Q1-LA-F1-A2',
     isOccupied: false,
-    maxCapacityKg: 1000,
+    maxCapacityKg: 1500,
     currentWeightKg: 0,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'

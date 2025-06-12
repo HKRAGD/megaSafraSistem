@@ -201,13 +201,15 @@ function parseExcelData(data) {
         produto: produto.toString().trim(),
         lote: lote.toString().trim(),
         quantidade: parseInt(quantidade),
-        kg: kg ? parseFloat(kg) : null
+        kgUnitario: kg ? parseFloat(kg) : null // Renomeado para deixar claro que é peso unitário
       };
 
-      // Calcular peso se não informado
-      if (!productData.kg) {
-        productData.kg = productData.quantidade * 1; // 1kg por unidade como padrão
-        console.log(`💡 Linha ${lineNumber}: KG calculado automaticamente: ${productData.kg}kg`);
+      // Definir peso unitário padrão se não informado
+      if (!productData.kgUnitario) {
+        productData.kgUnitario = 1; // 1kg por unidade como padrão
+        console.log(`💡 Linha ${lineNumber}: Peso unitário definido como padrão: ${productData.kgUnitario}kg/unidade`);
+      } else {
+        console.log(`📊 Linha ${lineNumber}: ${productData.quantidade} unidades × ${productData.kgUnitario}kg = ${productData.quantidade * productData.kgUnitario}kg total`);
       }
 
       products.push({
@@ -254,7 +256,7 @@ async function importProducts(productsData, { admin, chamber, locations, seedTyp
 
   for (const productData of productsData) {
     try {
-      const { lineNumber, quadra, lado, fila, andar, produto, lote, quantidade, kg } = productData;
+      const { lineNumber, quadra, lado, fila, andar, produto, lote, quantidade, kgUnitario } = productData;
 
       // Encontrar localização
       const locationKey = `${quadra}-${lado}-${fila}-${andar}`;
@@ -292,11 +294,10 @@ async function importProducts(productsData, { admin, chamber, locations, seedTyp
         continue;
       }
 
-      // Calcular peso por unidade
-      const weightPerUnit = kg / quantidade;
+      // Calcular peso total para validação prévia
+      const totalWeight = quantidade * kgUnitario;
 
       // Verificar capacidade
-      const totalWeight = kg;
       if (totalWeight > location.maxCapacityKg) {
         const error = `Linha ${lineNumber}: Peso total (${totalWeight}kg) excede capacidade da localização (${location.maxCapacityKg}kg)`;
         console.log(`⚠️ ${error}`);
@@ -305,15 +306,14 @@ async function importProducts(productsData, { admin, chamber, locations, seedTyp
         continue;
       }
 
-      // Criar produto
+      // Criar produto (totalWeight será calculado automaticamente pelo model)
       const product = new Product({
         name: `${produto} - Lote ${lote}`,
         lot: lote,
         seedTypeId: seedType._id,
         quantity: quantidade,
         storageType: 'saco',
-        weightPerUnit: weightPerUnit,
-        totalWeight: totalWeight,
+        weightPerUnit: kgUnitario,
         locationId: location._id,
         entryDate: new Date(),
         status: 'stored',
@@ -326,18 +326,18 @@ async function importProducts(productsData, { admin, chamber, locations, seedTyp
 
       await product.save();
 
-      // Atualizar localização
+      // Atualizar localização (usar o peso calculado pelo model)
       location.isOccupied = true;
-      location.currentWeightKg = totalWeight;
+      location.currentWeightKg = product.totalWeight;
       await location.save();
 
-      // Registrar movimentação
+      // Registrar movimentação (usar o peso calculado pelo model)
       const movement = new Movement({
         productId: product._id,
         type: 'entry',
         toLocationId: location._id,
         quantity: quantidade,
-        weight: totalWeight,
+        weight: product.totalWeight,
         userId: admin._id,
         reason: 'Importação via Excel',
         notes: `Importado da planilha - Linha ${lineNumber}`,

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Chamber, LocationWithChamber } from '../../../../types';
 import { numeroParaLetra, letraParaNumero } from '../../../../utils/locationUtils';
 
@@ -51,7 +51,7 @@ interface UseLocationMap3DProps {
   allLocations: LocationWithChamber[];
   mode: MapMode;
   onLocationSelect?: (location: LocationWithChamber | null) => void;
-  selectedLocation?: LocationWithChamber | null;
+  selectedChamber?: Chamber | null;
   availableOnly?: boolean; // Para modo selection
 }
 
@@ -60,7 +60,7 @@ export const useLocationMap3D = ({
   allLocations,
   mode,
   onLocationSelect,
-  selectedLocation,
+  selectedChamber: initialSelectedChamber,
   availableOnly = false,
 }: UseLocationMap3DProps) => {
   /*
@@ -77,34 +77,110 @@ export const useLocationMap3D = ({
    */
 
   // Estados do mapa
-  const [selectedChamber, setSelectedChamber] = useState<Chamber | null>(
-    chambers.length > 0 ? chambers[0] : null
-  );
+  const [selectedChamber, setSelectedChamber] = useState<Chamber | null>(initialSelectedChamber || null);
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [viewMode, setViewMode] = useState<ViewMode>('2d');
   const [showGrid, setShowGrid] = useState(true);
   const [showCapacityColors, setShowCapacityColors] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationWithChamber | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
 
-  // Atualizar câmara selecionada quando câmaras mudam
-  useMemo(() => {
-    if (chambers.length > 0 && !selectedChamber) {
-      setSelectedChamber(chambers[0]);
-    }
-  }, [chambers, selectedChamber]);
-
-  // Filtrar localizações da câmara selecionada
-  const chamberLocations = useMemo(() => {
-    if (!selectedChamber) return [];
+  // ✅ CORREÇÃO CRÍTICA: Selecionar câmara que tenha localizações de fato
+  useEffect(() => {
+    console.log('🔄 useLocationMap3D: Verificando câmaras...', {
+      chambersCount: chambers.length,
+      selectedChamber: selectedChamber?.name || 'None',
+      firstChamber: chambers[0]?.name || 'None',
+      totalLocations: allLocations.length
+    });
     
-    const filtered = allLocations.filter(
+    if (chambers.length > 0 && allLocations.length > 0 && !selectedChamber) {
+      // ✅ CORREÇÃO: Encontrar câmara que tenha localizações de fato
+      const chamberWithLocations = chambers.find(chamber => {
+        const locationsForThisChamber = allLocations.filter(loc => loc.chamberId === chamber.id);
+        console.log(`🔍 Câmara ${chamber.name} (${chamber.id}): ${locationsForThisChamber.length} localizações`);
+        return locationsForThisChamber.length > 0;
+      });
+      
+      if (chamberWithLocations) {
+        console.log('✅ Selecionando câmara com localizações:', chamberWithLocations.name);
+        setSelectedChamber(chamberWithLocations);
+      } else {
+        console.log('⚠️ Nenhuma câmara encontrada com localizações. Selecionando primeira mesmo assim:', chambers[0].name);
+        setSelectedChamber(chambers[0]);
+      }
+    }
+  }, [chambers, allLocations, selectedChamber]);
+
+  // ✅ CORREÇÃO CRÍTICA: Filtrar localizações da câmara selecionada
+  const chamberLocations = useMemo(() => {
+    if (!selectedChamber) {
+      console.log('❌ Nenhuma câmara selecionada');
+      return [];
+    }
+    
+    console.log('🔍 Filtrando localizações para câmara:', {
+      chamberName: selectedChamber.name,
+      chamberId: selectedChamber.id,
+      totalLocations: allLocations.length
+    });
+    
+    // ✅ CORREÇÃO: Primeiro tentar filtrar por ID exato
+    let filtered = allLocations.filter(
       loc => loc.chamberId === selectedChamber.id
     );
-
-    // ✅ CORREÇÃO CRÍTICA: Sempre mostrar TODAS as localizações no mapa
-    // O mapa 3D deve exibir localizações ocupadas (vermelhas) e disponíveis (verdes)
-    // A filtragem por disponibilidade é apenas para selecionar, não para visualizar
     
-    return filtered; // Retorna TODAS as localizações sempre
+    // ✅ FALLBACK: Se não encontrar por ID, tentar por nome da câmara
+    if (filtered.length === 0) {
+      console.log('🔄 Tentando buscar localizações por nome da câmara...');
+      filtered = allLocations.filter(loc => 
+        loc.chamber?.name && loc.chamber.name.toLowerCase() === selectedChamber.name.toLowerCase()
+      );
+      
+      if (filtered.length > 0) {
+        console.log(`✅ FALLBACK: Encontradas ${filtered.length} localizações por nome da câmara`);
+      }
+    }
+
+    console.log(`📍 ${filtered.length} localizações encontradas para câmara ${selectedChamber.name}`);
+    
+    // ✅ DEBUG: Mostrar algumas localizações de exemplo
+    if (filtered.length > 0) {
+      console.log('📝 Exemplos de localizações encontradas:', filtered.slice(0, 3).map(loc => ({
+        code: loc.code,
+        isOccupied: loc.isOccupied,
+        chamber: loc.chamber?.name
+      })));
+         } else {
+       console.log('⚠️ PROBLEMA: Nenhuma localização encontrada para esta câmara');
+       console.log('🔍 Verificando IDs das localizações disponíveis:', 
+         allLocations.slice(0, 5).map(loc => ({
+           code: loc.code,
+           chamberId: loc.chamberId,
+           expectedId: selectedChamber.id
+         }))
+       );
+       
+       // ✅ DIAGNÓSTICO: Mostrar quais câmaras têm localizações de fato
+       const uniqueChamberIds = Array.from(new Set(allLocations.map(loc => loc.chamberId)));
+       console.log('🏭 IDs de câmaras que têm localizações no banco:', uniqueChamberIds);
+       console.log('🏭 Câmaras carregadas da API:', chambers.map(c => ({ id: c.id, name: c.name })));
+       
+       // ✅ SUGESTÃO: Tentar encontrar correspondência por nome se IDs não batem
+       const chamberWithSameName = chambers.find(c => 
+         allLocations.some(loc => 
+           loc.chamber?.name && loc.chamber.name.toLowerCase() === c.name.toLowerCase()
+         )
+       );
+       
+       if (chamberWithSameName) {
+         console.log('💡 SUGESTÃO: Câmara com mesmo nome encontrada:', chamberWithSameName.name);
+       }
+     }
+    
+    return filtered;
   }, [allLocations, selectedChamber]);
 
   // Grid de localizações do andar selecionado
@@ -183,7 +259,7 @@ export const useLocationMap3D = ({
 
     // Cálculo de capacidade
     const capacityUsed = floorLocations.reduce((sum, loc) => sum + (loc.currentWeightKg || 0), 0);
-    const capacityTotal = floorLocations.reduce((sum, loc) => sum + (loc.maxCapacityKg || 1000), 0);
+    const capacityTotal = floorLocations.reduce((sum, loc) => sum + (loc.maxCapacityKg || 1500), 0);
     const capacityPercentage = capacityTotal > 0 ? (capacityUsed / capacityTotal) * 100 : 0;
 
     return {
@@ -311,6 +387,134 @@ export const useLocationMap3D = ({
     }
   }, [onLocationSelect]);
 
+  // ✅ CORREÇÃO CRÍTICA: Melhorar lógica do hasData
+  const hasData = useMemo(() => {
+    const result = chambers.length > 0 && selectedChamber != null && chamberLocations.length > 0;
+    console.log('🔍 hasData calculado:', {
+      chambers: chambers.length,
+      selectedChamber: selectedChamber?.name || 'None',
+      chamberLocations: chamberLocations.length,
+      result
+    });
+    return result;
+  }, [chambers.length, selectedChamber, chamberLocations.length]);
+
+  // 📊 SMART CHAMBER SELECTION - Selecionar câmara com localizações
+  useEffect(() => {
+    console.log('🔄 useLocationMap3D: Verificando câmaras...', {
+      chambersCount: chambers.length,
+      selectedChamber: selectedChamber?.name || 'None',
+      firstChamber: chambers[0]?.name || 'None',
+      totalLocations: allLocations.length
+    });
+    
+    if (chambers.length === 0) {
+      console.log('⏳ Aguardando câmaras...');
+      return;
+    }
+
+    // 🎯 SMART SELECTION: Escolher câmara inteligentemente
+    const smartChamberSelection = () => {
+      // Se não há câmara selecionada ou a selecionada não tem localizações
+      if (!selectedChamber || !hasLocationsForChamber(selectedChamber.name)) {
+        
+        // 1. Tentar usar a câmara inicial se ela tem localizações
+        if (initialSelectedChamber && hasLocationsForChamber(initialSelectedChamber.name)) {
+          console.log('✅ Usando câmara inicial:', initialSelectedChamber.name);
+          setSelectedChamber(initialSelectedChamber);
+          return;
+        }
+        
+        // 2. Encontrar primeira câmara com localizações
+        const chamberWithLocations = chambers.find(chamber => {
+          const hasLocs = hasLocationsForChamber(chamber.name);
+          console.log(`🏭 Verificando ${chamber.name}:`, hasLocs ? '✅ TEM localizações' : '❌ SEM localizações');
+          return hasLocs;
+        });
+        
+        if (chamberWithLocations) {
+          console.log('🎯 AUTO-SELEÇÃO: Selecionando câmara com localizações:', chamberWithLocations.name);
+          setSelectedChamber(chamberWithLocations);
+          setHasAutoSwitched(true);
+          setError(null);
+          return;
+        }
+        
+        // 3. Se nenhuma câmara tem localizações, selecionar a primeira
+        console.log('⚠️ Nenhuma câmara tem localizações, selecionando primeira:', chambers[0]?.name);
+        setSelectedChamber(chambers[0] || null);
+        setError('Nenhuma câmara possui localizações geradas. Gere localizações para começar.');
+      }
+    };
+
+    smartChamberSelection();
+  }, [chambers, allLocations, initialSelectedChamber, selectedChamber]);
+
+  // 🔍 VERIFICAR SE CÂMARA TEM LOCALIZAÇÕES
+  const hasLocationsForChamber = (chamberName: string): boolean => {
+    if (!chamberName || allLocations.length === 0) return false;
+    
+    // Buscar por nome da câmara
+    const locationsByName = allLocations.filter(loc => 
+      loc.chamber?.name === chamberName
+    );
+    
+    return locationsByName.length > 0;
+  };
+
+  // 📍 FILTRAR LOCALIZAÇÕES POR CÂMARA
+  const getFilteredLocations = (chamberName: string): LocationWithChamber[] => {
+    if (!chamberName || allLocations.length === 0) {
+      console.log('⚠️ Parâmetros inválidos para filtro:', { chamberName, locationsCount: allLocations.length });
+      return [];
+    }
+
+    console.log('🔍 Filtrando localizações para câmara:', {
+      chamberName,
+      chamberId: chambers.find(c => c.name === chamberName)?.id,
+      totalLocations: allLocations.length
+    });
+
+    // Buscar por nome da câmara (mais confiável)
+    let filteredLocations = allLocations.filter(loc => 
+      loc.chamber?.name === chamberName
+    );
+
+    console.log('📍', filteredLocations.length, 'localizações encontradas para câmara', chamberName);
+    
+    // 🔍 DIAGNÓSTICO DETALHADO quando não encontra localizações
+    if (filteredLocations.length === 0) {
+      console.log('⚠️ PROBLEMA: Nenhuma localização encontrada para esta câmara');
+      
+      // Mostrar amostras de dados para debug
+      const sampleLocations = allLocations.slice(0, 5).map(loc => ({
+        code: loc.code,
+        chamberId: loc.chamberId,
+        chamberName: loc.chamber?.name
+      }));
+      console.log('🔍 Amostra de localizações disponíveis:', sampleLocations);
+      
+      // Mostrar IDs únicos de câmaras no banco
+      const uniqueChamberIds = Array.from(new Set(allLocations.map(loc => loc.chamberId)));
+      console.log('🏭 IDs de câmaras que têm localizações no banco:', uniqueChamberIds);
+      
+      // Mostrar câmaras carregadas
+      const loadedChambers = chambers.map(c => ({ id: c.id, name: c.name }));
+      console.log('🏭 Câmaras carregadas da API:', loadedChambers);
+      
+      // Sugerir câmaras disponíveis
+      const availableChambers = chambers.filter(chamber => 
+        allLocations.some(loc => loc.chamber?.name === chamber.name)
+      );
+      
+      if (availableChambers.length > 0) {
+        console.log('💡 SUGESTÃO: Câmara com mesmo nome encontrada:', availableChambers[0].name);
+      }
+    }
+
+    return filteredLocations;
+  };
+
   return {
     // Estados
     selectedChamber,
@@ -318,6 +522,10 @@ export const useLocationMap3D = ({
     viewMode,
     showGrid,
     showCapacityColors,
+    selectedLocation,
+    isLoading,
+    error,
+    hasAutoSwitched,
     
     // Dados processados
     locationGrid,
@@ -338,7 +546,8 @@ export const useLocationMap3D = ({
     getTooltipInfo,
     
     // Estado de loading/erro
-    hasData: chamberLocations.length > 0,
-    isLoading: false, // TODO: implementar se necessário
+    hasData,
+    hasLocationsForChamber,
+    getFilteredLocations
   };
 }; 

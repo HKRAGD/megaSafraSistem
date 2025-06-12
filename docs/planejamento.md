@@ -51,7 +51,7 @@
   humidity: Number,
   dimensions: {
     quadras: Number,
-    lados: Number,
+    lados: String,
     filas: Number,
     andares: Number
   },

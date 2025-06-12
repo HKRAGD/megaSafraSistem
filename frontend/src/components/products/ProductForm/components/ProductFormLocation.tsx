@@ -10,8 +10,6 @@ import {
   Alert,
   Tabs,
   Tab,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import {
   LocationOn as LocationIcon,
@@ -47,6 +45,15 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
 }) => {
   const { control } = form;
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+
+  // ✅ DEBUG: Log dos dados recebidos
+  console.log('🔍 ProductFormLocation DEBUG:', {
+    chambers: chambers?.length || 0,
+    availableLocations: availableLocations?.length || 0,
+    allLocations: allLocations?.length || 0,
+    viewMode,
+    selectedLocation: selectedLocation?.code || 'None'
+  });
 
   const handleLocationSelect = (location: LocationWithChamber | null) => {
     onLocationSelect(location);
@@ -106,16 +113,29 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
                   transformStyle: 'preserve-3d',
                   p: 2
                 }}>
-                  <LocationMap3DAdvanced
-                    chambers={chambers}
-                    allLocations={allLocations || availableLocations}
-                    mode="selection"
-                    selectedLocation={selectedLocation}
-                    onLocationSelect={handleLocationSelect}
-                    availableOnly={true}
-                    height={'55vh'} 
-                    showControls={true}
-                  />
+                  {/* ✅ CORREÇÃO: Garantir que allLocations tenha dados antes de renderizar */}
+                  {(allLocations && allLocations.length > 0) ? (
+                    <LocationMap3DAdvanced
+                      chambers={chambers}
+                      allLocations={allLocations}
+                      selectedChamber={chambers[0] || null}
+                      onLocationSelect={handleLocationSelect}
+                      availableOnly={true}
+                      height={'55vh'}
+                    />
+                  ) : (
+                    <Box sx={{ p: 3, textAlign: 'center' }}>
+                      <Alert severity="warning">
+                        <Typography variant="body2">
+                          Carregando localizações para o mapa 3D...
+                        </Typography>
+                        <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                          Localizações disponíveis: {availableLocations?.length || 0} | 
+                          Todas as localizações: {allLocations?.length || 0}
+                        </Typography>
+                      </Alert>
+                    </Box>
+                  )}
                 </Box>
               ) : (
                 <Box sx={{ p: 3, textAlign: 'center' }}>

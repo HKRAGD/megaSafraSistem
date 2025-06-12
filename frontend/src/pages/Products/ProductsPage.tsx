@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -99,6 +100,8 @@ export const ProductsPage: React.FC = () => {
   // HOOKS PRINCIPAIS
   // ============================================================================
   
+  const navigate = useNavigate();
+  
   const {
     data: products,
     loading,
@@ -195,9 +198,8 @@ export const ProductsPage: React.FC = () => {
   }, [refreshLocationsWithChambers, refreshAllLocations]);
 
   const handleOpenCreateModal = () => {
-    setShowCreateModal(true);
-    // Carregar localizações quando abrir o modal
-    loadLocationsForForm();
+    // Navegar para a página de novo produto ao invés de abrir modal
+    navigate('/products/new');
   };
 
   useEffect(() => {

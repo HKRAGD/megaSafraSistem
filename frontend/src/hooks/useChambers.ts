@@ -321,7 +321,7 @@ export const useChambers = (options: UsChambersOptions = {}): UseChambersReturn 
 
       // 3. Gerar localizações via API com parâmetros otimizados
       const response = await chamberService.generateLocations(id, {
-        maxCapacityKg: 1000,
+        maxCapacityKg: 1500,
         overwrite: true, // Sempre permitir sobrescrever para regenerar
         optimizeAccess: true,
         capacityVariation: true

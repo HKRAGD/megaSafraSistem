@@ -108,7 +108,7 @@ export const chamberService = {
   }>> => {
     try {
       const {
-        maxCapacityKg = 1000,
+        maxCapacityKg = 1500,
         overwrite = true, // Por padrão permitir sobrescrever localizações existentes
         optimizeAccess = true,
         capacityVariation = true

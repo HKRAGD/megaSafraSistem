@@ -125,8 +125,7 @@ export const useAllLocationsWithChambers = (
     clearError();
 
     try {
-      setLoading(true);
-      setError(null);
+      // ✅ CORREÇÃO: Remover setState duplicado que causa loop infinito
 
       // ✅ CORREÇÃO CRÍTICA: Usar getAllUnpaginated para carregar TODAS as localizações
       // Isso resolve o problema das localizações brancas no mapa 3D
@@ -244,7 +243,8 @@ export const useAllLocationsWithChambers = (
    */
   const refreshData = useCallback(async (): Promise<void> => {
     await fetchAllLocationsWithChambers(initialFilters);
-  }, [fetchAllLocationsWithChambers, initialFilters]);
+  }, []); // ✅ CORREÇÃO: Remover todas as dependências para evitar loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // ============================================================================
   // EFEITOS
@@ -254,7 +254,8 @@ export const useAllLocationsWithChambers = (
     if (autoFetch) {
       fetchAllLocationsWithChambers(initialFilters);
     }
-  }, [autoFetch, fetchAllLocationsWithChambers, initialFilters]);
+  }, [autoFetch]); // ✅ CORREÇÃO: Remover dependências que causam loop infinito
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // ============================================================================
   // RETURN

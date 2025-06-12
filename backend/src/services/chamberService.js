@@ -60,7 +60,7 @@ const createChamberWithLocations = async (chamberData, locationOptions = {}) => 
       chamber._id,
       {
         dimensions: chamberData.dimensions,
-        defaultCapacity: locationOptions.defaultCapacity || chamberData.capacity || 1000,
+        defaultCapacity: locationOptions.defaultCapacity || chamberData.capacity || 1500,
         capacityVariation: locationOptions.capacityVariation !== false,
         optimizeAccess: locationOptions.optimizeAccess !== false,
         baseCapacityKg: locationOptions.baseCapacityKg || 1000,
@@ -113,7 +113,7 @@ const createChamberWithLocations = async (chamberData, locationOptions = {}) => 
           summary: locationResult.stats || {}
         },
         estimatedBenefits: {
-          storageCapacity: locationResult.stats?.totalCapacity || (locationResult.locationsCreated * (locationOptions.defaultCapacity || 1000)),
+          storageCapacity: locationResult.stats?.totalCapacity || (locationResult.locationsCreated * (locationOptions.defaultCapacity || 1500)),
           efficiency: initialEfficiencyScore,
           flexibilityScore: calculateFlexibilityScore({ totalGenerated: locationResult.locationsCreated })
         }

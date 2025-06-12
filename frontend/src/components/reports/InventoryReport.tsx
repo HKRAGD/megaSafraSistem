@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
 import { ProductStatus } from '../../types';
-import { formatWeightWithUnit, formatWeight } from '../../utils/displayHelpers';
+import { formatWeightWithUnit, formatWeight, formatWeightSmart } from '../../utils/displayHelpers';
 
 // Funções auxiliares para mapear dados relacionais
 const getSeedTypeName = (product: any) => {
@@ -250,7 +250,7 @@ export const InventoryReport: React.FC = () => {
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="success.main">
-                      {formatWeightWithUnit(reportData.summary?.totalWeight || 0)}
+                      {formatWeightSmart(reportData.summary?.totalWeight || 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Peso Total

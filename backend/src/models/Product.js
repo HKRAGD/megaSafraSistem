@@ -41,7 +41,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Peso por unidade é obrigatório'],
     min: [0.001, 'Peso por unidade deve ser pelo menos 0.001kg'],
-    max: [1000, 'Peso por unidade não pode exceder 1000kg'],
+    max: [1500, 'Peso por unidade não pode exceder 1500kg'],
     validate: {
       validator: function(value) {
         return !isNaN(value) && isFinite(value) && value > 0;

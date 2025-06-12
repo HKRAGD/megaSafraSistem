@@ -17,6 +17,7 @@ if (process.env.NODE_ENV === 'development') {
 const LoginPage = React.lazy(() => import('./pages/Login/LoginPage').then(module => ({ default: module.LoginPage })));
 const DashboardPage = React.lazy(() => import('./pages/Dashboard/DashboardPage').then(module => ({ default: module.DashboardPage })));
 const ProductsPage = React.lazy(() => import('./pages/Products/ProductsPage').then(module => ({ default: module.ProductsPage })));
+const NewProductPage = React.lazy(() => import('./pages/Products/NewProductPage').then(module => ({ default: module.NewProductPage })));
 const UsersPage = React.lazy(() => import('./pages/Users/UsersPage').then(module => ({ default: module.UsersPage })));
 const LocationsPage = React.lazy(() => import('./pages/Locations/LocationsPage').then(module => ({ default: module.LocationsPage })));
 const HistoryPage = React.lazy(() => import('./pages/History/HistoryPage'));
@@ -109,6 +110,19 @@ function App() {
                     <AppLayout>
                       <Suspense fallback={<Loading variant="table" text="Carregando produtos..." />}>
                         <ProductsPage />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/products/new" 
+                element={
+                  <ProtectedRoute requiredRole="operator">
+                    <AppLayout>
+                      <Suspense fallback={<Loading variant="page" text="Carregando formulário..." />}>
+                        <NewProductPage />
                       </Suspense>
                     </AppLayout>
                   </ProtectedRoute>

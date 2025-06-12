@@ -64,7 +64,7 @@ backend/
   currentHumidity: Number,
   dimensions: {
     quadras: Number (required, min: 1),
-    lados: Number (required, min: 1),
+    lados: String (required, min: 1),
     filas: Number (required, min: 1),
     andares: Number (required, min: 1)
   },
@@ -79,13 +79,13 @@ backend/
   chamberId: ObjectId (ref: 'Chamber', required),
   coordinates: {
     quadra: Number (required),
-    lado: Number (required),
+    lado: String (required),
     fila: Number (required),
     andar: Number (required)
   },
   code: String (auto-generated: "Q1-L2-F3-A4"),
   isOccupied: Boolean (default: false),
-  maxCapacityKg: Number (default: 1000),
+  maxCapacityKg: Number (default: 1500),
   currentWeightKg: Number (default: 0),
   timestamps: true
 }

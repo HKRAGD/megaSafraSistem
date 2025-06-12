@@ -326,7 +326,7 @@ const createChamber = asyncHandler(async (req, res, next) => {
     // 3. Usar chamberService para criação integrada
     if (generateLocations) {
       const result = await chamberService.createChamberWithLocations(chamberData, {
-        defaultCapacity: locationOptions?.defaultCapacity || 1000,
+        defaultCapacity: locationOptions?.defaultCapacity || 1500,
         capacityVariation: locationOptions?.capacityVariation !== false,
         optimizeAccess: locationOptions?.optimizeAccess !== false,
         ...locationOptions
@@ -665,7 +665,7 @@ const deleteChamber = asyncHandler(async (req, res, next) => {
 const generateLocations = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const { 
-    maxCapacityKg = 1000, 
+    maxCapacityKg = 1500, 
     overwrite = false,
     optimizeAccess = true,
     capacityVariation = true

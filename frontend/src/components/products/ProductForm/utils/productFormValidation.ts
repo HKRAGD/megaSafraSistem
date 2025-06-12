@@ -27,7 +27,7 @@ export const productSchema = yup.object({
   weightPerUnit: yup
     .number()
     .min(0.001, 'Peso deve ser pelo menos 0.001kg')
-    .max(1000, 'Peso não pode exceder 1000kg')
+    .max(1500, 'Peso não pode exceder 1500kg')
     .required('Peso por unidade é obrigatório'),
   locationId: yup
     .string()
