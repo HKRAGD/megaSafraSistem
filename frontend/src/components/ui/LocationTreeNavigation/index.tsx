@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Box, Paper, Skeleton, Alert, Fade, useTheme } from '@mui/material';
 import { 
   LocationTreeNavigationProps, 
@@ -73,13 +73,34 @@ export const LocationTreeNavigation: React.FC<LocationTreeNavigationProps> = ({
   
   const currentSelectedLocationId = externalSelectedLocationId ?? internalSelectedLocationId;
   
-  const handleLocationSelect = (locationId: string) => {
-    // Selecionar internamente
-    selectLocation(locationId);
+  // Handler para seleção de localização
+  const handleLocationSelect = useCallback((item: LocationTreeItem) => {
+    if (item.level !== 'andar') return;
     
-    // Notificar componente pai se callback fornecido
-    onLocationSelect?.(locationId);
-  };
+    // Permitir seleção de qualquer localização para feedback visual
+    // O componente pai (LocationStatusIndicator) vai mostrar o status apropriado
+    if (onLocationSelect) {
+      // Converter para o formato esperado pelo backend (apenas o ObjectId)
+      const locationId = item.location?.id || item.id.split('-')[0]; // Pegar apenas a parte do ObjectId
+      
+      // Callback sem alerts - feedback visual fica por conta do LocationStatusIndicator
+      onLocationSelect(locationId);
+    }
+  }, [onLocationSelect]);
+
+  // Handler para drill-down navigation
+  const handleDrillDown = useCallback((item: LocationTreeItem) => {
+    if (item.level === 'andar') {
+      // Se for andar, pode ser selecionado diretamente
+      handleLocationSelect(item);
+    } else {
+      // Para outros tipos, navegar para próximo nível
+      const nextLevel = getNextLevel(item.level);
+      if (nextLevel) {
+        navigateToLevel(nextLevel, item.id);
+      }
+    }
+  }, [navigateToLevel, handleLocationSelect]);
 
   // ============================================================================
   // SINCRONIZAÇÃO DE FILTROS (Externa vs Interna)
@@ -99,13 +120,6 @@ export const LocationTreeNavigation: React.FC<LocationTreeNavigationProps> = ({
   // HANDLERS DE NAVEGAÇÃO
   // ============================================================================
   
-  const handleDrillDown = (item: LocationTreeItem) => {
-    const nextLevel = getNextLevel(state.currentLevel);
-    if (nextLevel) {
-      navigateToLevel(nextLevel, item.id);
-    }
-  };
-
   const handleBreadcrumbNavigation = (path: string, level: TreeLevel) => {
     goToPath(path);
   };
@@ -118,12 +132,12 @@ export const LocationTreeNavigation: React.FC<LocationTreeNavigationProps> = ({
     if (isTreeMode && state.currentLevel !== 'andar') {
       handleDrillDown(item);
     } else {
-      handleLocationSelect(item.id);
+      handleLocationSelect(item);
     }
   };
 
   const handleItemSelect = (item: LocationTreeItem) => {
-    handleLocationSelect(item.id);
+    handleLocationSelect(item);
   };
 
   // ============================================================================

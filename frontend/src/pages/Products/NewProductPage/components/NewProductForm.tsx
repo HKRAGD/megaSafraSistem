@@ -24,6 +24,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
 import { FormSection } from './FormSection';
+import { LocationStatusIndicator } from './LocationStatusIndicator';
+import { LocationTreeNavigation } from '../../../../components/ui/LocationTreeNavigation';
 import { SeedType, Chamber, LocationWithChamber, CreateProductFormData } from '../../../../types';
 
 interface NewProductFormProps {
@@ -85,8 +87,8 @@ export const NewProductForm: React.FC<NewProductFormProps> = ({
 
   // Localização selecionada
   const selectedLocation = React.useMemo(() => {
-    return availableLocations.find(loc => loc.id === locationId) || null;
-  }, [availableLocations, locationId]);
+    return allLocations.find(loc => loc.id === locationId) || null;
+  }, [allLocations, locationId]);
 
   // Informações de capacidade
   const capacityInfo = React.useMemo(() => {
@@ -104,7 +106,25 @@ export const NewProductForm: React.FC<NewProductFormProps> = ({
     };
   }, [selectedLocation, totalWeight]);
 
-  // Notificar mudança de localização para o mapa 3D
+  // Handler para seleção via LocationTreeNavigation
+  const handleLocationSelectFromTree = React.useCallback((locationId: string) => {
+    // Garantir que apenas o ObjectId seja usado
+    const cleanLocationId = locationId.includes('-') ? locationId.split('-')[0] : locationId;
+    
+    // Encontrar a localização usando o ID limpo ou o ID original
+    const location = allLocations.find(loc => 
+      loc.id === cleanLocationId || loc.id === locationId
+    );
+    
+    // Sempre permitir a seleção para mostrar feedback visual
+    form.setValue('locationId', cleanLocationId);
+    
+    if (location && onLocationSelect) {
+      onLocationSelect(location);
+    }
+  }, [form, allLocations, onLocationSelect]);
+
+  // Notificar mudança de localização
   React.useEffect(() => {
     if (onLocationSelect && selectedLocation) {
       onLocationSelect(selectedLocation);
@@ -240,29 +260,47 @@ export const NewProductForm: React.FC<NewProductFormProps> = ({
           </Box>
         </FormSection>
 
-        {/* Seção: Localização */}
+        {/* Seção: Localização - Substituída por LocationTreeNavigation */}
         <FormSection 
           title="Localização" 
           icon={<LocationIcon />}
           elevation={0}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              {...form.register('locationId')}
-              label="Localização"
-              select
-              fullWidth
-              error={!!form.formState.errors.locationId}
-              helperText={form.formState.errors.locationId?.message || 'Selecione uma localização disponível'}
-            >
-              <MenuItem value="">Selecione uma localização</MenuItem>
-              {availableLocations.map((location) => (
-                <MenuItem key={location.id} value={location.id}>
-                  {location.code} - {location.chamber.name} 
-                  ({location.maxCapacityKg - location.currentWeightKg}kg disponível)
-                </MenuItem>
-              ))}
-            </TextField>
+            
+            {/* Indicador de Status da Localização */}
+            <LocationStatusIndicator
+              selectedLocation={selectedLocation}
+              allLocations={allLocations}
+              locationId={locationId}
+            />
+
+            {/* Erro de validação */}
+            {form.formState.errors.locationId && (
+              <Alert severity="error">
+                {form.formState.errors.locationId.message}
+              </Alert>
+            )}
+
+            {/* LocationTreeNavigation integrado */}
+            <Box sx={{ 
+              border: '1px solid', 
+              borderColor: 'divider',
+              borderRadius: 1,
+              minHeight: 400,
+              backgroundColor: 'background.paper'
+            }}>
+              <LocationTreeNavigation
+                onLocationSelect={handleLocationSelectFromTree}
+                selectedLocationId={locationId || undefined}
+                showStats={true}
+                allowModeToggle={true}
+                hideViewToggle={false}
+                filters={{
+                  status: 'all' // Mostrar todas as localizações para feedback visual
+                }}
+              />
+            </Box>
             
             {/* Feedback da Capacidade */}
             {capacityInfo && (
@@ -332,7 +370,11 @@ export const NewProductForm: React.FC<NewProductFormProps> = ({
             type="submit"
             variant="contained"
             startIcon={<SaveIcon />}
-            disabled={form.formState.isSubmitting || (capacityInfo?.exceedsCapacity ?? false)}
+            disabled={
+              form.formState.isSubmitting || 
+              (capacityInfo?.exceedsCapacity ?? false) ||
+              (selectedLocation?.isOccupied ?? false)
+            }
             sx={{ minWidth: 140 }}
           >
             {form.formState.isSubmitting ? 'Cadastrando...' : 'Cadastrar Produto'}
