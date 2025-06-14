@@ -20,6 +20,7 @@ import {
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { LocationWithChamber, Chamber } from '../../../../types';
 import { CapacityInfo } from '../utils/productFormUtils';
+import { sanitizeChipProps } from '../../../../utils/chipUtils';
 import LocationMap3DAdvanced from '../../../ui/LocationMap3D/LocationMap3DAdvanced';
 
 interface ProductFormLocationProps {
@@ -181,18 +182,22 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
                               }}
                             />
                           )}
-                          renderOption={(props, option) => (
-                            <Box component="li" {...props}>
-                              <Box>
-                                <Typography variant="body2" fontWeight="medium">
-                                  {option.code}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {option.chamber?.name || 'Câmara não encontrada'} - Cap: {option.maxCapacityKg}kg - Usado: {option.currentWeightKg}kg
-                                </Typography>
+                          renderOption={(props, option) => {
+                            // Sanitizar props para evitar erro "onClick is not a function"
+                            const safeProps = sanitizeChipProps(props);
+                            return (
+                              <Box component="li" {...safeProps}>
+                                <Box>
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {option.code}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {option.chamber?.name || 'Câmara não encontrada'} - Cap: {option.maxCapacityKg}kg - Usado: {option.currentWeightKg}kg
+                                  </Typography>
+                                </Box>
                               </Box>
-                            </Box>
-                          )}
+                            );
+                          }}
                           noOptionsText={
                             availableLocations.length === 0 
                               ? "Nenhuma localização disponível"

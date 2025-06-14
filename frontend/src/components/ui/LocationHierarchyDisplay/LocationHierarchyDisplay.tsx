@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { Location, Chamber } from '../../../types';
 import { numeroParaLetra } from '../../../utils/locationUtils';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 
 // ============================================================================
 // INTERFACES
@@ -139,12 +140,14 @@ export const LocationHierarchyDisplay: React.FC<LocationHierarchyDisplayProps> =
             </Typography>
           )}
                      <Chip
-             size={size === 'small' ? 'small' : 'medium'}
-             label={`${coord.label.charAt(0)}${coord.value}`}
-             sx={{ 
-               backgroundColor: coord.color,
-               color: 'white',
-             }}
+             {...sanitizeChipProps({
+               size: size === 'small' ? 'small' : 'medium',
+               label: `${coord.label.charAt(0)}${coord.value}`,
+               sx: { 
+                 backgroundColor: coord.color,
+                 color: 'white',
+               }
+             })}
            />
         </React.Fragment>
       ))}
@@ -165,10 +168,12 @@ export const LocationHierarchyDisplay: React.FC<LocationHierarchyDisplayProps> =
       </Typography>
       {showCapacity && (
         <Chip
-          size="small"
-          label={getCapacityLabel()}
-          color={getCapacityColor()}
-          variant="outlined"
+          {...sanitizeChipProps({
+            size: "small",
+            label: getCapacityLabel(),
+            color: getCapacityColor(),
+            variant: "outlined"
+          })}
         />
       )}
     </Box>
@@ -260,10 +265,12 @@ export const LocationHierarchyDisplay: React.FC<LocationHierarchyDisplayProps> =
             
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
               <Chip
-                size="small"
-                label={getCapacityLabel()}
-                color={getCapacityColor()}
-                variant="outlined"
+                {...sanitizeChipProps({
+                  size: "small",
+                  label: getCapacityLabel(),
+                  color: getCapacityColor(),
+                  variant: "outlined"
+                })}
               />
               <Typography variant="caption" color="text.secondary">
                 {capacityPercentage.toFixed(1)}% ocupado
@@ -276,26 +283,32 @@ export const LocationHierarchyDisplay: React.FC<LocationHierarchyDisplayProps> =
         <Box sx={{ mt: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip
-              size="small"
-              label={isOccupied ? 'OCUPADO' : 'DISPONÍVEL'}
-              color={isOccupied ? 'error' : 'success'}
-              variant={isOccupied ? 'filled' : 'outlined'}
+              {...sanitizeChipProps({
+                size: "small",
+                label: isOccupied ? 'OCUPADO' : 'DISPONÍVEL',
+                color: isOccupied ? 'error' : 'success',
+                variant: isOccupied ? 'filled' : 'outlined'
+              })}
             />
             
             {isOverCapacity && (
               <Chip
-                size="small"
-                label="SOBRECARGA"
-                color="error"
-                variant="filled"
+                {...sanitizeChipProps({
+                  size: "small",
+                  label: "SOBRECARGA",
+                  color: "error",
+                  variant: "filled"
+                })}
               />
             )}
             
             {chamber && (
               <Chip
-                size="small"
-                label={chamber.name}
-                variant="outlined"
+                {...sanitizeChipProps({
+                  size: "small",
+                  label: chamber.name,
+                  variant: "outlined"
+                })}
               />
             )}
           </Stack>

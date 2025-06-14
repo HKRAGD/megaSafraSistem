@@ -18,6 +18,7 @@ import {
 import { useController, Control, FieldPath, FieldValues } from 'react-hook-form';
 import { SeedType } from '../../../types';
 import { useSeedTypes } from '../../../hooks/useSeedTypes';
+import { safeGetTagProps, sanitizeChipProps } from '../../../utils/chipUtils';
 
 // ============================================================================
 // INTERFACES
@@ -155,8 +156,11 @@ export const SeedTypeSelector = <
     return option.id === value.id;
   };
 
-  const renderOption = (props: any, option: SeedTypeOption) => (
-    <li {...props}>
+  const renderOption = (props: any, option: SeedTypeOption) => {
+    // Sanitizar props para evitar erro "onClick is not a function"
+    const safeProps = sanitizeChipProps(props);
+    return (
+      <li {...safeProps}>
       <ListItemAvatar>
         <Avatar
           sx={{ 
@@ -189,20 +193,26 @@ export const SeedTypeSelector = <
         }
       />
     </li>
-  );
+    );
+  };
 
   const renderTags = (tagValue: SeedTypeOption[], getTagProps: any) =>
-    tagValue.map((option, index) => (
-      <Chip
-        {...getTagProps({ index })}
-        key={option.id}
-        label={option.name}
-        size="small"
-        avatar={<Avatar><SeedIcon /></Avatar>}
-        color="primary"
-        variant="outlined"
-      />
-    ));
+    tagValue.map((option, index) => {
+      // Usar função utilitária para garantir props seguras
+      const safeTagProps = safeGetTagProps(getTagProps, index);
+      
+      return (
+        <Chip
+          {...safeTagProps}
+          key={option.id}
+          label={option.name}
+          size="small"
+          avatar={<Avatar><SeedIcon /></Avatar>}
+          color="primary"
+          variant="outlined"
+        />
+      );
+    });
 
   // ============================================================================
   // VALUE CONVERSION

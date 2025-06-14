@@ -27,6 +27,7 @@ import { FormSection } from './FormSection';
 import { LocationStatusIndicator } from './LocationStatusIndicator';
 import { LocationTreeNavigation } from '../../../../components/ui/LocationTreeNavigation';
 import { SeedType, Chamber, LocationWithChamber, CreateProductFormData } from '../../../../types';
+import { sanitizeChipProps } from '../../../../utils/chipUtils';
 
 interface NewProductFormProps {
   seedTypes: SeedType[];
@@ -240,10 +241,12 @@ export const NewProductForm: React.FC<NewProductFormProps> = ({
                   Peso Total Calculado
                 </Typography>
                 <Chip 
-                  label={`${totalWeight.toFixed(3)} kg`}
-                  color="primary"
-                  variant="outlined"
-                  size="medium"
+                  {...sanitizeChipProps({
+                    label: `${totalWeight.toFixed(3)} kg`,
+                    color: "primary",
+                    variant: "outlined",
+                    size: "medium"
+                  })}
                 />
               </Box>
             </Box>

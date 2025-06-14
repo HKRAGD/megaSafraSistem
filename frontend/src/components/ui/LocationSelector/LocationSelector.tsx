@@ -21,6 +21,7 @@ import { Location } from '../../../types';
 import { useLocations } from '../../../hooks/useLocations';
 import { LocationHierarchyDisplay } from '../LocationHierarchyDisplay';
 import { formatarLocalizacaoCompleta, gerarTextoBusca } from '../../../utils/locationUtils';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 
 // ============================================================================
 // INTERFACES
@@ -230,8 +231,11 @@ export const LocationSelector = <
     const warning = getCapacityWarning(location);
     const capacityPercentage = (location.currentWeightKg / location.maxCapacityKg) * 100;
     
+    // Sanitizar props para evitar erro "onClick is not a function"
+    const safeProps = sanitizeChipProps(props);
+    
     return (
-      <Box component="li" {...props} key={location.id}>
+      <Box component="li" {...safeProps} key={location.id}>
         <Box display="flex" alignItems="center" gap={2}>
           <Box>
             {!location.isOccupied ? (

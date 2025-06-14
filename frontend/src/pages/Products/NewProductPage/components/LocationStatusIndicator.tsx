@@ -11,6 +11,7 @@ import {
   Error as OccupiedIcon,
 } from '@mui/icons-material';
 import { LocationWithChamber } from '../../../../types';
+import { sanitizeChipProps } from '../../../../utils/chipUtils';
 
 interface LocationStatusIndicatorProps {
   selectedLocation: LocationWithChamber | null;
@@ -79,10 +80,12 @@ export const LocationStatusIndicator: React.FC<LocationStatusIndicatorProps> = (
           </Typography>
         </Box>
         <Chip 
-          label="OCUPADA" 
-          color="error" 
-          variant="filled" 
-          size="small"
+          {...sanitizeChipProps({
+            label: "OCUPADA",
+            color: "error",
+            variant: "filled",
+            size: "small"
+          })}
         />
       </Box>
     );
@@ -124,10 +127,12 @@ export const LocationStatusIndicator: React.FC<LocationStatusIndicatorProps> = (
         </Stack>
       </Box>
       <Chip 
-        label="DISPONÍVEL" 
-        color="success" 
-        variant="filled" 
-        size="small"
+        {...sanitizeChipProps({
+          label: "DISPONÍVEL",
+          color: "success",
+          variant: "filled",
+          size: "small"
+        })}
       />
     </Box>
   );

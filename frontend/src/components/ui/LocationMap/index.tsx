@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import { Chamber, LocationWithChamber } from '../../../types';
 import { numeroParaLetra, letraParaNumero } from '../../../utils/locationUtils';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 
 interface LocationMap3DProps {
   chambers: Chamber[];
@@ -206,20 +207,26 @@ export const LocationMap3D: React.FC<LocationMap3DProps> = ({
           {/* Estatísticas do Andar */}
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
             <Chip
-              icon={<LayersIcon />}
-              label={`Total: ${floorStats.total}`}
-              color="default"
-              size="small"
+              {...sanitizeChipProps({
+                icon: <LayersIcon />,
+                label: `Total: ${floorStats.total}`,
+                color: "default",
+                size: "small"
+              })}
             />
             <Chip
-              label={`Disponíveis: ${floorStats.available}`}
-              color="success"
-              size="small"
+              {...sanitizeChipProps({
+                label: `Disponíveis: ${floorStats.available}`,
+                color: "success",
+                size: "small"
+              })}
             />
             <Chip
-              label={`Ocupadas: ${floorStats.occupied}`}
-              color="error"
-              size="small"
+              {...sanitizeChipProps({
+                label: `Ocupadas: ${floorStats.occupied}`,
+                color: "error",
+                size: "small"
+              })}
             />
           </Box>
         </Box>

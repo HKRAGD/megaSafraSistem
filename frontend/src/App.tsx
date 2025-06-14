@@ -7,11 +7,9 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { Loading } from './components/common/Loading';
 import { APP_CONFIG } from './config/app';
-
-// Import debug script para desenvolvimento
-if (process.env.NODE_ENV === 'development') {
-  import('./utils/debugSession.js');
-}
+import ChipErrorBoundary from './components/common/ChipErrorBoundary';
+// Sistema de debug avançado para Chips (automático em desenvolvimento)
+import './utils/debugInit';
 
 // Lazy loading de páginas para melhorar performance inicial
 const LoginPage = React.lazy(() => import('./pages/Login/LoginPage').then(module => ({ default: module.LoginPage })));
@@ -83,7 +81,8 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
+        <ChipErrorBoundary>
+          <Router>
           <Suspense fallback={<Loading variant="page" text="Carregando aplicação..." />}>
             <Routes>
               {/* Rota pública de login */}
@@ -202,6 +201,7 @@ function App() {
             </Routes>
           </Suspense>
         </Router>
+        </ChipErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
   );

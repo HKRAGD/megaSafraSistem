@@ -30,6 +30,7 @@ import {
   FilterList as FilterIcon
 } from '@mui/icons-material';
 import { Chamber, LocationWithChamber } from '../../../types';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 
 interface LocationMap3DAdvancedProps {
   allLocations: LocationWithChamber[];
@@ -275,10 +276,12 @@ export const LocationMap3DAdvanced: React.FC<LocationMap3DAdvancedProps> = ({
                       <CheckCircle color="success" fontSize="small" />
                       <span>{chamber.name}</span>
                       <Chip 
-                        label={`${allLocations.filter(l => l.chamber?.name === chamber.name).length} localizações`}
-                        size="small"
-                        color="success"
-                        variant="outlined"
+                        {...sanitizeChipProps({
+                          label: `${allLocations.filter(l => l.chamber?.name === chamber.name).length} localizações`,
+                          size: "small",
+                          color: "success",
+                          variant: "outlined"
+                        })}
                       />
                     </Stack>
                   </MenuItem>
@@ -299,19 +302,25 @@ export const LocationMap3DAdvanced: React.FC<LocationMap3DAdvancedProps> = ({
         action={
           <Stack direction="row" spacing={1}>
             <Chip 
-              label={`${stats.totalLocations} total`} 
-              color="primary" 
-              size="small" 
+              {...sanitizeChipProps({
+                label: `${stats.totalLocations} total`,
+                color: "primary",
+                size: "small"
+              })}
             />
             <Chip 
-              label={`${stats.availableCount} disponíveis`} 
-              color="success" 
-              size="small" 
+              {...sanitizeChipProps({
+                label: `${stats.availableCount} disponíveis`,
+                color: "success",
+                size: "small"
+              })}
             />
             <Chip 
-              label={`${stats.occupiedCount} ocupadas`} 
-              color="warning" 
-              size="small" 
+              {...sanitizeChipProps({
+                label: `${stats.occupiedCount} ocupadas`,
+                color: "warning",
+                size: "small"
+              })}
             />
           </Stack>
         }
@@ -368,10 +377,12 @@ export const LocationMap3DAdvanced: React.FC<LocationMap3DAdvancedProps> = ({
                       )}
                       <span>{chamber.name}</span>
                       <Chip 
-                        label={`${allLocations.filter(l => l.chamber?.name === chamber.name).length}`}
-                        size="small"
-                        color={hasLocationsForChamber(chamber.name) ? "success" : "error"}
-                        variant="outlined"
+                        {...sanitizeChipProps({
+                          label: `${allLocations.filter(l => l.chamber?.name === chamber.name).length}`,
+                          size: "small",
+                          color: hasLocationsForChamber(chamber.name) ? "success" : "error",
+                          variant: "outlined"
+                        })}
                       />
                     </Stack>
                   </MenuItem>

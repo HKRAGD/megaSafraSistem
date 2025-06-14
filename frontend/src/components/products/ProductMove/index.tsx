@@ -30,6 +30,7 @@ import { ProductWithRelations, Chamber, LocationWithChamber } from '../../../typ
 import { useLocationsWithChambers } from '../../../hooks/useLocationsWithChambers';
 import { useAllLocationsWithChambers } from '../../../hooks/useAllLocationsWithChambers';
 import { useChambers } from '../../../hooks/useChambers';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 import LocationMap3D from '../../ui/LocationMap';
 
 interface ProductMoveProps {
@@ -297,7 +298,7 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
                     {option.label}
                   </Typography>
                   {operationType === option.value && (
-                    <Chip size="small" label="Selecionado" color={option.color as any} />
+                    <Chip {...sanitizeChipProps({ size: "small", label: "Selecionado", color: option.color as any })} />
                   )}
                 </Box>
                 <Typography variant="caption" color="text.secondary">
@@ -402,18 +403,22 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
                   onChange={(event, newValue) => handleLocationSelect(newValue)}
                   options={availableLocationsWithChambers}
                   getOptionLabel={(option) => `${option.code} - ${option.chamber?.name || 'N/A'}`}
-                  renderOption={(props, option) => (
-                    <li {...props}>
-                      <Box>
-                        <Typography variant="body2">
-                          {option.code} - {option.chamber?.name || 'N/A'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Capacidade: {option.currentWeightKg || 0}kg / {option.maxCapacityKg}kg
-                        </Typography>
-                      </Box>
-                    </li>
-                  )}
+                  renderOption={(props, option) => {
+                    // Sanitizar props para evitar erro "onClick is not a function"
+                    const safeProps = sanitizeChipProps(props);
+                    return (
+                      <li {...safeProps}>
+                        <Box>
+                          <Typography variant="body2">
+                            {option.code} - {option.chamber?.name || 'N/A'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Capacidade: {option.currentWeightKg || 0}kg / {option.maxCapacityKg}kg
+                          </Typography>
+                        </Box>
+                      </li>
+                    );
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}

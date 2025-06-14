@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 
 import { BreadcrumbItem, TreeLevel } from '../../../types/locationTree';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 
 interface LocationBreadcrumbProps {
   breadcrumb: BreadcrumbItem[];
@@ -283,11 +284,7 @@ export const LocationBreadcrumb: React.FC<LocationBreadcrumbProps> = ({
         {/* Demais itens visíveis */}
         {visibleItems.slice(1).map((item, index) => {
           const isLast = index === visibleItems.length - 2;
-          return (
-            <React.Fragment key={index}>
-              {renderBreadcrumbItem(item, isLast)}
-            </React.Fragment>
-          );
+          return renderBreadcrumbItem(item, isLast);
         })}
       </Breadcrumbs>
 

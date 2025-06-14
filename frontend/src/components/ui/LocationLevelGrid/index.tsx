@@ -24,8 +24,9 @@ import {
   Thermostat as TempIcon,
   Scale as WeightIcon
 } from '@mui/icons-material';
-
+import SafeChip from '../SafeChip';
 import { LocationTreeItem, TreeLevel, LevelGridProps } from '../../../types/locationTree';
+import { sanitizeChipProps } from '../../../utils/chipUtils';
 
 // Configurações de grid por nível
 const GRID_CONFIGS = {
@@ -185,7 +186,7 @@ const LocationCard: React.FC<LocationCardProps> = ({
         {cardSize !== 'mini' && (
           <Box>
             {/* Chip de ocupação */}
-            <Chip
+            <SafeChip
               label={`${item.stats.occupancyRate.toFixed(0)}% ocupado`}
               size="small"
               sx={{
@@ -253,7 +254,7 @@ const LocationCard: React.FC<LocationCardProps> = ({
 
         {/* Indicador de filhos (se aplicável) */}
         {item.hasChildren && item.childrenCount > 0 && (
-          <Chip
+          <SafeChip
             label={`${item.childrenCount} ${level === 'chamber' ? 'quadras' : 'itens'}`}
             size="small"
             variant="outlined"

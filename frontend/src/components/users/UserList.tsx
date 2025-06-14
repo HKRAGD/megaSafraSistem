@@ -31,6 +31,7 @@ import {
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { User } from '../../types';
+import { sanitizeChipProps } from '../../utils/chipUtils';
 import { Loading } from '../common/Loading';
 
 interface UserListProps {
@@ -192,7 +193,7 @@ export const UserList: React.FC<UserListProps> = ({
                         <Typography variant="body2" fontWeight="bold">
                           {user.name}
                           {user.id === currentUserId && (
-                            <Chip label="Você" size="small" sx={{ ml: 1 }} />
+                            <Chip {...sanitizeChipProps({ label: "Você", size: "small", sx: { ml: 1 } })} />
                           )}
                         </Typography>
                       </Box>
@@ -205,10 +206,12 @@ export const UserList: React.FC<UserListProps> = ({
                   
                   <TableCell>
                     <Chip
-                      icon={getRoleIcon(user.role)}
-                      label={getRoleLabel(user.role)}
-                      color={getRoleColor(user.role) as any}
-                      size="small"
+                      {...sanitizeChipProps({
+                        icon: getRoleIcon(user.role),
+                        label: getRoleLabel(user.role),
+                        color: getRoleColor(user.role) as any,
+                        size: "small"
+                      })}
                     />
                   </TableCell>
                   
