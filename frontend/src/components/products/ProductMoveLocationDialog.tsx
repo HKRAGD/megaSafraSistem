@@ -297,7 +297,6 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
           </IconButton>
         </Box>
       </DialogTitle>
-
       <DialogContent>
         {product && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -316,7 +315,11 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
             <FilterIcon /> Filtros
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Câmara</InputLabel>
                 <Select
@@ -333,7 +336,11 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 fullWidth
                 size="small"
@@ -345,7 +352,11 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="body2">Apenas disponíveis:</Typography>
                 <Button
@@ -357,7 +368,11 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
                 </Button>
               </Box>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconButton
                   color={viewMode === 'grid' ? 'primary' : 'default'}
@@ -389,7 +404,13 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
           ) : viewMode === 'grid' ? (
             <Grid container spacing={2}>
               {filteredLocations.map(location => (
-                <Grid item xs={12} sm={6} md={4} key={location.id}>
+                <Grid
+                  key={location.id}
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                    md: 4
+                  }}>
                   <LocationCard location={location} />
                 </Grid>
               ))}
@@ -424,7 +445,6 @@ export const ProductMoveLocationDialog: React.FC<ProductMoveLocationDialogProps>
           </Box>
         )}
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose}>
           Cancelar

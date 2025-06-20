@@ -13,7 +13,7 @@ function getApiBaseUrl(): string {
   
   // IPs configurados
   const localIP = process.env.REACT_APP_LOCAL_IP || '192.168.1.89';
-  const publicIP = process.env.REACT_APP_PUBLIC_IP || '168.90.248.160';
+  const publicIP = process.env.REACT_APP_PUBLIC_IP || '168.90.248.170';
   
   // URLs da API
   const localApiUrl = process.env.REACT_APP_API_URL_LOCAL || `http://${localIP}:3001/api`;

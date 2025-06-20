@@ -21,7 +21,7 @@ export const ProductFormTracking: React.FC<ProductFormTrackingProps> = React.mem
   const { register, control } = form;
 
   return (
-    <Grid item xs={12}>
+    <Grid size={12}>
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -29,7 +29,11 @@ export const ProductFormTracking: React.FC<ProductFormTrackingProps> = React.mem
           </Typography>
           
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 fullWidth
                 label="Número do Lote"
@@ -40,7 +44,11 @@ export const ProductFormTracking: React.FC<ProductFormTrackingProps> = React.mem
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 fullWidth
                 label="Origem"
@@ -51,7 +59,11 @@ export const ProductFormTracking: React.FC<ProductFormTrackingProps> = React.mem
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 fullWidth
                 label="Fornecedor"
@@ -62,7 +74,11 @@ export const ProductFormTracking: React.FC<ProductFormTrackingProps> = React.mem
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <Controller
                 name="tracking.qualityGrade"
                 control={control}

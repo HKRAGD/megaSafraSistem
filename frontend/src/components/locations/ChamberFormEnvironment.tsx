@@ -37,7 +37,7 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
   return (
     <>
       {/* Condições Atuais da Câmara */}
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Divider sx={{ my: 2 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <SensorsIcon />
@@ -49,10 +49,11 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           Registre as condições ambientais atuais da câmara (leituras dos sensores)
         </Typography>
       </Grid>
-
       <Grid
-        item xs={12} sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <Controller
           name="currentTemperature"
           control={control}
@@ -78,10 +79,11 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <Controller
           name="currentHumidity"
           control={control}
@@ -107,9 +109,8 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       {/* Configurações de Ambiente */}
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Divider sx={{ my: 2 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <ThermostatIcon />
@@ -121,10 +122,11 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           Defina as condições ideais de temperatura e umidade para a câmara
         </Typography>
       </Grid>
-
       <Grid
-        item xs={12} sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <Controller
           name="settings.targetTemperature"
           control={control}
@@ -149,10 +151,11 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <Controller
           name="settings.targetHumidity"
           control={control}
@@ -177,9 +180,8 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       {/* Configurações de Alertas */}
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Divider sx={{ my: 2 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <AlertIcon />
@@ -191,8 +193,7 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           Configure os limites que disparam alertas automáticos
         </Typography>
       </Grid>
-
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Alert severity="info" sx={{ mb: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
             Valores configurados:
@@ -205,10 +206,12 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           </Typography>
         </Alert>
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="settings.alertThresholds.temperatureMin"
           control={control}
@@ -228,10 +231,12 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="settings.alertThresholds.temperatureMax"
           control={control}
@@ -251,10 +256,12 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="settings.alertThresholds.humidityMin"
           control={control}
@@ -274,10 +281,12 @@ export const ChamberFormEnvironment: React.FC<ChamberFormEnvironmentProps> = Rea
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="settings.alertThresholds.humidityMax"
           control={control}

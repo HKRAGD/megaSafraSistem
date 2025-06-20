@@ -53,7 +53,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
 
   return (
     <>
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Divider sx={{ my: 2 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <DimensionsIcon />
@@ -65,10 +65,12 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
           Defina a estrutura hierárquica da câmara: Quadra → Lado → Fila → Andar
         </Typography>
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="dimensions.quadras"
           control={control}
@@ -86,10 +88,12 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="dimensions.lados"
           control={control}
@@ -107,10 +111,12 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="dimensions.filas"
           control={control}
@@ -128,10 +134,12 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
           )}
         />
       </Grid>
-
       <Grid
-        item xs={12} sm={6} md={3}
-      >
+        size={{
+          xs: 12,
+          sm: 6,
+          md: 3
+        }}>
         <Controller
           name="dimensions.andares"
           control={control}
@@ -149,8 +157,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
           )}
         />
       </Grid>
-
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Alert 
           severity={getEstimateColor()} 
           sx={{ mt: 2 }}

@@ -8,17 +8,23 @@ import {
   CardContent,
   LinearProgress,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
   PictureAsPdf as PdfIcon,
   TableChart as ExcelIcon,
 } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 import { useReports } from '../../hooks/useReports';
+import { exportCapacityPdf, exportCapacityExcel } from '../../services/export';
 
 export const CapacityReport: React.FC = () => {
-  const { loading, capacityData, generateCapacityReport, exportToPDF, exportToExcel } = useReports();
+  const { loading, capacityData, generateCapacityReport } = useReports();
   const [error, setError] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
 
   const reportData = capacityData;
 
@@ -39,15 +45,47 @@ export const CapacityReport: React.FC = () => {
     }
   };
 
-  const handleExportPDF = () => {
-    if (reportData) {
-      exportToPDF(reportData, 'capacity');
+  const handleExportPDF = async () => {
+    if (!reportData) {
+      enqueueSnackbar('Nenhum dado disponível para exportação', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      setExportingPdf(true);
+      await exportCapacityPdf(reportData, {
+        reportTitle: 'Relatório de Capacidade das Câmaras',
+        author: 'Sistema de Gerenciamento',
+        filtersApplied: 'Todas as câmaras ativas'
+      });
+      enqueueSnackbar('Relatório PDF exportado com sucesso!', { variant: 'success' });
+    } catch (error: any) {
+      console.error('Erro ao exportar PDF:', error);
+      enqueueSnackbar('Erro ao exportar PDF: ' + (error.message || 'Erro desconhecido'), { variant: 'error' });
+    } finally {
+      setExportingPdf(false);
     }
   };
 
-  const handleExportExcel = () => {
-    if (reportData) {
-      exportToExcel(reportData, 'capacity');
+  const handleExportExcel = async () => {
+    if (!reportData) {
+      enqueueSnackbar('Nenhum dado disponível para exportação', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      setExportingExcel(true);
+      await exportCapacityExcel(reportData, {
+        reportTitle: 'Relatório de Capacidade das Câmaras',
+        author: 'Sistema de Gerenciamento',
+        filtersApplied: 'Todas as câmaras ativas'
+      });
+      enqueueSnackbar('Relatório Excel exportado com sucesso!', { variant: 'success' });
+    } catch (error: any) {
+      console.error('Erro ao exportar Excel:', error);
+      enqueueSnackbar('Erro ao exportar Excel: ' + (error.message || 'Erro desconhecido'), { variant: 'error' });
+    } finally {
+      setExportingExcel(false);
     }
   };
 
@@ -107,20 +145,20 @@ export const CapacityReport: React.FC = () => {
             <>
               <Button
                 variant="outlined"
-                startIcon={<PdfIcon />}
+                startIcon={exportingPdf ? <CircularProgress size={16} /> : <PdfIcon />}
                 onClick={handleExportPDF}
-                disabled={loading}
+                disabled={loading || exportingPdf || exportingExcel}
               >
-                PDF
+                {exportingPdf ? 'Exportando...' : 'PDF'}
               </Button>
               
               <Button
                 variant="outlined"
-                startIcon={<ExcelIcon />}
+                startIcon={exportingExcel ? <CircularProgress size={16} /> : <ExcelIcon />}
                 onClick={handleExportExcel}
-                disabled={loading}
+                disabled={loading || exportingPdf || exportingExcel}
               >
-                Excel
+                {exportingExcel ? 'Exportando...' : 'Excel'}
               </Button>
             </>
           )}

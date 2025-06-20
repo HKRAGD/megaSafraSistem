@@ -176,16 +176,20 @@ export const SeedTypesManager: React.FC = () => {
           Novo Tipo
         </Button>
       </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
       <Grid container spacing={3}>
         {seedTypes.map((seedType) => (
-          <Grid item xs={12} sm={6} md={4} key={seedType.id}>
+          <Grid
+            key={seedType.id}
+            size={{
+              xs: 12,
+              sm: 6,
+              md: 4
+            }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -258,7 +262,7 @@ export const SeedTypesManager: React.FC = () => {
         ))}
 
         {seedTypes.length === 0 && (
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card>
               <CardContent sx={{ textAlign: 'center', py: 6 }}>
                 <SeedIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
@@ -273,7 +277,6 @@ export const SeedTypesManager: React.FC = () => {
           </Grid>
         )}
       </Grid>
-
       {/* Formulário de Criação/Edição */}
       <Dialog open={showForm} onClose={handleCloseForm} maxWidth="sm" fullWidth>
         {/* @ts-ignore - Type compatibility issue with react-hook-form */}
@@ -284,7 +287,7 @@ export const SeedTypesManager: React.FC = () => {
           
           <DialogContent>
             <Grid container spacing={3} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   {...register('name')}
                   label="Nome"
@@ -294,7 +297,7 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   {...register('description')}
                   label="Descrição"
@@ -306,7 +309,11 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <TextField
                   {...register('optimalTemperature')}
                   label="Temperatura Ideal"
@@ -320,7 +327,11 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <TextField
                   {...register('optimalHumidity')}
                   label="Umidade Ideal"
@@ -334,7 +345,7 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   {...register('maxStorageTimeDays')}
                   label="Tempo Máximo de Armazenamento"
@@ -364,7 +375,6 @@ export const SeedTypesManager: React.FC = () => {
           </DialogActions>
         </form>
       </Dialog>
-
       {/* Confirmação de Exclusão */}
       <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
         <DialogTitle>Confirmar Exclusão</DialogTitle>

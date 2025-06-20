@@ -81,13 +81,20 @@ export const Loading: React.FC<LoadingProps> = ({
           <Skeleton variant="text" width="30%" height={40} />
           <Skeleton variant="text" width="60%" height={20} sx={{ mt: 1 }} />
         </Box>
-
         {/* Content skeleton */}
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 8
+            }}>
             <Skeleton variant="rectangular" height={400} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 4
+            }}>
             <Skeleton variant="rectangular" height={200} sx={{ mb: 2 }} />
             <Skeleton variant="rectangular" height={180} />
           </Grid>
@@ -132,7 +139,13 @@ export const Loading: React.FC<LoadingProps> = ({
     return (
       <Grid container spacing={3}>
         {Array.from({ length: count }).map((_, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid
+            key={index}
+            size={{
+              xs: 12,
+              sm: 6,
+              md: 4
+            }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -165,7 +178,13 @@ export const Loading: React.FC<LoadingProps> = ({
         {/* Cards de métricas */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {Array.from({ length: 4 }).map((_, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Grid
+              key={index}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -179,10 +198,13 @@ export const Loading: React.FC<LoadingProps> = ({
             </Grid>
           ))}
         </Grid>
-
         {/* Gráficos e conteúdo */}
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 8
+            }}>
             <Card>
               <CardContent>
                 <Skeleton variant="text" width="30%" height={24} sx={{ mb: 2 }} />
@@ -190,7 +212,11 @@ export const Loading: React.FC<LoadingProps> = ({
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 4
+            }}>
             <Card>
               <CardContent>
                 <Skeleton variant="text" width="40%" height={24} sx={{ mb: 2 }} />

@@ -61,7 +61,7 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
   };
 
   return (
-    <Grid item xs={12}>
+    <Grid size={12}>
       <Card>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -157,7 +157,7 @@ export const ProductFormLocation: React.FC<ProductFormLocationProps> = React.mem
             }}>
               {chambers.length > 0 ? (
                 <Grid container spacing={2} sx={{ p: 2 }}>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Controller
                       name="locationId"
                       control={control}

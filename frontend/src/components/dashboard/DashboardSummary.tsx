@@ -122,7 +122,14 @@ export const DashboardSummary: React.FC = () => {
     return (
       <Grid container spacing={3}>
         {Array.from({ length: 6 }).map((_, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
+          <Grid
+            key={index}
+            size={{
+              xs: 12,
+              sm: 6,
+              md: 4,
+              lg: 2
+            }}>
             <StatsCard
               title="Carregando..."
               value="--"
@@ -139,7 +146,14 @@ export const DashboardSummary: React.FC = () => {
   return (
     <Grid container spacing={3}>
       {stats.map((stat, index) => (
-        <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
+        <Grid
+          key={index}
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4,
+            lg: 2
+          }}>
           <StatsCard
             title={stat.title}
             value={stat.value}

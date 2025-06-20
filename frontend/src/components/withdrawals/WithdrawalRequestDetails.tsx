@@ -241,10 +241,13 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
           <CloseIcon />
         </IconButton>
       </Box>
-
       <Grid container spacing={3}>
         {/* Informações principais */}
-        <Grid item xs={12} md={8}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 8
+          }}>
           <Stack spacing={3}>
             {/* Produto */}
             <Card>
@@ -270,7 +273,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">
                       Tipo de Semente:
                     </Typography>
@@ -278,7 +281,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                       {withdrawal.productId?.seedTypeId?.name || 'N/A'}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">
                       Armazenamento:
                     </Typography>
@@ -286,7 +289,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                       {withdrawal.productId?.storageType || 'N/A'}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">
                       Quantidade Total:
                     </Typography>
@@ -294,7 +297,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                       {withdrawal.productId?.quantity || 0} unidades
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">
                       Peso Total:
                     </Typography>
@@ -317,7 +320,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                   <Divider sx={{ mb: 2 }} />
                   
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <Typography variant="body2" color="text.secondary">
                         Código:
                       </Typography>
@@ -325,7 +328,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                         {withdrawal.productId.locationId.code}
                       </Typography>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <Typography variant="body2" color="text.secondary">
                         Câmara:
                       </Typography>
@@ -348,7 +351,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                 <Divider sx={{ mb: 2 }} />
                 
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">
                       Quantidade Solicitada:
                     </Typography>
@@ -356,7 +359,7 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
                       {withdrawal.quantityRequested || withdrawal.productId?.quantity || 0} unidades
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">
                       Peso Estimado:
                     </Typography>
@@ -396,7 +399,11 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
         </Grid>
 
         {/* Sidebar */}
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Stack spacing={3}>
             {/* Ações */}
             <Card sx={{ backgroundColor: 'primary.50', borderColor: 'primary.200', borderWidth: 1, borderStyle: 'solid' }}>
@@ -530,7 +537,6 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
           </Stack>
         </Grid>
       </Grid>
-
       {/* Dialog de confirmação */}
       <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Confirmar Retirada</DialogTitle>
@@ -570,7 +576,6 @@ export const WithdrawalRequestDetails: React.FC<WithdrawalRequestDetailsProps> =
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Dialog de cancelamento */}
       <Dialog open={cancelDialog} onClose={() => setCancelDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Cancelar Solicitação</DialogTitle>

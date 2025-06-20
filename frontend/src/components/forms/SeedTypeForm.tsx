@@ -128,9 +128,8 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           {error}
         </Alert>
       )}
-
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             {...register('name')}
             label="Nome do Tipo de Semente"
@@ -141,7 +140,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             {...register('description')}
             label="Descrição"
@@ -154,7 +153,11 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             {...register('optimalTemperature')}
             label="Temperatura Ótima (°C)"
@@ -166,7 +169,11 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             {...register('optimalHumidity')}
             label="Umidade Ótima (%)"
@@ -178,7 +185,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             {...register('maxStorageTimeDays')}
             label="Tempo Máximo de Armazenamento (dias)"
@@ -191,7 +198,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
         </Grid>
 
         {seedType && (
-          <Grid item xs={12}>
+          <Grid size={12}>
             <FormControlLabel
               control={
                 <Switch
@@ -207,7 +214,6 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           </Grid>
         )}
       </Grid>
-
       <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
         <Button 
           onClick={onClose}

@@ -172,7 +172,6 @@ export const ProductAllocationPage: React.FC = () => {
           Aloque produtos que estão aguardando locação nas câmaras refrigeradas
         </Typography>
       </Box>
-
       {/* Actions */}
       <Box sx={{ mb: 3, display: 'flex', justify: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6">
@@ -190,20 +189,17 @@ export const ProductAllocationPage: React.FC = () => {
           Atualizar
         </Button>
       </Box>
-
       {/* Error Alerts */}
       {productsError && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {productsError}
         </Alert>
       )}
-      
       {allocationError && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={clearError}>
           {allocationError}
         </Alert>
       )}
-
       {/* Empty State */}
       {pendingProducts.length === 0 && !productsLoading && (
         <Card>
@@ -221,12 +217,17 @@ export const ProductAllocationPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
       {/* Product Grid */}
       {pendingProducts.length > 0 && (
         <Grid container spacing={3}>
           {pendingProducts.map((product) => (
-            <Grid item xs={12} md={6} lg={4} key={product.id}>
+            <Grid
+              key={product.id}
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 4
+              }}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   {/* Product Header */}
@@ -349,7 +350,6 @@ export const ProductAllocationPage: React.FC = () => {
           ))}
         </Grid>
       )}
-
       {/* Allocation Dialog */}
       <Dialog
         open={showAllocationDialog}
@@ -373,7 +373,7 @@ export const ProductAllocationPage: React.FC = () => {
 
           <Grid container spacing={3}>
             {/* Navegação em árvore ocupa toda a largura */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Box sx={{ 
                 border: '1px solid', 
                 borderColor: 'divider',
@@ -395,7 +395,7 @@ export const ProductAllocationPage: React.FC = () => {
             </Grid>
 
             {/* Feedback da localização selecionada */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               {selectedLocationId ? (
                 <Alert severity="success">
                   <Typography variant="body2">
@@ -412,7 +412,7 @@ export const ProductAllocationPage: React.FC = () => {
             </Grid>
 
             {/* Campo de observações */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Observações da Alocação (opcional)"
@@ -452,7 +452,6 @@ export const ProductAllocationPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Toast
         open={toastOpen}
         onClose={() => setToastOpen(false)}

@@ -126,132 +126,145 @@ export const UsersPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-        <PageHeader
-          title="Gerenciar Usuários"
-          subtitle="Controle de acesso e permissões do sistema"
-        />
-
-        {/* Breadcrumbs */}
-        <Breadcrumbs sx={{ mb: 3 }}>
-          <Link underline="hover" color="inherit" href="/dashboard">
-            Dashboard
-          </Link>
-          <Typography color="text.primary">Usuários</Typography>
-        </Breadcrumbs>
-
-        {/* Exibir erros */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Cards de estatísticas */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid
-            item xs={12} sm={6} md={2}>
-            <StatsCard
-              title="Total"
-              value={stats.total}
-              icon={GroupIcon}
-              iconColor="primary"
-            />
-          </Grid>
-          <Grid
-            item xs={12} sm={6} md={2}>
-            <StatsCard
-              title="Ativos"
-              value={stats.active}
-              icon={PersonIcon}
-              iconColor="success"
-            />
-          </Grid>
-          <Grid
-            item xs={12} sm={6} md={2}>
-            <StatsCard
-              title="Inativos"
-              value={stats.inactive}
-              icon={PersonIcon}
-              iconColor="error"
-            />
-          </Grid>
-          <Grid
-            item xs={12} sm={6} md={2}>
-            <StatsCard
-              title="Admins"
-              value={stats.admins}
-              icon={SecurityIcon}
-              iconColor="warning"
-            />
-          </Grid>
-          <Grid
-            item xs={12} sm={6} md={2}>
-            <StatsCard
-              title="Operadores"
-              value={stats.operators}
-              icon={PersonIcon}
-              iconColor="info"
-            />
-          </Grid>
-        </Grid>
-
-        {/* Controles */}
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">
-                            Lista de Usuários ({safeUsers.length})
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateUser}
-          >
-            Novo Usuário
-          </Button>
-        </Box>
-
-        {/* Informações importantes */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>Níveis de Permissão no Sistema:</strong>
-          </Typography>
-          <Typography variant="body2" component="div" sx={{ mt: 1 }}>
-            • <strong>Administrador:</strong> Acesso total ao sistema, criar produtos, solicitar retiradas, gerenciar usuários<br/>
-            • <strong>Operador:</strong> Localizar produtos aguardando, confirmar retiradas, mover produtos entre localizações, visualizar relatórios
-          </Typography>
+      <PageHeader
+        title="Gerenciar Usuários"
+        subtitle="Controle de acesso e permissões do sistema"
+      />
+      {/* Breadcrumbs */}
+      <Breadcrumbs sx={{ mb: 3 }}>
+        <Link underline="hover" color="inherit" href="/dashboard">
+          Dashboard
+        </Link>
+        <Typography color="text.primary">Usuários</Typography>
+      </Breadcrumbs>
+      {/* Exibir erros */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
         </Alert>
-
-        {/* Lista de usuários */}
-        <Card>
-          <CardContent>
-            <UserList
-              users={safeUsers}
-              loading={loading}
-              currentUserId={currentUser?.id || ''}
-              onEdit={handleEditUser}
-              onDelete={handleDeleteUser}
-              onToggleStatus={handleToggleStatus}
-              filters={filters}
-              onFiltersChange={setFilters}
-              totalPages={totalPages}
-              currentPage={currentPage}
-              onPageChange={(page) => fetchUsers({ ...filters, page })}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Modal de formulário de usuário */}
-        {showUserForm && (
-          <UserForm
-            user={editingUser}
-            open={showUserForm}
-            onClose={() => {
-              setShowUserForm(false);
-              setEditingUser(null);
-            }}
-            onSubmit={handleSubmitUser}
-            currentUserId={currentUser?.id || ''}
+      )}
+      {/* Cards de estatísticas */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 2
+          }}>
+          <StatsCard
+            title="Total"
+            value={stats.total}
+            icon={GroupIcon}
+            iconColor="primary"
           />
-        )}
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 2
+          }}>
+          <StatsCard
+            title="Ativos"
+            value={stats.active}
+            icon={PersonIcon}
+            iconColor="success"
+          />
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 2
+          }}>
+          <StatsCard
+            title="Inativos"
+            value={stats.inactive}
+            icon={PersonIcon}
+            iconColor="error"
+          />
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 2
+          }}>
+          <StatsCard
+            title="Admins"
+            value={stats.admins}
+            icon={SecurityIcon}
+            iconColor="warning"
+          />
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 2
+          }}>
+          <StatsCard
+            title="Operadores"
+            value={stats.operators}
+            icon={PersonIcon}
+            iconColor="info"
+          />
+        </Grid>
+      </Grid>
+      {/* Controles */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">
+                          Lista de Usuários ({safeUsers.length})
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleCreateUser}
+        >
+          Novo Usuário
+        </Button>
+      </Box>
+      {/* Informações importantes */}
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <Typography variant="body2">
+          <strong>Níveis de Permissão no Sistema:</strong>
+        </Typography>
+        <Typography variant="body2" component="div" sx={{ mt: 1 }}>
+          • <strong>Administrador:</strong> Acesso total ao sistema, criar produtos, solicitar retiradas, gerenciar usuários<br/>
+          • <strong>Operador:</strong> Localizar produtos aguardando, confirmar retiradas, mover produtos entre localizações, visualizar relatórios
+        </Typography>
+      </Alert>
+      {/* Lista de usuários */}
+      <Card>
+        <CardContent>
+          <UserList
+            users={safeUsers}
+            loading={loading}
+            currentUserId={currentUser?.id || ''}
+            onEdit={handleEditUser}
+            onDelete={handleDeleteUser}
+            onToggleStatus={handleToggleStatus}
+            filters={filters}
+            onFiltersChange={setFilters}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={(page) => fetchUsers({ ...filters, page })}
+          />
+        </CardContent>
+      </Card>
+      {/* Modal de formulário de usuário */}
+      {showUserForm && (
+        <UserForm
+          user={editingUser}
+          open={showUserForm}
+          onClose={() => {
+            setShowUserForm(false);
+            setEditingUser(null);
+          }}
+          onSubmit={handleSubmitUser}
+          currentUserId={currentUser?.id || ''}
+        />
+      )}
     </Container>
   );
 }; 

@@ -162,7 +162,11 @@ export const LocationMap3D: React.FC<LocationMap3DProps> = ({
 
           {/* Seleção de Câmara */}
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <FormControl fullWidth>
                 <InputLabel>Câmara</InputLabel>
                 <Select
@@ -183,7 +187,11 @@ export const LocationMap3D: React.FC<LocationMap3DProps> = ({
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <FormControl fullWidth>
                 <InputLabel>Andar</InputLabel>
                 <Select
@@ -393,7 +401,7 @@ export const LocationMap3D: React.FC<LocationMap3DProps> = ({
             </Typography>
                          <Paper sx={{ p: 2, bgcolor: 'primary.50' }}>
                <Grid container spacing={2}>
-                 <Grid item xs={6}>
+                 <Grid size={6}>
                    <Typography variant="caption" display="block">
                      Código
                    </Typography>
@@ -401,7 +409,7 @@ export const LocationMap3D: React.FC<LocationMap3DProps> = ({
                      {selectedLocation.code}
                    </Typography>
                  </Grid>
-                 <Grid item xs={6}>
+                 <Grid size={6}>
                    <Typography variant="caption" display="block">
                      Capacidade
                    </Typography>

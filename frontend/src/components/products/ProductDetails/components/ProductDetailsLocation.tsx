@@ -34,7 +34,11 @@ export const ProductDetailsLocation: React.FC<ProductDetailsLocationProps> = Rea
   const progressColor = getCapacityColor(locationInfo.capacityPercentage);
 
   return (
-    <Grid item xs={12} md={6}>
+    <Grid
+      size={{
+        xs: 12,
+        md: 6
+      }}>
       <Card variant="outlined">
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -45,7 +49,7 @@ export const ProductDetailsLocation: React.FC<ProductDetailsLocationProps> = Rea
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="body2" color="text.secondary">
                     Coordenadas
                   </Typography>
@@ -54,7 +58,7 @@ export const ProductDetailsLocation: React.FC<ProductDetailsLocationProps> = Rea
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="body2" color="text.secondary">
                     Câmara
                   </Typography>
@@ -63,7 +67,7 @@ export const ProductDetailsLocation: React.FC<ProductDetailsLocationProps> = Rea
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Capacidade da Localização
                   </Typography>

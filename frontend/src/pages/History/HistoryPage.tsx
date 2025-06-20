@@ -257,7 +257,10 @@ const HistoryPage: React.FC = () => {
           </Typography>
           <Grid container spacing={3}>
             <Grid
-              item xs={12} md={3}>
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 label="Buscar"
                 fullWidth
@@ -267,7 +270,10 @@ const HistoryPage: React.FC = () => {
               />
             </Grid>
             <Grid
-              item xs={12} md={3}>
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 select
                 label="Tipo de Movimentação"
@@ -283,7 +289,10 @@ const HistoryPage: React.FC = () => {
               </TextField>
             </Grid>
             <Grid
-              item xs={12} md={3}>
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 type="date"
                 label="Data Inicial"
@@ -294,7 +303,10 @@ const HistoryPage: React.FC = () => {
               />
             </Grid>
             <Grid
-              item xs={12} md={3}>
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 type="date"
                 label="Data Final"
@@ -327,7 +339,7 @@ const HistoryPage: React.FC = () => {
         {selectedMovement && (
           <Box>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                   {getMovementIcon(selectedMovement.type)}
                   <Typography variant="h6">
@@ -341,7 +353,10 @@ const HistoryPage: React.FC = () => {
               </Grid>
 
               <Grid
-                item xs={12} md={6}>
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Typography variant="subtitle2" color="textSecondary">
                   Data e Hora
                 </Typography>
@@ -351,7 +366,10 @@ const HistoryPage: React.FC = () => {
               </Grid>
 
               <Grid
-                item xs={12} md={6}>
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Typography variant="subtitle2" color="textSecondary">
                   Produto
                 </Typography>
@@ -361,7 +379,10 @@ const HistoryPage: React.FC = () => {
               </Grid>
 
               <Grid
-                item xs={12} md={6}>
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Typography variant="subtitle2" color="textSecondary">
                   Quantidade
                 </Typography>
@@ -371,7 +392,10 @@ const HistoryPage: React.FC = () => {
               </Grid>
 
               <Grid
-                item xs={12} md={6}>
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Typography variant="subtitle2" color="textSecondary">
                   Peso
                 </Typography>
@@ -382,7 +406,10 @@ const HistoryPage: React.FC = () => {
 
               {selectedMovement.fromLocationId && (
                 <Grid
-                  item xs={12} md={6}>
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
                   <Typography variant="subtitle2" color="textSecondary">
                     Localização Origem
                   </Typography>
@@ -394,7 +421,10 @@ const HistoryPage: React.FC = () => {
 
               {selectedMovement.toLocationId && (
                 <Grid
-                  item xs={12} md={6}>
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
                   <Typography variant="subtitle2" color="textSecondary">
                     Localização Destino
                   </Typography>
@@ -404,7 +434,7 @@ const HistoryPage: React.FC = () => {
                 </Grid>
               )}
 
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Typography variant="subtitle2" color="textSecondary">
                   Usuário Responsável
                 </Typography>
@@ -414,7 +444,7 @@ const HistoryPage: React.FC = () => {
               </Grid>
 
               {selectedMovement.reason && (
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="subtitle2" color="textSecondary">
                     Motivo
                   </Typography>
@@ -425,7 +455,7 @@ const HistoryPage: React.FC = () => {
               )}
 
               {selectedMovement.notes && (
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="subtitle2" color="textSecondary">
                     Observações
                   </Typography>

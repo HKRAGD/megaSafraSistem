@@ -1,65 +1,15 @@
-GET http://192.168.1.89:3001/api/reports/inventory?status=AGUARDANDO_LOCACAO 500 (Internal Server Error)
-dispatchXhrRequest @ xhr.js:175
-xhr @ xhr.js:13
-dispatchRequest @ dispatchRequest.js:43
-Promise.then
-_request @ Axios.js:143
-request @ Axios.js:39
-Axios.<computed> @ Axios.js:183
-wrap @ bind.js:5
-apiGet @ api.ts:300
-getInventoryReport @ reportService.ts:6
-(anonymous) @ useReports.ts:204
-handleGenerateReport @ InventoryReport.tsx:133
-onClick @ InventoryReport.tsx:156
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ GET /reports/inventory {status: 500, data: {…}}
-console.error @ chipUtils.ts:213
-(anonymous) @ api.ts:169
-Promise.then
-_request @ Axios.js:143
-request @ Axios.js:39
-Axios.<computed> @ Axios.js:183
-wrap @ bind.js:5
-apiGet @ api.ts:300
-getInventoryReport @ reportService.ts:6
-(anonymous) @ useReports.ts:204
-handleGenerateReport @ InventoryReport.tsx:133
-onClick @ InventoryReport.tsx:156
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 🔥 Erro interno do servidor
-console.error @ chipUtils.ts:213
-(anonymous) @ api.ts:237
-Promise.then
-_request @ Axios.js:143
-request @ Axios.js:39
-Axios.<computed> @ Axios.js:183
-wrap @ bind.js:5
-apiGet @ api.ts:300
-getInventoryReport @ reportService.ts:6
-(anonymous) @ useReports.ts:204
-handleGenerateReport @ InventoryReport.tsx:133
-onClick @ InventoryReport.tsx:156
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ gerar relatório de estoque: AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_RESPONSE"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 30000, …}message: "Request failed with status code 500"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 30000, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: {…}, status: 500, statusText: 'Internal Server Error', headers: AxiosHeaders, config: {…}, …}status: 500stack: "AxiosError: Request failed with status code 500\n    at settle (http://192.168.1.89:3000/static/js/bundle.js:33126:12)\n    at XMLHttpRequest.onloadend (http://192.168.1.89:3000/static/js/bundle.js:31753:66)\n    at Axios.request (http://192.168.1.89:3000/static/js/bundle.js:32252:41)\n    at async apiGet (http://192.168.1.89:3000/static/js/bundle.js:76727:20)\n    at async http://192.168.1.89:3000/static/js/src_pages_Reports_ReportsPage_tsx-node_modules_mui_material_node_modules_mui_system_esm_style-82bfa0.chunk.js:4534:24\n    at async handleGenerateReport (http://192.168.1.89:3000/static/js/src_pages_Reports_ReportsPage_tsx-node_modules_mui_material_node_modules_mui_system_esm_style-82bfa0.chunk.js:2642:5)"[[Prototype]]: Error
+ReferenceError: Cannot access 'formatUtils' before initialization
+    at Module.formatUtils (expirationExport.ts:358:1)
+    at ./src/services/export/inventoryExport.ts (inventoryExport.ts:26:1)
+    at options.factory (react refresh:37:1)
+    at __webpack_require__ (bootstrap:22:1)
+    at fn (hot module replacement:61:1)
+    at hotRequire (react refresh:20:1)
+    at ./src/services/export/index.ts (expirationExport.ts:358:1)
+    at options.factory (react refresh:37:1)
+    at __webpack_require__ (bootstrap:22:1)
+    at fn (hot module replacement:61:1)
+
+The above error occurred in one of your React components.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ChipErrorBoundary.

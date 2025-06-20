@@ -20,10 +20,6 @@ interface UseReportsReturn {
   generateCapacityReport: () => Promise<any>;
   generateExecutiveReport: () => Promise<any>;
   
-  // Funções de exportação
-  exportToPDF: (data: any, type: string) => Promise<void>;
-  exportToExcel: (data: any, type: string) => Promise<void>;
-  
   clearError: () => void;
 }
 
@@ -458,16 +454,6 @@ export const useReports = (): UseReportsReturn => {
     }
   }, [handleError, clearError]);
 
-  // Funções de exportação (placeholder - implementação completa futura)
-  const exportToPDF = useCallback(async (data: any, type: string) => {
-    console.log(`📄 Exportando ${type} para PDF...`);
-    // TODO: Implementar exportação PDF com jsPDF
-  }, []);
-
-  const exportToExcel = useCallback(async (data: any, type: string) => {
-    console.log(`📊 Exportando ${type} para Excel...`);
-    // TODO: Implementar exportação Excel com xlsx
-  }, []);
 
   return {
     loading,
@@ -486,10 +472,6 @@ export const useReports = (): UseReportsReturn => {
     generateExpirationReport,
     generateCapacityReport,
     generateExecutiveReport,
-    
-    // Funções de exportação
-    exportToPDF,
-    exportToExcel,
     
     clearError,
   };

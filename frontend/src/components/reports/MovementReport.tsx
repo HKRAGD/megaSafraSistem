@@ -21,6 +21,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -30,6 +31,7 @@ import {
 import { useReports } from '../../hooks/useReports';
 import { useChambers } from '../../hooks/useChambers';
 import { formatWeight } from '../../utils/displayHelpers';
+import { exportMovementsPdf, exportMovementsExcel } from '../../services/export/movementsExport';
 
 // Funções auxiliares para mapear dados relacionais
 const getProductName = (movement: any) => {
@@ -83,8 +85,14 @@ const getUserName = (movement: any) => {
 };
 
 export const MovementReport: React.FC = () => {
-  const { loading, movementData, generateMovementReport, exportToPDF, exportToExcel } = useReports();
+  const { loading, movementData, generateMovementReport } = useReports();
   const { chambers, loading: chambersLoading } = useChambers();
+  
+  const showSnackbar = (message: string, variant: 'success' | 'error' = 'success') => {
+    console.log(`${variant.toUpperCase()}: ${message}`);
+    // TODO: Implementar notificação visual se necessário
+  };
+  const [exportLoading, setExportLoading] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -110,15 +118,61 @@ export const MovementReport: React.FC = () => {
     console.log('🔍 DEBUG MovementReport - Result:', result);
   };
 
-  const handleExportPDF = () => {
-    if (reportData) {
-      exportToPDF(reportData, 'movements');
+  const buildFiltersDescription = () => {
+    const parts = [];
+    if (filters.startDate) parts.push(`Data inicial: ${filters.startDate}`);
+    if (filters.endDate) parts.push(`Data final: ${filters.endDate}`);
+    if (filters.type) parts.push(`Tipo: ${getMovementTypeLabel(filters.type)}`);
+    if (filters.chamberId) {
+      const chamber = chambers.find(c => c.id === filters.chamberId);
+      if (chamber) parts.push(`Câmara: ${chamber.name}`);
+    }
+    return parts.length > 0 ? parts.join(', ') : 'Nenhum filtro aplicado';
+  };
+
+  const handleExportPDF = async () => {
+    if (!reportData?.movements?.length) {
+      showSnackbar('Não há dados para exportar', 'error');
+      return;
+    }
+    
+    setExportLoading(true);
+    try {
+      await exportMovementsPdf(reportData.movements, {
+        reportTitle: 'Relatório de Movimentações',
+        filtersApplied: buildFiltersDescription(),
+        author: 'Sistema de Câmaras Refrigeradas',
+        includeMetadata: true
+      });
+      showSnackbar('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      showSnackbar('Erro ao gerar relatório PDF. Tente novamente.', 'error');
+    } finally {
+      setExportLoading(false);
     }
   };
 
-  const handleExportExcel = () => {
-    if (reportData) {
-      exportToExcel(reportData, 'movements');
+  const handleExportExcel = async () => {
+    if (!reportData?.movements?.length) {
+      showSnackbar('Não há dados para exportar', 'error');
+      return;
+    }
+    
+    setExportLoading(true);
+    try {
+      await exportMovementsExcel(reportData.movements, {
+        reportTitle: 'Relatório de Movimentações',
+        filtersApplied: buildFiltersDescription(),
+        author: 'Sistema de Câmaras Refrigeradas',
+        excelSheetName: 'Movimentações'
+      });
+      showSnackbar('Planilha Excel gerada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      showSnackbar('Erro ao gerar planilha Excel. Tente novamente.', 'error');
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -163,18 +217,18 @@ export const MovementReport: React.FC = () => {
             <>
               <Button
                 variant="outlined"
-                startIcon={<PdfIcon />}
+                startIcon={exportLoading ? <CircularProgress size={16} /> : <PdfIcon />}
                 onClick={handleExportPDF}
-                disabled={loading || chambersLoading}
+                disabled={loading || chambersLoading || exportLoading}
               >
                 PDF
               </Button>
               
               <Button
                 variant="outlined"
-                startIcon={<ExcelIcon />}
+                startIcon={exportLoading ? <CircularProgress size={16} /> : <ExcelIcon />}
                 onClick={handleExportExcel}
-                disabled={loading || chambersLoading}
+                disabled={loading || chambersLoading || exportLoading}
               >
                 Excel
               </Button>
@@ -182,7 +236,6 @@ export const MovementReport: React.FC = () => {
           )}
         </Box>
       </Box>
-
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -190,7 +243,11 @@ export const MovementReport: React.FC = () => {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 type="date"
                 label="Data Inicial"
@@ -202,7 +259,11 @@ export const MovementReport: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 type="date"
                 label="Data Final"
@@ -214,7 +275,11 @@ export const MovementReport: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Movimentação</InputLabel>
                 <Select
@@ -231,7 +296,11 @@ export const MovementReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Câmara</InputLabel>
                 <Select
@@ -252,19 +321,16 @@ export const MovementReport: React.FC = () => {
           </Grid>
         </CardContent>
       </Card>
-
       {(loading || chambersLoading) && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
       )}
-
       {!reportData && !loading && !chambersLoading && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Clique em "Atualizar" para gerar o relatório de movimentações
         </Alert>
       )}
-
       {reportData && !loading && (
         <Card>
           <CardContent>
@@ -273,7 +339,12 @@ export const MovementReport: React.FC = () => {
             </Typography>
             
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
@@ -286,7 +357,12 @@ export const MovementReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="success.main">
@@ -299,7 +375,12 @@ export const MovementReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="error.main">
@@ -312,7 +393,12 @@ export const MovementReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="info.main">

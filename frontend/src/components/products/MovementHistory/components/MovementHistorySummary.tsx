@@ -26,7 +26,11 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
         Resumo do período
       </Typography>
       <Grid container spacing={2}>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Total de movimentações
           </Typography>
@@ -34,7 +38,11 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
             {stats.total}
           </Typography>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Entradas
           </Typography>
@@ -42,7 +50,11 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
             {stats.entry}
           </Typography>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Saídas
           </Typography>
@@ -50,7 +62,11 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
             {stats.exit}
           </Typography>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Transferências
           </Typography>
@@ -59,10 +75,13 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
           </Typography>
         </Grid>
       </Grid>
-      
       {/* Segunda linha com totais */}
       <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Ajustes
           </Typography>
@@ -70,7 +89,11 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
             {stats.adjustment}
           </Typography>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Peso Total
           </Typography>
@@ -78,7 +101,11 @@ export const MovementHistorySummary: React.FC<MovementHistorySummaryProps> = Rea
             {stats.totalWeight.toFixed(2)} kg
           </Typography>
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid
+          size={{
+            xs: 6,
+            sm: 3
+          }}>
           <Typography variant="body2" color="text.secondary">
             Quantidade Total
           </Typography>

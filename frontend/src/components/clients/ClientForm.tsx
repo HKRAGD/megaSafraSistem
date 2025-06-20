@@ -204,18 +204,21 @@ export const ClientForm: React.FC<ClientFormProps> = ({
       <DialogTitle>
         {title || (client ? 'Editar Cliente' : 'Novo Cliente')}
       </DialogTitle>
-      
       <DialogContent dividers>
         <Box sx={{ py: 2 }}>
           <Grid container spacing={3}>
             {/* Informações Básicas */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="h6" gutterBottom>
                 Informações Básicas
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Nome *"
                 fullWidth
@@ -227,7 +230,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth>
                 <InputLabel>Tipo de Documento *</InputLabel>
                 <Select
@@ -242,7 +249,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 label={`${formData.documentType} *`}
                 fullWidth
@@ -255,7 +266,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Email"
                 type="email"
@@ -268,7 +283,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Telefone"
                 fullWidth
@@ -279,14 +298,18 @@ export const ClientForm: React.FC<ClientFormProps> = ({
             </Grid>
 
             {/* Endereço */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Endereço
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={8}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 8
+              }}>
               <TextField
                 label="Rua/Avenida"
                 fullWidth
@@ -296,7 +319,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="Número"
                 fullWidth
@@ -306,7 +333,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Complemento"
                 fullWidth
@@ -316,7 +347,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Bairro"
                 fullWidth
@@ -326,7 +361,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="Cidade"
                 fullWidth
@@ -336,7 +375,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="Estado"
                 fullWidth
@@ -346,7 +389,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="CEP"
                 fullWidth
@@ -357,7 +404,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
             </Grid>
 
             {/* Observações */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <TextField
                 label="Observações"
@@ -378,7 +425,6 @@ export const ClientForm: React.FC<ClientFormProps> = ({
           )}
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} disabled={loading}>
           Cancelar

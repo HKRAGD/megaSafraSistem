@@ -21,7 +21,11 @@ export const MovementHistoryFilters: React.FC<MovementHistoryFiltersProps> = Rea
   return (
     <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <FormControl fullWidth size="small">
             <InputLabel>Tipo de Movimentação</InputLabel>
             <Select
@@ -38,7 +42,11 @@ export const MovementHistoryFilters: React.FC<MovementHistoryFiltersProps> = Rea
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <FormControl fullWidth size="small">
             <InputLabel>Período</InputLabel>
             <Select

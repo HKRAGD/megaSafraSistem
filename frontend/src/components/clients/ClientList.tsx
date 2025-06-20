@@ -136,7 +136,11 @@ export const ClientList: React.FC<ClientListProps> = ({
             </Box>
 
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Typography variant="body2" color="text.secondary">
                     <strong>{client.documentType}:</strong> {formatDocument(client.document, client.documentType)}
@@ -162,7 +166,11 @@ export const ClientList: React.FC<ClientListProps> = ({
                 )}
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 {client.address && (client.address.city || client.address.state) && (
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
                     <LocationIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary', mt: 0.5 }} />
@@ -215,7 +223,11 @@ export const ClientList: React.FC<ClientListProps> = ({
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="Buscar clientes"
                 fullWidth
@@ -233,7 +245,11 @@ export const ClientList: React.FC<ClientListProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Documento</InputLabel>
                 <Select
@@ -248,7 +264,11 @@ export const ClientList: React.FC<ClientListProps> = ({
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -263,7 +283,11 @@ export const ClientList: React.FC<ClientListProps> = ({
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 2
+              }}>
               <Button
                 variant="outlined"
                 fullWidth
@@ -276,7 +300,6 @@ export const ClientList: React.FC<ClientListProps> = ({
           </Grid>
         </CardContent>
       </Card>
-
       {/* Lista de Clientes */}
       {loading ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -303,7 +326,6 @@ export const ClientList: React.FC<ClientListProps> = ({
           {clients.map(renderClientCard)}
         </Box>
       )}
-
       {/* Menu de Ações */}
       <Menu
         anchorEl={anchorEl}
@@ -324,7 +346,6 @@ export const ClientList: React.FC<ClientListProps> = ({
           Excluir
         </DropdownMenuItem>
       </Menu>
-
       {/* Modal de Confirmação de Exclusão */}
       <Modal
         open={deleteModalOpen}

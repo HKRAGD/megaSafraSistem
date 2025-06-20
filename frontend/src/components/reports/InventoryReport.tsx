@@ -20,6 +20,7 @@ import {
   Select,
   MenuItem,
   Paper,
+  Snackbar,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -34,6 +35,7 @@ import { useClients } from '../../hooks/useClients';
 import { useSeedTypes } from '../../hooks/useSeedTypes';
 import { ProductStatus } from '../../types';
 import { formatWeightWithUnit, formatWeight, formatWeightSmart } from '../../utils/displayHelpers';
+import { exportInventoryPdf, exportInventoryExcel } from '../../services/export';
 
 // Funções auxiliares para mapear dados relacionais
 const getSeedTypeName = (product: any) => {
@@ -92,13 +94,19 @@ export const InventoryReport: React.FC = () => {
     status: '',
   });
 
+  // Estados para controle de exportação
+  const [exportLoading, setExportLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error'
+  });
+
   const { 
     loading, 
     error, 
     inventoryData: reportData, 
-    generateInventoryReport, 
-    exportToPDF, 
-    exportToExcel 
+    generateInventoryReport
   } = useReports();
 
   // Use useDashboard para dados de resumo
@@ -133,14 +141,90 @@ export const InventoryReport: React.FC = () => {
     await generateInventoryReport(reportFilters);
   };
 
-  const handleExportPDF = () => {
-    console.log('Exportar PDF - Feature será implementada');
-    alert('Funcionalidade de exportação será implementada em breve');
+  const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const handleExportExcel = () => {
-    console.log('Exportar Excel - Feature será implementada');
-    alert('Funcionalidade de exportação será implementada em breve');
+  const closeSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const buildFiltersDescription = () => {
+    const appliedFilters = [];
+    
+    if (filters.chamberId) {
+      const chamber = chambers.find(c => c.id === filters.chamberId);
+      appliedFilters.push(`Câmara: ${chamber?.name || filters.chamberId}`);
+    }
+    
+    if (filters.seedTypeId) {
+      const seedType = seedTypes.find(s => s.id === filters.seedTypeId);
+      appliedFilters.push(`Tipo: ${seedType?.name || filters.seedTypeId}`);
+    }
+    
+    if (filters.clientId) {
+      const client = clients.find(c => c.id === filters.clientId);
+      appliedFilters.push(`Cliente: ${client?.name || filters.clientId}`);
+    }
+    
+    if (filters.status) {
+      appliedFilters.push(`Status: ${getStatusLabel(filters.status)}`);
+    }
+    
+    return appliedFilters.length > 0 ? appliedFilters.join(', ') : 'Nenhum filtro aplicado';
+  };
+
+  const handleExportPDF = async () => {
+    if (!reportData?.products?.length) {
+      showSnackbar('Não há dados para exportar', 'error');
+      return;
+    }
+
+    setExportLoading(true);
+    try {
+      await exportInventoryPdf(
+        reportData.products,
+        {
+          reportTitle: 'Relatório de Inventário',
+          filtersApplied: buildFiltersDescription(),
+          author: 'Sistema de Câmaras Refrigeradas',
+          includeMetadata: true
+        }
+      );
+      showSnackbar('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      showSnackbar('Erro ao gerar relatório PDF. Tente novamente.', 'error');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!reportData?.products?.length) {
+      showSnackbar('Não há dados para exportar', 'error');
+      return;
+    }
+
+    setExportLoading(true);
+    try {
+      await exportInventoryExcel(
+        reportData.products,
+        {
+          reportTitle: 'Relatório de Inventário',
+          filtersApplied: buildFiltersDescription(),
+          author: 'Sistema de Câmaras Refrigeradas',
+          excelSheetName: 'Inventário',
+          includeMetadata: true
+        }
+      );
+      showSnackbar('Relatório Excel gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      showSnackbar('Erro ao gerar relatório Excel. Tente novamente.', 'error');
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   return (
@@ -161,24 +245,23 @@ export const InventoryReport: React.FC = () => {
             Atualizar
           </Button>
           <Button
-            startIcon={<PdfIcon />}
+            startIcon={exportLoading ? <CircularProgress size={16} /> : <PdfIcon />}
             onClick={handleExportPDF}
-            disabled={!reportData || loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading}
+            disabled={!reportData || loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading || exportLoading}
             color="error"
           >
             PDF
           </Button>
           <Button
-            startIcon={<ExcelIcon />}
+            startIcon={exportLoading ? <CircularProgress size={16} /> : <ExcelIcon />}
             onClick={handleExportExcel}
-            disabled={!reportData || loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading}
+            disabled={!reportData || loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading || exportLoading}
             color="success"
           >
             Excel
           </Button>
         </Box>
       </Box>
-
       {/* Filtros */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
@@ -188,7 +271,11 @@ export const InventoryReport: React.FC = () => {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Câmara</InputLabel>
                 <Select
@@ -207,7 +294,11 @@ export const InventoryReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Semente</InputLabel>
                 <Select
@@ -226,7 +317,11 @@ export const InventoryReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Cliente</InputLabel>
                 <Select
@@ -245,7 +340,11 @@ export const InventoryReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -266,25 +365,21 @@ export const InventoryReport: React.FC = () => {
           </Grid>
         </CardContent>
       </Card>
-
       {(loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading) && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
       )}
-
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
       {!reportData && !loading && !dashboardLoading && !chambersLoading && !clientsLoading && !seedTypesLoading && !error && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Clique em "Atualizar" para gerar o relatório de inventário
         </Alert>
       )}
-
       {dashboardSummary && !loading && !dashboardLoading && (
         <Card>
           <CardContent>
@@ -293,7 +388,12 @@ export const InventoryReport: React.FC = () => {
             </Typography>
             
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
@@ -306,7 +406,12 @@ export const InventoryReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="success.main">
@@ -319,7 +424,12 @@ export const InventoryReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="info.main">
@@ -332,7 +442,12 @@ export const InventoryReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 3
+                }}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="warning.main">
@@ -351,7 +466,6 @@ export const InventoryReport: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
       {/* Tabela de produtos independente */}
       {reportData && !loading && (
         <Card sx={{ mt: 3 }}>
@@ -412,6 +526,21 @@ export const InventoryReport: React.FC = () => {
           </CardContent>
         </Card>
       )}
+      {/* Snackbar para feedback de exportação */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={closeSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={closeSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }; 

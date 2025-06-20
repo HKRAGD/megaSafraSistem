@@ -23,16 +23,29 @@ import {
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
 import { formatWeight } from '../../utils/displayHelpers';
+import { exportExpirationPdf, exportExpirationExcel } from '../../services/export/expirationExport';
 
 export const ExpirationReport: React.FC = () => {
   const { 
     loading, 
     error, 
     expirationData: reportData, 
-    generateExpirationReport, 
-    exportToPDF, 
-    exportToExcel 
+    generateExpirationReport
   } = useReports();
+  const [exportLoading, setExportLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error'
+  });
+
+  const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const closeSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
 
   const handleGenerateReport = async () => {
     console.log('🔍 DEBUG ExpirationReport - Generating report...');
@@ -75,6 +88,53 @@ export const ExpirationReport: React.FC = () => {
     return 'Normal';
   };
 
+
+  const handleExportPDF = async () => {
+    if (!reportData?.products?.length) {
+      showSnackbar('Não há dados para exportar', 'error');
+      return;
+    }
+    
+    setExportLoading(true);
+    try {
+      await exportExpirationPdf(reportData.products, {
+        reportTitle: 'Relatório de Produtos Próximos ao Vencimento',
+        filtersApplied: 'Produtos com vencimento em até 30 dias',
+        author: 'Sistema de Câmaras Refrigeradas',
+        includeMetadata: true
+      });
+      showSnackbar('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      showSnackbar('Erro ao gerar relatório PDF. Tente novamente.', 'error');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!reportData?.products?.length) {
+      showSnackbar('Não há dados para exportar', 'error');
+      return;
+    }
+    
+    setExportLoading(true);
+    try {
+      await exportExpirationExcel(reportData.products, {
+        reportTitle: 'Relatório de Produtos Próximos ao Vencimento',
+        filtersApplied: 'Produtos com vencimento em até 30 dias',
+        author: 'Sistema de Câmaras Refrigeradas',
+        excelSheetName: 'Expiração'
+      });
+      showSnackbar('Planilha Excel gerada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      showSnackbar('Erro ao gerar planilha Excel. Tente novamente.', 'error');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   // Funções auxiliares para mapear dados relacionais
   const getLocationCode = (product: any) => {
     if (product.locationId && typeof product.locationId === 'object') {
@@ -101,18 +161,18 @@ export const ExpirationReport: React.FC = () => {
             Atualizar
           </Button>
           <Button
-            startIcon={<PdfIcon />}
-            disabled={!reportData || loading}
+            startIcon={exportLoading ? <CircularProgress size={16} /> : <PdfIcon />}
+            disabled={!reportData || loading || exportLoading}
             color="error"
-            onClick={() => reportData && exportToPDF(reportData, 'expiration')}
+            onClick={handleExportPDF}
           >
             PDF
           </Button>
           <Button
-            startIcon={<ExcelIcon />}
-            disabled={!reportData || loading}
+            startIcon={exportLoading ? <CircularProgress size={16} /> : <ExcelIcon />}
+            disabled={!reportData || loading || exportLoading}
             color="success"
-            onClick={() => reportData && exportToExcel(reportData, 'expiration')}
+            onClick={handleExportExcel}
           >
             Excel
           </Button>

@@ -33,7 +33,11 @@ export const ProductDetailsExpiration: React.FC<ProductDetailsExpirationProps> =
   if (!expirationData) return null;
 
   return (
-    <Grid item xs={12} md={6}>
+    <Grid
+      size={{
+        xs: 12,
+        md: 6
+      }}>
       <Card variant="outlined">
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -44,7 +48,7 @@ export const ProductDetailsExpiration: React.FC<ProductDetailsExpirationProps> =
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="body2" color="text.secondary">
                     Data de Entrada
                   </Typography>
@@ -53,7 +57,7 @@ export const ProductDetailsExpiration: React.FC<ProductDetailsExpirationProps> =
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="body2" color="text.secondary">
                     Data de Expiração
                   </Typography>

@@ -24,7 +24,7 @@ export const ProductFormActions: React.FC<ProductFormActionsProps> = React.memo(
   onCancel,
 }) => {
   return (
-    <Grid item xs={12}>
+    <Grid size={12}>
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
         <Button
           variant="outlined"

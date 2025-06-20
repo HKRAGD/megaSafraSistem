@@ -56,26 +56,31 @@ export const DashboardPage: React.FC = () => {
           {isOperator && ' Aqui estão suas tarefas operacionais pendentes.'}
         </Typography>
       </Box>
-
       {/* Error Alert */}
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
       {/* Cards de Resumo */}
       <Box sx={{ mb: 4 }}>
         <DashboardSummary />
       </Box>
-
       {/* Seção Principal */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 8
+          }}>
           <RecentMovements />
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Card elevation={2}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

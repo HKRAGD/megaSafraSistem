@@ -24,7 +24,7 @@ export const ProductFormQuantityWeight: React.FC<ProductFormQuantityWeightProps>
   const { register } = form;
 
   return (
-    <Grid item xs={12}>
+    <Grid size={12}>
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -32,7 +32,11 @@ export const ProductFormQuantityWeight: React.FC<ProductFormQuantityWeightProps>
           </Typography>
           
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 fullWidth
                 type="number"
@@ -46,7 +50,11 @@ export const ProductFormQuantityWeight: React.FC<ProductFormQuantityWeightProps>
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 fullWidth
                 type="number"
@@ -60,7 +68,11 @@ export const ProductFormQuantityWeight: React.FC<ProductFormQuantityWeightProps>
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 fullWidth
                 label="Peso Total"

@@ -581,18 +581,20 @@ export const ProductsPage: React.FC = () => {
           </>
         }
       />
-
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
       {/* Filtros */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 fullWidth
                 label="Buscar produtos"
@@ -608,7 +610,11 @@ export const ProductsPage: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} md={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 2
+              }}>
               <TextField
                 fullWidth
                 select
@@ -626,7 +632,11 @@ export const ProductsPage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 3
+              }}>
               <TextField
                 fullWidth
                 select
@@ -644,7 +654,11 @@ export const ProductsPage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 2
+              }}>
               <TextField
                 fullWidth
                 select
@@ -662,7 +676,11 @@ export const ProductsPage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={1}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 1
+              }}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -675,7 +693,6 @@ export const ProductsPage: React.FC = () => {
           </Grid>
         </CardContent>
       </Card>
-
       {/* Tabela de Produtos */}
       <Card>
         <CardContent>
@@ -715,7 +732,6 @@ export const ProductsPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
-
       {/* FAB para adicionar em mobile */}
       {canCreateProduct && (
         <Fab
@@ -732,7 +748,6 @@ export const ProductsPage: React.FC = () => {
           <AddIcon />
         </Fab>
       )}
-
       {/* Menu de Ações */}
       {selectedProduct && (
         <ProductActionsMenu
@@ -746,7 +761,6 @@ export const ProductsPage: React.FC = () => {
           onDelete={handleRemove}
         />
       )}
-
       {/* Modal de Criação */}
       <Modal
         open={showCreateModal}
@@ -845,7 +859,6 @@ export const ProductsPage: React.FC = () => {
           );
         })()}
       </Modal>
-
       {/* Modal de Detalhes */}
       <Modal
         open={showDetailsModal}
@@ -866,7 +879,6 @@ export const ProductsPage: React.FC = () => {
           />
         )}
       </Modal>
-
       {/* Modal de Edição */}
       <Modal
         open={showEditModal}
@@ -888,7 +900,6 @@ export const ProductsPage: React.FC = () => {
           />
         )}
       </Modal>
-
       {/* Modal de Movimentação */}
       <Modal
         open={showMoveModal}
@@ -913,14 +924,12 @@ export const ProductsPage: React.FC = () => {
           />
         )}
       </Modal>
-
       <Toast
         open={toastOpen}
         onClose={() => setToastOpen(false)}
         message={toastMessage}
         severity={toastSeverity}
       />
-
     </Box>
   );
 }; 

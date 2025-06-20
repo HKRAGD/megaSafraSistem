@@ -119,193 +119,214 @@ const ReportsPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-        <PageHeader
-          title="Relatórios"
-          subtitle="Gere relatórios detalhados e análises do sistema"
-        />
+      <PageHeader
+        title="Relatórios"
+        subtitle="Gere relatórios detalhados e análises do sistema"
+      />
+      {/* Breadcrumbs */}
+      <Breadcrumbs sx={{ mb: 3 }}>
+        <Link underline="hover" color="inherit" href="/dashboard">
+          Dashboard
+        </Link>
+        <Typography color="text.primary">Relatórios</Typography>
+      </Breadcrumbs>
+      {/* Visão geral dos relatórios */}
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <Typography variant="body2">
+          <strong>Dica:</strong> Todos os relatórios podem ser exportados em formato PDF ou Excel. 
+          Use os filtros disponíveis para personalizar suas análises.
+        </Typography>
+      </Alert>
+      {/* Grid de cards dos relatórios */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {availableReports.map((report) => (
+          <Grid
+            key={report.id}
+            size={{
+              xs: 12,
+              sm: 6,
+              md: 4
+            }}>
+            <Card 
+              sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 6,
+                }
+              }}
+              onClick={() => setTabValue(report.tabIndex)}
+            >
+              <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
+                <Box sx={{ mb: 2 }}>
+                  {report.icon}
+                </Box>
+                
+                <Typography variant="h6" gutterBottom>
+                  {report.title}
+                </Typography>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {report.description}
+                </Typography>
 
-        {/* Breadcrumbs */}
-        <Breadcrumbs sx={{ mb: 3 }}>
-          <Link underline="hover" color="inherit" href="/dashboard">
-            Dashboard
-          </Link>
-          <Typography color="text.primary">Relatórios</Typography>
-        </Breadcrumbs>
-
-        {/* Visão geral dos relatórios */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>Dica:</strong> Todos os relatórios podem ser exportados em formato PDF ou Excel. 
-            Use os filtros disponíveis para personalizar suas análises.
-          </Typography>
-        </Alert>
-
-        {/* Grid de cards dos relatórios */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {availableReports.map((report) => (
-            <Grid item xs={12} sm={6} md={4} key={report.id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 6,
-                  }
-                }}
-                onClick={() => setTabValue(report.tabIndex)}
-              >
-                <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
-                  <Box sx={{ mb: 2 }}>
-                    {report.icon}
-                  </Box>
-                  
-                  <Typography variant="h6" gutterBottom>
-                    {report.title}
-                  </Typography>
-                  
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {report.description}
-                  </Typography>
-
-                  <Chip 
-                    label={report.complexity}
-                    color={report.color as any}
-                    size="small"
-                    variant="outlined"
-                  />
-                </CardContent>
-
-                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<ReportIcon />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTabValue(report.tabIndex);
-                    }}
-                  >
-                    Gerar Relatório
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Tabs com os relatórios */}
-        <Card>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={handleTabChange} scrollButtons="auto" variant="scrollable">
-              <Tab 
-                icon={<InventoryIcon />} 
-                label="Estoque" 
-                id="reports-tab-0"
-                aria-controls="reports-tabpanel-0"
-              />
-              <Tab 
-                icon={<MovementIcon />} 
-                label="Movimentações" 
-                id="reports-tab-1"
-                aria-controls="reports-tabpanel-1"
-              />
-              <Tab 
-                icon={<ExpirationIcon />} 
-                label="Vencimentos" 
-                id="reports-tab-2"
-                aria-controls="reports-tabpanel-2"
-              />
-              <Tab 
-                icon={<CapacityIcon />} 
-                label="Capacidade" 
-                id="reports-tab-3"
-                aria-controls="reports-tabpanel-3"
-              />
-              {user?.role === 'ADMIN' && (
-                <Tab 
-                  icon={<ExecutiveIcon />} 
-                  label="Executivo" 
-                  id="reports-tab-4"
-                  aria-controls="reports-tabpanel-4"
+                <Chip 
+                  label={report.complexity}
+                  color={report.color as any}
+                  size="small"
+                  variant="outlined"
                 />
-              )}
-            </Tabs>
-          </Box>
+              </CardContent>
 
-          {/* Conteúdo dos relatórios */}
-          <TabPanel value={tabValue} index={0}>
-            <InventoryReport />
+              <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ReportIcon />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTabValue(report.tabIndex);
+                  }}
+                >
+                  Gerar Relatório
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+      {/* Tabs com os relatórios */}
+      <Card>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={tabValue} onChange={handleTabChange} scrollButtons="auto" variant="scrollable">
+            <Tab 
+              icon={<InventoryIcon />} 
+              label="Estoque" 
+              id="reports-tab-0"
+              aria-controls="reports-tabpanel-0"
+            />
+            <Tab 
+              icon={<MovementIcon />} 
+              label="Movimentações" 
+              id="reports-tab-1"
+              aria-controls="reports-tabpanel-1"
+            />
+            <Tab 
+              icon={<ExpirationIcon />} 
+              label="Vencimentos" 
+              id="reports-tab-2"
+              aria-controls="reports-tabpanel-2"
+            />
+            <Tab 
+              icon={<CapacityIcon />} 
+              label="Capacidade" 
+              id="reports-tab-3"
+              aria-controls="reports-tabpanel-3"
+            />
+            {user?.role === 'ADMIN' && (
+              <Tab 
+                icon={<ExecutiveIcon />} 
+                label="Executivo" 
+                id="reports-tab-4"
+                aria-controls="reports-tabpanel-4"
+              />
+            )}
+          </Tabs>
+        </Box>
+
+        {/* Conteúdo dos relatórios */}
+        <TabPanel value={tabValue} index={0}>
+          <InventoryReport />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <MovementReport />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          <ExpirationReport />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={3}>
+          <CapacityReport />
+        </TabPanel>
+
+        {user?.role === 'ADMIN' && (
+          <TabPanel value={tabValue} index={4}>
+            <ExecutiveReport />
           </TabPanel>
-
-          <TabPanel value={tabValue} index={1}>
-            <MovementReport />
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={2}>
-            <ExpirationReport />
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={3}>
-            <CapacityReport />
-          </TabPanel>
-
-          {user?.role === 'ADMIN' && (
-            <TabPanel value={tabValue} index={4}>
-              <ExecutiveReport />
-            </TabPanel>
-          )}
-        </Card>
-
-        {/* Informações adicionais */}
-        <Card sx={{ mt: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Formatos de Exportação Disponíveis
-            </Typography>
-            
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PdfIcon color="error" />
-                  <Typography variant="body2">
-                    <strong>PDF:</strong> Relatórios formatados para impressão
-                  </Typography>
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TableIcon color="success" />
-                  <Typography variant="body2">
-                    <strong>Excel:</strong> Dados estruturados para análise
-                  </Typography>
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <FilterIcon color="primary" />
-                  <Typography variant="body2">
-                    <strong>Filtros:</strong> Personalize por período e critério
-                  </Typography>
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <DownloadIcon color="info" />
-                  <Typography variant="body2">
-                    <strong>Download:</strong> Salve ou compartilhe facilmente
-                  </Typography>
-                </Box>
-              </Grid>
+        )}
+      </Card>
+      {/* Informações adicionais */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Formatos de Exportação Disponíveis
+          </Typography>
+          
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PdfIcon color="error" />
+                <Typography variant="body2">
+                  <strong>PDF:</strong> Relatórios formatados para impressão
+                </Typography>
+              </Box>
             </Grid>
-          </CardContent>
-        </Card>
+            
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TableIcon color="success" />
+                <Typography variant="body2">
+                  <strong>Excel:</strong> Dados estruturados para análise
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FilterIcon color="primary" />
+                <Typography variant="body2">
+                  <strong>Filtros:</strong> Personalize por período e critério
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DownloadIcon color="info" />
+                <Typography variant="body2">
+                  <strong>Download:</strong> Salve ou compartilhe facilmente
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
     </Container>
   );
 };

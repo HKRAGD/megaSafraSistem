@@ -21,7 +21,7 @@ export const ProductFormAdditional: React.FC<ProductFormAdditionalProps> = React
   const { register, control } = form;
 
   return (
-    <Grid item xs={12}>
+    <Grid size={12}>
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -29,7 +29,11 @@ export const ProductFormAdditional: React.FC<ProductFormAdditionalProps> = React
           </Typography>
           
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <Controller
                 name="expirationDate"
                 control={control}
@@ -50,7 +54,11 @@ export const ProductFormAdditional: React.FC<ProductFormAdditionalProps> = React
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 fullWidth
                 multiline

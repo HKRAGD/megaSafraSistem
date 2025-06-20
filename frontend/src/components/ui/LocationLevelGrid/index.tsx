@@ -349,7 +349,7 @@ export const LocationLevelGrid: React.FC<LevelGridProps> = ({
       >
         {loading ? (
           // Skeletons durante carregamento
-          Array.from({ length: 12 }).map((_, index) => (
+          (Array.from({ length: 12 }).map((_, index) => (
             <LocationCard
               key={`skeleton-${index}`}
               item={{} as LocationTreeItem}
@@ -359,10 +359,10 @@ export const LocationLevelGrid: React.FC<LevelGridProps> = ({
               loading={true}
               cardSize={config.cardSize}
             />
-          ))
+          )))
         ) : (
           // Cards reais
-          data.map((item, index) => {
+          (data.map((item, index) => {
             const isSelected = selectedItemId === item.id;
             
             const cardElement = (
@@ -411,10 +411,9 @@ export const LocationLevelGrid: React.FC<LevelGridProps> = ({
                 {cardElement}
               </div>
             );
-          })
+          }))
         )}
       </Box>
-
       {/* Footer informativo */}
       {!loading && data && data.length > 0 && (
         <Box mt={2} textAlign="center">
