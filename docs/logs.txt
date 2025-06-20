@@ -1,25 +1,17 @@
-POST /products {headers: AxiosHeaders, data: {…}}data: clientId: "6853391f0f88dbaba794cfc1"expirationDate: Sat Jun 21 2025 00:00:00 GMT-0300 (Horário Padrão de Brasília) {}locationId: ""lot: "Teste"name: "Teste Cliente"notes: "Teste cliente"quantity: 1seedTypeId: "6849b66a08caeca0225e94c4"storageType: "saco"weightPerUnit: 50[[Prototype]]: Objectheaders: AxiosHeaders {Accept: 'application/json', Content-Type: 'application/json', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZC…MyOX0.-ThlzpOCA0kwr0v0LZc7bElWbxMZkjGAAycIfv_89gA'}[[Prototype]]: Object
-api.ts:312 
-            
-            
-           POST http://192.168.1.89:3001/api/products 400 (Bad Request)
+GET http://192.168.1.89:3001/api/reports/inventory?status=AGUARDANDO_LOCACAO 500 (Internal Server Error)
 dispatchXhrRequest @ xhr.js:175
 xhr @ xhr.js:13
 dispatchRequest @ dispatchRequest.js:43
 Promise.then
 _request @ Axios.js:143
 request @ Axios.js:39
-httpMethod @ Axios.js:195
+Axios.<computed> @ Axios.js:183
 wrap @ bind.js:5
-apiPost @ api.ts:312
-create @ productService.ts:63
-(anonymous) @ useProducts.ts:227
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1820
-await in (anonymous)
+apiGet @ api.ts:300
+getInventoryReport @ reportService.ts:6
+(anonymous) @ useReports.ts:204
+handleGenerateReport @ InventoryReport.tsx:133
+onClick @ InventoryReport.tsx:156
 executeDispatch @ react-dom-client.development.js:8372
 runWithFiberInDEV @ react-dom-client.development.js:1115
 processDispatchQueue @ react-dom-client.development.js:8400
@@ -28,23 +20,19 @@ batchedUpdates$1 @ react-dom-client.development.js:1963
 dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
 dispatchEvent @ react-dom-client.development.js:10575
 dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ POST /products {status: 400, data: {…}}data: message: "Erro ao criar produto: capacityValidation is not defined"stack: "Error: Erro ao criar produto: capacityValidation is not defined\n    at C:\\Users\\fande\\OneDrive\\Documentos\\IA\\sistemaSementes\\backend\\src\\controllers\\productController.js:362:17\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"status: "fail"[[Prototype]]: Objectstatus: 400[[Prototype]]: Object
+chipUtils.ts:213 ❌ GET /reports/inventory {status: 500, data: {…}}
 console.error @ chipUtils.ts:213
 (anonymous) @ api.ts:169
 Promise.then
 _request @ Axios.js:143
 request @ Axios.js:39
-httpMethod @ Axios.js:195
+Axios.<computed> @ Axios.js:183
 wrap @ bind.js:5
-apiPost @ api.ts:312
-create @ productService.ts:63
-(anonymous) @ useProducts.ts:227
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1820
-await in (anonymous)
+apiGet @ api.ts:300
+getInventoryReport @ reportService.ts:6
+(anonymous) @ useReports.ts:204
+handleGenerateReport @ InventoryReport.tsx:133
+onClick @ InventoryReport.tsx:156
 executeDispatch @ react-dom-client.development.js:8372
 runWithFiberInDEV @ react-dom-client.development.js:1115
 processDispatchQueue @ react-dom-client.development.js:8400
@@ -53,17 +41,19 @@ batchedUpdates$1 @ react-dom-client.development.js:1963
 dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
 dispatchEvent @ react-dom-client.development.js:10575
 dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ Erro ao criar produto: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_REQUEST"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 30000, …}message: "Request failed with status code 400"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 30000, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: {…}, status: 400, statusText: 'Bad Request', headers: AxiosHeaders, config: {…}, …}status: 400stack: "AxiosError: Request failed with status code 400\n    at settle (http://192.168.1.89:3000/static/js/bundle.js:33126:12)\n    at XMLHttpRequest.onloadend (http://192.168.1.89:3000/static/js/bundle.js:31753:66)\n    at Axios.request (http://192.168.1.89:3000/static/js/bundle.js:32252:41)\n    at async apiPost (http://192.168.1.89:3000/static/js/bundle.js:76735:20)\n    at async Object.create (http://192.168.1.89:3000/static/js/src_hooks_useChambers_ts-src_hooks_useProducts_ts.chunk.js:1375:24)\n    at async http://192.168.1.89:3000/static/js/src_hooks_useChambers_ts-src_hooks_useProducts_ts.chunk.js:620:24\n    at async http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:2053:9\n    at async withLoading (http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:432:22)\n    at async onSubmit (http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:1144:7)\n    at async http://192.168.1.89:3000/static/js/vendors-node_modules_mui_material_InputAdornment_InputAdornment_js-node_modules_mui_material_-2a4ae6.chunk.js:2135:9"[[Prototype]]: Error
+chipUtils.ts:213 🔥 Erro interno do servidor
 console.error @ chipUtils.ts:213
-create @ productService.ts:69
-await in create
-(anonymous) @ useProducts.ts:227
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1820
-await in (anonymous)
+(anonymous) @ api.ts:237
+Promise.then
+_request @ Axios.js:143
+request @ Axios.js:39
+Axios.<computed> @ Axios.js:183
+wrap @ bind.js:5
+apiGet @ api.ts:300
+getInventoryReport @ reportService.ts:6
+(anonymous) @ useReports.ts:204
+handleGenerateReport @ InventoryReport.tsx:133
+onClick @ InventoryReport.tsx:156
 executeDispatch @ react-dom-client.development.js:8372
 runWithFiberInDEV @ react-dom-client.development.js:1115
 processDispatchQueue @ react-dom-client.development.js:8400
@@ -72,23 +62,4 @@ batchedUpdates$1 @ react-dom-client.development.js:1963
 dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
 dispatchEvent @ react-dom-client.development.js:10575
 dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ criar produto: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_REQUEST"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 30000, …}message: "Request failed with status code 400"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 30000, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: {…}, status: 400, statusText: 'Bad Request', headers: AxiosHeaders, config: {…}, …}status: 400stack: "AxiosError: Request failed with status code 400\n    at settle (http://192.168.1.89:3000/static/js/bundle.js:33126:12)\n    at XMLHttpRequest.onloadend (http://192.168.1.89:3000/static/js/bundle.js:31753:66)\n    at Axios.request (http://192.168.1.89:3000/static/js/bundle.js:32252:41)\n    at async apiPost (http://192.168.1.89:3000/static/js/bundle.js:76735:20)\n    at async Object.create (http://192.168.1.89:3000/static/js/src_hooks_useChambers_ts-src_hooks_useProducts_ts.chunk.js:1375:24)\n    at async http://192.168.1.89:3000/static/js/src_hooks_useChambers_ts-src_hooks_useProducts_ts.chunk.js:620:24\n    at async http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:2053:9\n    at async withLoading (http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:432:22)\n    at async onSubmit (http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:1144:7)\n    at async http://192.168.1.89:3000/static/js/vendors-node_modules_mui_material_InputAdornment_InputAdornment_js-node_modules_mui_material_-2a4ae6.chunk.js:2135:9"[[Prototype]]: Error
-console.error @ chipUtils.ts:213
-(anonymous) @ useProducts.ts:171
-(anonymous) @ useProducts.ts:242
-await in (anonymous)
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1820
-await in (anonymous)
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 Erro ao criar produto: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_REQUEST"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 30000, …}message: "Request failed with status code 400"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 30000, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: {…}, status: 400, statusText: 'Bad Request', headers: AxiosHeaders, config: {…}, …}status: 400stack: "AxiosError: Request failed with status code 400\n    at settle (http://192.168.1.89:3000/static/js/bundle.js:33126:12)\n    at XMLHttpRequest.onloadend (http://192.168.1.89:3000/static/js/bundle.js:31753:66)\n    at Axios.request (http://192.168.1.89:3000/static/js/bundle.js:32252:41)\n    at async apiPost (http://192.168.1.89:3000/static/js/bundle.js:76735:20)\n    at async Object.create (http://192.168.1.89:3000/static/js/src_hooks_useChambers_ts-src_hooks_useProducts_ts.chunk.js:1375:24)\n    at async http://192.168.1.89:3000/static/js/src_hooks_useChambers_ts-src_hooks_useProducts_ts.chunk.js:620:24\n    at async http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:2053:9\n    at async withLoading (http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:432:22)\n    at async onSubmit (http://192.168.1.89:3000/static/js/src_pages_Products_NewProductPage_index_tsx.chunk.js:1144:7)\n    at async http://192.168.1.89:3000/static/js/vendors-node_modules_mui_material_InputAdornment_InputAdornment_js-node_modules_mui_material_-2a4ae6.chunk.js:2135:9"[[Prototype]]: Error
+chipUtils.ts:213 ❌ gerar relatório de estoque: AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_RESPONSE"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 30000, …}message: "Request failed with status code 500"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 30000, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: {…}, status: 500, statusText: 'Internal Server Error', headers: AxiosHeaders, config: {…}, …}status: 500stack: "AxiosError: Request failed with status code 500\n    at settle (http://192.168.1.89:3000/static/js/bundle.js:33126:12)\n    at XMLHttpRequest.onloadend (http://192.168.1.89:3000/static/js/bundle.js:31753:66)\n    at Axios.request (http://192.168.1.89:3000/static/js/bundle.js:32252:41)\n    at async apiGet (http://192.168.1.89:3000/static/js/bundle.js:76727:20)\n    at async http://192.168.1.89:3000/static/js/src_pages_Reports_ReportsPage_tsx-node_modules_mui_material_node_modules_mui_system_esm_style-82bfa0.chunk.js:4534:24\n    at async handleGenerateReport (http://192.168.1.89:3000/static/js/src_pages_Reports_ReportsPage_tsx-node_modules_mui_material_node_modules_mui_system_esm_style-82bfa0.chunk.js:2642:5)"[[Prototype]]: Error

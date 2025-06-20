@@ -49,6 +49,7 @@ export interface Client {
   name: string;
   document: string;
   documentType: 'CPF' | 'CNPJ';
+  contactPerson?: string;
   email?: string;
   phone?: string;
   address?: {
@@ -146,6 +147,7 @@ export interface ProductWithRelations extends Omit<Product, 'seedTypeId' | 'loca
     name: string;
     document: string;
     documentType: 'CPF' | 'CNPJ';
+    contactPerson?: string;
   };
 }
 
@@ -754,6 +756,9 @@ export interface ReportFilters {
   endDate?: string;
   status?: ProductStatus;
   expirationDays?: number;
+  movementType?: string;
+  userId?: string;
+  productId?: string;
 }
 
 // ============================================================================

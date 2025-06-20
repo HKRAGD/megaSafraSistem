@@ -23,6 +23,7 @@ const SeedType = require('../models/SeedType');
       const {
         chamberId,
         seedTypeId,
+        clientId,
         status = 'LOCADO,AGUARDANDO_RETIRADA',
         expirationDays,
         includeInactive = false,
@@ -34,6 +35,7 @@ const SeedType = require('../models/SeedType');
     const filters = {
       chamberId,
       seedTypeId,
+      clientId,
       status: status.split(','),
       expirationDays: expirationDays ? parseInt(expirationDays) : undefined,
       includeInactive: includeInactive === 'true'

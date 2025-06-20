@@ -35,6 +35,7 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
     const {
       chamberId,
       seedTypeId,
+      clientId,
       status,
       expirationDays,
       includeInactive = false
@@ -47,6 +48,7 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
       baseQuery.locationId = { $in: locations.map(l => l._id) };
     }
     if (seedTypeId) baseQuery.seedTypeId = seedTypeId;
+    if (clientId) baseQuery.clientId = clientId;
 
     // 2. Buscar produtos com dados completos
     const products = await Product.find(baseQuery)
@@ -56,7 +58,8 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
         path: 'locationId',
         populate: { path: 'chamberId', select: 'name currentTemperature currentHumidity' }
       })
-      .sort({ 'locationId.chamberId': 1, 'locationId.code': 1 });
+      .populate('clientId', 'name contactPerson')
+      .sort({ status: 1, name: 1, entryDate: -1 });
 
     // 3. Análise por câmara
     let chamberBreakdown = {};
@@ -77,10 +80,18 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
     }
 
     // 6. Estatísticas consolidadas
-    const locationsOccupied = new Set(products.map(p => p.locationId._id.toString())).size;
+    const locationsOccupied = new Set(
+      products
+        .filter(p => p.locationId && p.locationId._id)
+        .map(p => p.locationId._id.toString())
+    ).size;
     
     // Calcular total de localizações para taxa de ocupação
-    const allChambers = new Set(products.map(p => p.locationId.chamberId._id.toString()));
+    const allChambers = new Set(
+      products
+        .filter(p => p.locationId && p.locationId.chamberId)
+        .map(p => p.locationId.chamberId._id.toString())
+    );
     let totalLocations = 0;
     if (allChambers.size > 0) {
       const chambersData = await Chamber.find({ 
@@ -97,7 +108,11 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
       totalWeight: products.reduce((sum, p) => sum + p.totalWeight, 0),
       totalQuantity: products.reduce((sum, p) => sum + p.quantity, 0),
       uniqueSeedTypes: new Set(products.map(p => p.seedTypeId._id.toString())).size,
-      chambersInUse: new Set(products.map(p => p.locationId.chamberId._id.toString())).size,
+      chambersInUse: new Set(
+        products
+          .filter(p => p.locationId && p.locationId.chamberId)
+          .map(p => p.locationId.chamberId._id.toString())
+      ).size,
       locationsOccupied,
       totalLocations,
       occupancyRate: totalLocations > 0 ? Math.round((locationsOccupied / totalLocations) * 100) : 0,
@@ -454,8 +469,17 @@ const generateChamberBreakdown = async (products) => {
   const breakdown = {};
   
   for (const product of products) {
-    const chamberId = product.locationId.chamberId._id.toString();
-    const chamberName = product.locationId.chamberId.name;
+    // Tratar produtos sem localização (AGUARDANDO_LOCACAO)
+    let chamberId, chamberName;
+    
+    if (product.locationId && product.locationId.chamberId) {
+      chamberId = product.locationId.chamberId._id.toString();
+      chamberName = product.locationId.chamberId.name;
+    } else {
+      // Produtos sem localização agrupados separadamente
+      chamberId = 'no_location';
+      chamberName = 'Aguardando Locação';
+    }
     
     if (!breakdown[chamberId]) {
       breakdown[chamberId] = {
@@ -471,7 +495,12 @@ const generateChamberBreakdown = async (products) => {
     breakdown[chamberId].products.push(product);
     breakdown[chamberId].totalWeight += product.totalWeight;
     breakdown[chamberId].totalQuantity += product.quantity;
-    breakdown[chamberId].locationsUsed.add(product.locationId._id.toString());
+    
+    // Só adicionar localização se existir
+    if (product.locationId && product.locationId._id) {
+      breakdown[chamberId].locationsUsed.add(product.locationId._id.toString());
+    }
+    
     breakdown[chamberId].seedTypes.add(product.seedTypeId._id.toString());
   }
 
@@ -530,12 +559,15 @@ const generateOptimizationSuggestions = async (products) => {
   // Análise de distribuição por câmara
   const chamberDistribution = {};
   products.forEach(product => {
-    const chamberId = product.locationId.chamberId._id.toString();
-    if (!chamberDistribution[chamberId]) {
-      chamberDistribution[chamberId] = { count: 0, weight: 0 };
+    // Só analisar produtos que têm localização
+    if (product.locationId && product.locationId.chamberId) {
+      const chamberId = product.locationId.chamberId._id.toString();
+      if (!chamberDistribution[chamberId]) {
+        chamberDistribution[chamberId] = { count: 0, weight: 0 };
+      }
+      chamberDistribution[chamberId].count++;
+      chamberDistribution[chamberId].weight += product.totalWeight;
     }
-    chamberDistribution[chamberId].count++;
-    chamberDistribution[chamberId].weight += product.totalWeight;
   });
 
   // Detectar desequilíbrios
@@ -673,7 +705,13 @@ const classifyByExpiration = (products) => {
 const groupProductsByChamber = (products) => {
   const groups = {};
   products.forEach(product => {
-    const chamberId = product.locationId.chamberId._id.toString();
+    let chamberId;
+    if (product.locationId && product.locationId.chamberId) {
+      chamberId = product.locationId.chamberId._id.toString();
+    } else {
+      chamberId = 'no_location'; // Produtos sem localização
+    }
+    
     if (!groups[chamberId]) groups[chamberId] = [];
     groups[chamberId].push(product);
   });

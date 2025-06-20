@@ -157,16 +157,27 @@ const getProducts = asyncHandler(async (req, res, next) => {
         }
       },
       {
+        $lookup: {
+          from: 'clients',
+          localField: 'clientId',
+          foreignField: '_id',
+          as: 'client',
+          pipeline: [{ $project: { name: 1, contactPerson: 1 } }]
+        }
+      },
+      {
         $addFields: {
           seedTypeId: { $arrayElemAt: ['$seedType', 0] },
-          locationId: { $arrayElemAt: ['$location', 0] }
+          locationId: { $arrayElemAt: ['$location', 0] },
+          clientId: { $arrayElemAt: ['$client', 0] }
         }
       },
       {
         $project: {
           statusPriority: 0, // Remover campo temporário
           seedType: 0,
-          location: 0
+          location: 0,
+          client: 0 // Remover array temporário, clientId já foi atualizado
         }
       }
     ]),
@@ -253,6 +264,7 @@ const getProduct = asyncHandler(async (req, res, next) => {
         select: 'name status currentTemperature currentHumidity'
       }
     })
+    .populate('clientId', 'name contactPerson') // ADICIONADO: Informações básicas do cliente
     .populate('metadata.createdBy', 'name email')
     .populate('metadata.lastModifiedBy', 'name email');
 

@@ -28,6 +28,7 @@ import {
   TableChart as ExcelIcon,
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
+import { useChambers } from '../../hooks/useChambers';
 import { formatWeight } from '../../utils/displayHelpers';
 
 // Funções auxiliares para mapear dados relacionais
@@ -83,6 +84,7 @@ const getUserName = (movement: any) => {
 
 export const MovementReport: React.FC = () => {
   const { loading, movementData, generateMovementReport, exportToPDF, exportToExcel } = useReports();
+  const { chambers, loading: chambersLoading } = useChambers();
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -100,6 +102,8 @@ export const MovementReport: React.FC = () => {
     const reportFilters = {
       startDate: filters.startDate || undefined,
       endDate: filters.endDate || undefined,
+      movementType: filters.type || undefined,
+      chamberId: filters.chamberId || undefined,
     };
     console.log('🔍 DEBUG MovementReport - Generating with filters:', reportFilters);
     const result = await generateMovementReport(reportFilters);
@@ -150,7 +154,7 @@ export const MovementReport: React.FC = () => {
             variant="contained"
             startIcon={<RefreshIcon />}
             onClick={handleGenerateReport}
-            disabled={loading}
+            disabled={loading || chambersLoading}
           >
             Atualizar
           </Button>
@@ -161,7 +165,7 @@ export const MovementReport: React.FC = () => {
                 variant="outlined"
                 startIcon={<PdfIcon />}
                 onClick={handleExportPDF}
-                disabled={loading}
+                disabled={loading || chambersLoading}
               >
                 PDF
               </Button>
@@ -170,7 +174,7 @@ export const MovementReport: React.FC = () => {
                 variant="outlined"
                 startIcon={<ExcelIcon />}
                 onClick={handleExportExcel}
-                disabled={loading}
+                disabled={loading || chambersLoading}
               >
                 Excel
               </Button>
@@ -234,11 +238,14 @@ export const MovementReport: React.FC = () => {
                   value={filters.chamberId}
                   label="Câmara"
                   onChange={(e) => handleFilterChange('chamberId', e.target.value)}
+                  disabled={chambersLoading}
                 >
                   <MenuItem value="">Todas as câmaras</MenuItem>
-                  <MenuItem value="1">Câmara A</MenuItem>
-                  <MenuItem value="2">Câmara B</MenuItem>
-                  <MenuItem value="3">Câmara C</MenuItem>
+                  {chambers.map((chamber) => (
+                    <MenuItem key={chamber.id} value={chamber.id}>
+                      {chamber.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -246,13 +253,13 @@ export const MovementReport: React.FC = () => {
         </CardContent>
       </Card>
 
-      {loading && (
+      {(loading || chambersLoading) && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
       )}
 
-      {!reportData && !loading && (
+      {!reportData && !loading && !chambersLoading && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Clique em "Atualizar" para gerar o relatório de movimentações
         </Alert>

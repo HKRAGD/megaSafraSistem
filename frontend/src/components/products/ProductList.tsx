@@ -194,6 +194,16 @@ export const ProductList: React.FC<ProductListProps> = ({
       ),
     },
     {
+      id: 'client',
+      label: 'Cliente',
+      sortable: false,
+      render: (product: ProductWithRelations) => (
+        <Typography variant="body2">
+          {product.clientId?.name || 'N/A'}
+        </Typography>
+      ),
+    },
+    {
       id: 'quantity',
       label: 'Quantidade',
       sortable: true,

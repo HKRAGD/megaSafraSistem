@@ -29,6 +29,9 @@ import {
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
 import { useDashboard } from '../../hooks/useDashboard';
+import { useChambers } from '../../hooks/useChambers';
+import { useClients } from '../../hooks/useClients';
+import { useSeedTypes } from '../../hooks/useSeedTypes';
 import { ProductStatus } from '../../types';
 import { formatWeightWithUnit, formatWeight, formatWeightSmart } from '../../utils/displayHelpers';
 
@@ -46,6 +49,13 @@ const getLocationCode = (product: any) => {
   }
   if (product.location && typeof product.location === 'object') {
     return product.location.code || 'N/A';
+  }
+  return 'N/A';
+};
+
+const getClientName = (product: any) => {
+  if (product.clientId && typeof product.clientId === 'object') {
+    return product.clientId.name || 'N/A';
   }
   return 'N/A';
 };
@@ -78,6 +88,7 @@ export const InventoryReport: React.FC = () => {
   const [filters, setFilters] = useState({
     chamberId: '',
     seedTypeId: '',
+    clientId: '',
     status: '',
   });
 
@@ -97,6 +108,11 @@ export const InventoryReport: React.FC = () => {
     loading: dashboardLoading 
   } = useDashboard();
 
+  // Carregar dados reais das câmaras, clientes e tipos de semente
+  const { chambers, loading: chambersLoading } = useChambers();
+  const { clients, loading: clientsLoading } = useClients();
+  const { seedTypes, loading: seedTypesLoading } = useSeedTypes();
+
   // Carregar dados automaticamente quando o componente for montado
   useEffect(() => {
     handleGenerateReport(); // Para lista detalhada de produtos
@@ -111,6 +127,7 @@ export const InventoryReport: React.FC = () => {
     const reportFilters = {
       chamberId: filters.chamberId || undefined,
       seedTypeId: filters.seedTypeId || undefined,
+      clientId: filters.clientId || undefined,
       status: (filters.status as ProductStatus) || undefined,
     };
     await generateInventoryReport(reportFilters);
@@ -139,14 +156,14 @@ export const InventoryReport: React.FC = () => {
               handleGenerateReport();
               refreshDashboard();
             }}
-            disabled={loading || dashboardLoading}
+            disabled={loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading}
           >
             Atualizar
           </Button>
           <Button
             startIcon={<PdfIcon />}
             onClick={handleExportPDF}
-            disabled={!reportData || loading || dashboardLoading}
+            disabled={!reportData || loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading}
             color="error"
           >
             PDF
@@ -154,7 +171,7 @@ export const InventoryReport: React.FC = () => {
           <Button
             startIcon={<ExcelIcon />}
             onClick={handleExportExcel}
-            disabled={!reportData || loading || dashboardLoading}
+            disabled={!reportData || loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading}
             color="success"
           >
             Excel
@@ -171,39 +188,64 @@ export const InventoryReport: React.FC = () => {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Câmara</InputLabel>
                 <Select
                   value={filters.chamberId}
                   label="Câmara"
                   onChange={(e) => handleFilterChange('chamberId', e.target.value)}
+                  disabled={chambersLoading}
                 >
                   <MenuItem value="">Todas as câmaras</MenuItem>
-                  <MenuItem value="1">Câmara A</MenuItem>
-                  <MenuItem value="2">Câmara B</MenuItem>
-                  <MenuItem value="3">Câmara C</MenuItem>
+                  {chambers.map((chamber) => (
+                    <MenuItem key={chamber.id} value={chamber.id}>
+                      {chamber.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Semente</InputLabel>
                 <Select
                   value={filters.seedTypeId}
                   label="Tipo de Semente"
                   onChange={(e) => handleFilterChange('seedTypeId', e.target.value)}
+                  disabled={seedTypesLoading}
                 >
                   <MenuItem value="">Todos os tipos</MenuItem>
-                  <MenuItem value="1">Milho</MenuItem>
-                  <MenuItem value="2">Soja</MenuItem>
-                  <MenuItem value="3">Trigo</MenuItem>
+                  {seedTypes.map((seedType) => (
+                    <MenuItem key={seedType.id} value={seedType.id}>
+                      {seedType.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Cliente</InputLabel>
+                <Select
+                  value={filters.clientId}
+                  label="Cliente"
+                  onChange={(e) => handleFilterChange('clientId', e.target.value)}
+                  disabled={clientsLoading}
+                >
+                  <MenuItem value="">Todos os clientes</MenuItem>
+                  {clients.map((client) => (
+                    <MenuItem key={client.id} value={client.id}>
+                      {client.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -225,7 +267,7 @@ export const InventoryReport: React.FC = () => {
         </CardContent>
       </Card>
 
-      {(loading || dashboardLoading) && (
+      {(loading || dashboardLoading || chambersLoading || clientsLoading || seedTypesLoading) && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
@@ -237,7 +279,7 @@ export const InventoryReport: React.FC = () => {
         </Alert>
       )}
 
-      {!reportData && !loading && !dashboardLoading && !error && (
+      {!reportData && !loading && !dashboardLoading && !chambersLoading && !clientsLoading && !seedTypesLoading && !error && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Clique em "Atualizar" para gerar o relatório de inventário
         </Alert>
@@ -325,6 +367,7 @@ export const InventoryReport: React.FC = () => {
                     <TableCell>Produto</TableCell>
                     <TableCell>Lote</TableCell>
                     <TableCell>Tipo</TableCell>
+                    <TableCell>Cliente</TableCell>
                     <TableCell>Localização</TableCell>
                     <TableCell align="right">Quantidade</TableCell>
                     <TableCell align="right">Peso (kg)</TableCell>
@@ -338,6 +381,7 @@ export const InventoryReport: React.FC = () => {
                       <TableCell>{product.name}</TableCell>
                       <TableCell>{product.lot}</TableCell>
                       <TableCell>{getSeedTypeName(product)}</TableCell>
+                      <TableCell>{getClientName(product)}</TableCell>
                       <TableCell>{getLocationCode(product)}</TableCell>
                       <TableCell align="right">{product.quantity}</TableCell>
                       <TableCell align="right">{formatWeight(product.totalWeight)}</TableCell>

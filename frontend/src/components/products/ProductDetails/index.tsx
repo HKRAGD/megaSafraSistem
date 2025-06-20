@@ -28,6 +28,7 @@ import {
   Assignment as RequestIcon,
   Done as ConfirmIcon,
   Timeline as TimelineIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { ProductWithRelations } from '../../../types';
 import { useProducts } from '../../../hooks/useProducts';
@@ -411,6 +412,31 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             </Stack>
           </CardContent>
         </Card>
+
+        {/* Informações do Cliente */}
+        {product.clientId && (
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PersonIcon color="primary" />
+                Informações do Cliente
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Stack spacing={2}>
+                <Typography variant="body2">
+                  <strong>Nome:</strong> {product.clientId.name}
+                </Typography>
+                
+                {product.clientId.contactPerson && (
+                  <Typography variant="body2">
+                    <strong>Pessoa de Contato:</strong> {product.clientId.contactPerson}
+                  </Typography>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Observações */}
         {product.notes && (
