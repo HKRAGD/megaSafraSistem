@@ -656,7 +656,7 @@ const validateMovementData = async (data) => {
  */
 const validateBusinessRules = async (movementData, product) => {
   // Verificar se produto pode receber movimentação
-  if (product.status === 'removed' && movementData.type !== 'entry') {
+  if (product.status === 'REMOVIDO' && movementData.type !== 'entry') {
     return {
       valid: false,
       reason: 'Produto removido não pode receber movimentações (exceto re-entrada)'

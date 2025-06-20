@@ -16,6 +16,7 @@ import {
 import {
   Settings as SettingsIcon,
   Nature as SeedIcon,
+  People as ClientsIcon,
   Security as SecurityIcon,
   Notifications as NotificationsIcon,
   Backup as BackupIcon,
@@ -25,6 +26,7 @@ import {
 import { PageHeader } from '../../components/layout/PageHeader';
 import { SeedTypesManager } from '../../components/settings/SeedTypesManager';
 import { SystemSettings } from '../../components/settings/SystemSettings';
+import { ClientsManager } from '../../components/clients/ClientsManager';
 import { useAuth } from '../../hooks/useAuth';
 
 interface TabPanelProps {
@@ -52,21 +54,13 @@ export const SettingsPage: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
 
   // Verificar permissões - apenas admin e operator podem acessar configurações
-  if (user?.role === 'viewer') {
-      return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Alert severity="error">
-        Você não tem permissão para acessar as configurações do sistema.
-      </Alert>
-    </Container>
-  );
-  }
+  // Não há mais role 'viewer', apenas ADMIN e OPERATOR
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  const canManageSystem = user?.role === 'admin';
+  const canManageSystem = user?.role === 'ADMIN';
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -93,36 +87,42 @@ export const SettingsPage: React.FC = () => {
                 id="settings-tab-0"
                 aria-controls="settings-tabpanel-0"
               />
+              <Tab 
+                icon={<ClientsIcon />} 
+                label="Clientes" 
+                id="settings-tab-1"
+                aria-controls="settings-tabpanel-1"
+              />
               {canManageSystem && (
                 <Tab 
                   icon={<SettingsIcon />} 
                   label="Sistema" 
-                  id="settings-tab-1"
-                  aria-controls="settings-tabpanel-1"
-                />
-              )}
-              {canManageSystem && (
-                <Tab 
-                  icon={<SecurityIcon />} 
-                  label="Segurança" 
                   id="settings-tab-2"
                   aria-controls="settings-tabpanel-2"
                 />
               )}
               {canManageSystem && (
                 <Tab 
-                  icon={<NotificationsIcon />} 
-                  label="Notificações" 
+                  icon={<SecurityIcon />} 
+                  label="Segurança" 
                   id="settings-tab-3"
                   aria-controls="settings-tabpanel-3"
                 />
               )}
               {canManageSystem && (
                 <Tab 
-                  icon={<BackupIcon />} 
-                  label="Backup" 
+                  icon={<NotificationsIcon />} 
+                  label="Notificações" 
                   id="settings-tab-4"
                   aria-controls="settings-tabpanel-4"
+                />
+              )}
+              {canManageSystem && (
+                <Tab 
+                  icon={<BackupIcon />} 
+                  label="Backup" 
+                  id="settings-tab-5"
+                  aria-controls="settings-tabpanel-5"
                 />
               )}
             </Tabs>
@@ -134,16 +134,21 @@ export const SettingsPage: React.FC = () => {
               <SeedTypesManager />
             </TabPanel>
 
-            {/* Tab 1: Configurações do Sistema */}
+            {/* Tab 1: Clientes */}
+            <TabPanel value={tabValue} index={1}>
+              <ClientsManager />
+            </TabPanel>
+
+            {/* Tab 2: Configurações do Sistema */}
             {canManageSystem && (
-              <TabPanel value={tabValue} index={1}>
+              <TabPanel value={tabValue} index={2}>
                 <SystemSettings />
               </TabPanel>
             )}
 
-            {/* Tab 2: Configurações de Segurança */}
+            {/* Tab 3: Configurações de Segurança */}
             {canManageSystem && (
-              <TabPanel value={tabValue} index={2}>
+              <TabPanel value={tabValue} index={3}>
                 <Box>
                   <Typography variant="h6" gutterBottom>
                     Configurações de Segurança
@@ -154,7 +159,7 @@ export const SettingsPage: React.FC = () => {
                   </Alert>
                   
                   <Grid container spacing={3}>
-                    <Grid size={12}>
+                    <Grid item xs={12}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom>
@@ -170,7 +175,7 @@ export const SettingsPage: React.FC = () => {
                       </Card>
                     </Grid>
                     
-                    <Grid size={12}>
+                    <Grid item xs={12}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom>
@@ -189,9 +194,9 @@ export const SettingsPage: React.FC = () => {
               </TabPanel>
             )}
 
-            {/* Tab 3: Configurações de Notificações */}
+            {/* Tab 4: Configurações de Notificações */}
             {canManageSystem && (
-              <TabPanel value={tabValue} index={3}>
+              <TabPanel value={tabValue} index={4}>
                 <Box>
                   <Typography variant="h6" gutterBottom>
                     Configurações de Notificações
@@ -202,7 +207,7 @@ export const SettingsPage: React.FC = () => {
                   </Alert>
 
                   <Grid container spacing={3}>
-                    <Grid size={12}>
+                    <Grid item xs={12}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom>
@@ -217,7 +222,7 @@ export const SettingsPage: React.FC = () => {
                       </Card>
                     </Grid>
 
-                    <Grid size={12}>
+                    <Grid item xs={12}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom>
@@ -236,9 +241,9 @@ export const SettingsPage: React.FC = () => {
               </TabPanel>
             )}
 
-            {/* Tab 4: Configurações de Backup */}
+            {/* Tab 5: Configurações de Backup */}
             {canManageSystem && (
-              <TabPanel value={tabValue} index={4}>
+              <TabPanel value={tabValue} index={5}>
                 <Box>
                   <Typography variant="h6" gutterBottom>
                     Configurações de Backup
@@ -249,7 +254,7 @@ export const SettingsPage: React.FC = () => {
                   </Alert>
 
                   <Grid container spacing={3}>
-                    <Grid size={12}>
+                    <Grid item xs={12}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom>
@@ -264,7 +269,7 @@ export const SettingsPage: React.FC = () => {
                       </Card>
                     </Grid>
 
-                    <Grid size={12}>
+                    <Grid item xs={12}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom>
@@ -297,7 +302,7 @@ export const SettingsPage: React.FC = () => {
             <Divider sx={{ mb: 2 }} />
             
             <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
                   <strong>Versão:</strong> 1.0.0
                 </Typography>
@@ -308,7 +313,7 @@ export const SettingsPage: React.FC = () => {
                   <strong>Última Atualização:</strong> 05/06/2025
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
                   <strong>Usuário:</strong> {user?.name}
                 </Typography>

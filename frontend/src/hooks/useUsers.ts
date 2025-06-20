@@ -64,46 +64,23 @@ export const useUsers = (options: UseUsersOptions = {}): UseUsersReturn => {
       setData(usersData);
       setTotal(usersData.length);
 
-      console.log(`✅ ${usersData.length} usuários carregados`);
+      console.log(`✅ ${usersData.length} usuários carregados do backend`);
     } catch (error: any) {
-      // Se a requisição falhar, usar dados mock para desenvolvimento
-      console.warn('Backend indisponível, usando dados mock para usuários');
+      // Log detalhado do erro para debug
+      console.error('❌ Erro ao carregar usuários do backend:', {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        url: error.config?.url,
+        method: error.config?.method
+      });
       
-      const mockUsers = [
-        {
-          id: '1',
-          name: 'Administrador',
-          email: 'admin@sistema-sementes.com',
-          role: 'admin' as const,
-          isActive: true,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: '2',
-          name: 'Operador Silva',
-          email: 'operador@sistema-sementes.com',
-          role: 'operator' as const,
-          isActive: true,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: '3',
-          name: 'Visualizador Santos',
-          email: 'viewer@sistema-sementes.com',
-          role: 'viewer' as const,
-          isActive: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        }
-      ];
+      // Definir dados vazios e mostrar o erro real
+      setData([]);
+      setTotal(0);
+      handleError(error, 'carregar usuários do backend');
       
-      setData(mockUsers);
-      setTotal(mockUsers.length);
-      setError(null);
-      
-      console.log(`✅ ${mockUsers.length} usuários mock carregados`);
+      // REMOVED: Mock data fallback - agora mostra erro real
+      console.warn('🚨 API de usuários falhando - verifique o backend');
     } finally {
       setLoading(false);
     }

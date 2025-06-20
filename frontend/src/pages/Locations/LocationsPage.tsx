@@ -140,7 +140,7 @@ export const LocationsPage: React.FC = () => {
     setTabValue(newValue);
   };
 
-  const canManage = user?.role === 'admin' || user?.role === 'operator';
+  const canManage = user?.role === 'ADMIN' || user?.role === 'OPERATOR';
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -242,11 +242,7 @@ export const LocationsPage: React.FC = () => {
                 <CardContent>
                   <Grid container spacing={2}>
                     <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                        md: 3
-                      }}>
+                      item xs={12} sm={6} md={3}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Dimensões
                       </Typography>
@@ -255,11 +251,7 @@ export const LocationsPage: React.FC = () => {
                       </Typography>
                     </Grid>
                     <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                        md: 3
-                      }}>
+                      item xs={12} sm={6} md={3}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Total de Localizações
                       </Typography>
@@ -268,11 +260,7 @@ export const LocationsPage: React.FC = () => {
                       </Typography>
                     </Grid>
                     <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                        md: 3
-                      }}>
+                      item xs={12} sm={6} md={3}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Temperatura
                       </Typography>
@@ -294,11 +282,7 @@ export const LocationsPage: React.FC = () => {
                       </Box>
                     </Grid>
                     <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                        md: 3
-                      }}>
+                      item xs={12} sm={6} md={3}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Status
                       </Typography>

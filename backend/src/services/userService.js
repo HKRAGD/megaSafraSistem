@@ -376,9 +376,8 @@ const detectInactiveUsers = async (options = {}) => {
 
     // 4. **ANÁLISE POR ROLE** (Alinhamento com hierarquia)
     const byRole = {
-      admin: inactivityAnalysis.filter(u => u.user.role === 'admin'),
-      operator: inactivityAnalysis.filter(u => u.user.role === 'operator'),
-      viewer: inactivityAnalysis.filter(u => u.user.role === 'viewer')
+      ADMIN: inactivityAnalysis.filter(u => u.user.role === 'ADMIN'),
+      OPERATOR: inactivityAnalysis.filter(u => u.user.role === 'OPERATOR')
     };
 
     // 5. Gerar recomendações
@@ -611,7 +610,7 @@ const analyzeDemonstratedCapabilities = (details, productivity) => {
  * Calcula adequação aos roles
  */
 const calculateRoleAdequacy = (activityData, capabilities, similarUsers) => {
-  const roles = ['viewer', 'operator', 'admin'];
+  const roles = ['OPERATOR', 'ADMIN'];
   const adequacy = {};
 
   roles.forEach(role => {
@@ -891,9 +890,8 @@ const generateInactivityRecommendations = (categories, byRole) => {
 
 const validatePermissionList = (permissions, userRole, context, securityAnalysis) => {
   const rolePermissions = {
-    admin: ['read', 'write', 'delete', 'manage'],
-    operator: ['read', 'write', 'create_movements'],
-    viewer: ['read']
+    ADMIN: ['read', 'write', 'delete', 'manage'],
+    OPERATOR: ['read', 'write', 'create_movements']
   };
   
   const userPermissions = rolePermissions[userRole] || [];
@@ -940,7 +938,7 @@ const calculateRiskLevel = (context, user) => {
 const identifyRestrictions = (context, user) => {
   const restrictions = [];
   
-  if (user.role === 'viewer' && context.operation !== 'read') {
+  if (user.role === 'OPERATOR' && context.operation === 'delete') {
     restrictions.push('role_limitation');
   }
   
@@ -961,9 +959,8 @@ const calculateManagementCapability = (details) => {
 
 const calculateRoleScore = (role, capabilities, activityData) => {
   const weights = {
-    admin: { leadership: 0.4, management: 0.3, technical: 0.2, efficiency: 0.1 },
-    operator: { technical: 0.4, efficiency: 0.3, management: 0.2, leadership: 0.1 },
-    viewer: { efficiency: 0.6, technical: 0.3, management: 0.1, leadership: 0 }
+    ADMIN: { leadership: 0.4, management: 0.3, technical: 0.2, efficiency: 0.1 },
+    OPERATOR: { technical: 0.4, efficiency: 0.3, management: 0.2, leadership: 0.1 }
   };
   
   const roleWeights = weights[role];
@@ -983,9 +980,8 @@ const generateRoleReasoning = (role, capabilities, activityData) => {
 
 const getRoleRequirements = (role) => {
   const requirements = {
-    admin: ['Liderança', 'Gestão avançada', 'Experiência técnica'],
-    operator: ['Conhecimento técnico', 'Eficiência operacional'],
-    viewer: ['Conhecimento básico do sistema']
+    ADMIN: ['Liderança', 'Gestão avançada', 'Experiência técnica'],
+    OPERATOR: ['Conhecimento técnico', 'Eficiência operacional']
   };
   
   return requirements[role] || [];
@@ -993,9 +989,8 @@ const getRoleRequirements = (role) => {
 
 const checkRoleRequirements = (role, capabilities, activityData) => {
   const thresholds = {
-    admin: { leadership: 70, management: 70, technical: 60 },
-    operator: { technical: 60, efficiency: 70 },
-    viewer: { efficiency: 40 }
+    ADMIN: { leadership: 70, management: 70, technical: 60 },
+    OPERATOR: { technical: 60, efficiency: 70 }
   };
   
   const roleThresholds = thresholds[role];
@@ -1008,9 +1003,7 @@ const checkRoleRequirements = (role, capabilities, activityData) => {
 
 const estimateTransitionTimeline = (currentRole, targetRole) => {
   const transitions = {
-    'viewer-operator': '2-4 semanas',
-    'operator-admin': '1-3 meses',
-    'viewer-admin': '3-6 meses'
+    'OPERATOR-ADMIN': '1-3 meses'
   };
   
   return transitions[`${currentRole}-${targetRole}`] || '1-2 meses';

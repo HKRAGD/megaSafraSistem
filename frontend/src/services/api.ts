@@ -326,6 +326,18 @@ export const apiPut = async <T>(
 };
 
 /**
+ * PATCH request
+ */
+export const apiPatch = async <T>(
+  url: string, 
+  data?: any, 
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  const response = await api.patch<T>(url, data, config);
+  return response.data;
+};
+
+/**
  * DELETE request
  */
 export const apiDelete = async <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {

@@ -23,17 +23,36 @@ import {
   Error as ErrorIcon,
   Inventory as InventoryIcon,
   Close as CloseIcon,
+  Edit as EditIcon,
+  SwapHoriz as MoveIcon,
+  Assignment as RequestIcon,
+  Done as ConfirmIcon,
+  Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import { ProductWithRelations } from '../../../types';
 import { useProducts } from '../../../hooks/useProducts';
+import { usePermissions } from '../../../hooks/usePermissions';
+import { ProductStatusBadge } from '../../ui';
 
 interface ProductDetailsProps {
   productId: string;
   onClose: () => void;
+  onEdit?: (product: ProductWithRelations) => void;
+  onMove?: (product: ProductWithRelations) => void;
+  onRequestWithdrawal?: (product: ProductWithRelations) => void;
+  onConfirmWithdrawal?: (product: ProductWithRelations) => void;
 }
 
-export const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onClose }) => {
+export const ProductDetails: React.FC<ProductDetailsProps> = ({ 
+  productId, 
+  onClose, 
+  onEdit, 
+  onMove, 
+  onRequestWithdrawal, 
+  onConfirmWithdrawal 
+}) => {
   const { getProduct } = useProducts();
+  const { canCreateProduct, canLocateProduct, canRequestWithdrawal, canConfirmWithdrawal } = usePermissions();
   const [product, setProduct] = useState<ProductWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,19 +91,37 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onClo
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'stored': return 'success';
-      case 'reserved': return 'warning';
-      case 'removed': return 'default';
+      case 'CADASTRADO': return 'default';
+      case 'AGUARDANDO_LOCACAO': return 'warning';
+      case 'LOCADO': return 'success';
+      case 'AGUARDANDO_RETIRADA': return 'info';
+      case 'RETIRADO': return 'secondary';
+      case 'REMOVIDO': return 'error';
       default: return 'default';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'stored': return 'Armazenado';
-      case 'reserved': return 'Reservado';
-      case 'removed': return 'Removido';
+      case 'CADASTRADO': return 'Cadastrado';
+      case 'AGUARDANDO_LOCACAO': return 'Aguardando Locação';
+      case 'LOCADO': return 'Locado';
+      case 'AGUARDANDO_RETIRADA': return 'Aguardando Retirada';
+      case 'RETIRADO': return 'Retirado';
+      case 'REMOVIDO': return 'Removido';
       default: return status;
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'CADASTRADO': return <InventoryIcon fontSize="small" />;
+      case 'AGUARDANDO_LOCACAO': return <WarningIcon fontSize="small" />;
+      case 'LOCADO': return <CheckIcon fontSize="small" />;
+      case 'AGUARDANDO_RETIRADA': return <WarningIcon fontSize="small" />;
+      case 'RETIRADO': return <CheckIcon fontSize="small" />;
+      case 'REMOVIDO': return <ErrorIcon fontSize="small" />;
+      default: return <InventoryIcon fontSize="small" />;
     }
   };
 
@@ -154,11 +191,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onClo
             {product.name}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
-            <Chip
-              label={getStatusLabel(product.status)}
-              color={getStatusColor(product.status) as any}
-              size="small"
-            />
+            <ProductStatusBadge status={product.status} size="medium" />
             <Chip
               {...(expirationStatus.icon && { icon: expirationStatus.icon })}
               label={expirationStatus.label}
@@ -173,6 +206,93 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onClo
       </Box>
 
       <Stack spacing={3}>
+        {/* Ações FSM */}
+        <Card sx={{ backgroundColor: 'primary.50', borderColor: 'primary.200', borderWidth: 1, borderStyle: 'solid' }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TimelineIcon color="primary" />
+              Ações Disponíveis
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            
+            <Stack direction="row" spacing={2} flexWrap="wrap">
+              {/* Editar - sempre disponível para ADMIN */}
+              {canCreateProduct && onEdit && (
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => onEdit(product)}
+                  size="small"
+                >
+                  Editar Produto
+                </Button>
+              )}
+
+              {/* Localizar produto - OPERATOR quando AGUARDANDO_LOCACAO */}
+              {canLocateProduct && product.status === 'AGUARDANDO_LOCACAO' && onMove && (
+                <Button
+                  variant="contained"
+                  color="warning"
+                  startIcon={<LocationIcon />}
+                  onClick={() => onMove(product)}
+                  size="small"
+                >
+                  Localizar Produto
+                </Button>
+              )}
+
+              {/* Mover produto - OPERATOR quando LOCADO */}
+              {canLocateProduct && product.status === 'LOCADO' && onMove && (
+                <Button
+                  variant="outlined"
+                  startIcon={<MoveIcon />}
+                  onClick={() => onMove(product)}
+                  size="small"
+                >
+                  Mover Produto
+                </Button>
+              )}
+
+              {/* Solicitar retirada - ADMIN quando LOCADO */}
+              {canRequestWithdrawal && product.status === 'LOCADO' && onRequestWithdrawal && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<RequestIcon />}
+                  onClick={() => onRequestWithdrawal(product)}
+                  size="small"
+                >
+                  Solicitar Retirada
+                </Button>
+              )}
+
+              {/* Confirmar retirada - OPERATOR quando AGUARDANDO_RETIRADA */}
+              {canConfirmWithdrawal && product.status === 'AGUARDANDO_RETIRADA' && onConfirmWithdrawal && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<ConfirmIcon />}
+                  onClick={() => onConfirmWithdrawal(product)}
+                  size="small"
+                >
+                  Confirmar Retirada
+                </Button>
+              )}
+            </Stack>
+
+            {/* Indicador de status atual no workflow */}
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'background.paper', borderRadius: 1 }}>
+              <Typography variant="caption" color="text.secondary" gutterBottom display="block">
+                Status atual no workflow:
+              </Typography>
+              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {getStatusIcon(product.status)}
+                <strong>{getStatusLabel(product.status)}</strong>
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
         {/* Informações Básicas */}
         <Card>
           <CardContent>
@@ -193,7 +313,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onClo
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CategoryIcon fontSize="small" color="action" />
                 <Typography variant="body2">
-                  <strong>Tipo de Semente:</strong> {product.seedType?.name || 'N/A'}
+                  <strong>Tipo de Semente:</strong> {product.seedTypeId?.name || 'N/A'}
                 </Typography>
               </Box>
               
@@ -248,17 +368,17 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onClo
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LocationIcon fontSize="small" color="action" />
                 <Typography variant="body2">
-                  <strong>Código:</strong> {product.location?.code || 'N/A'}
+                  <strong>Código:</strong> {product.locationId?.code || 'N/A'}
                 </Typography>
               </Box>
               
               <Typography variant="body2">
-                <strong>Câmara:</strong> {product.location?.chamber?.name || 'N/A'}
+                <strong>Câmara:</strong> {product.locationId?.chamberId?.name || 'N/A'}
               </Typography>
               
-              {product.location?.maxCapacityKg && (
+              {product.locationId?.maxCapacityKg && (
                 <Typography variant="body2">
-                  <strong>Capacidade:</strong> {product.location.currentWeightKg || 0}kg / {product.location.maxCapacityKg}kg
+                  <strong>Capacidade:</strong> {product.locationId.currentWeightKg || 0}kg / {product.locationId.maxCapacityKg}kg
                 </Typography>
               )}
             </Stack>

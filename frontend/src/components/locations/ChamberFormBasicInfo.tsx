@@ -25,17 +25,14 @@ export const ChamberFormBasicInfo: React.FC<ChamberFormBasicInfoProps> = React.m
 
   return (
     <>
-      <Grid size={12}>
+      <Grid item xs={12}>
         <Typography variant="h6" gutterBottom>
           Informações Básicas
         </Typography>
       </Grid>
 
       <Grid
-        size={{
-          xs: 12,
-          sm: 8
-        }}
+        item xs={12} sm={8}
       >
         <Controller
           name="name"
@@ -55,10 +52,7 @@ export const ChamberFormBasicInfo: React.FC<ChamberFormBasicInfoProps> = React.m
       </Grid>
 
       <Grid
-        size={{
-          xs: 12,
-          sm: 4
-        }}
+        item xs={12} sm={4}
       >
         <Controller
           name="status"
@@ -93,7 +87,7 @@ export const ChamberFormBasicInfo: React.FC<ChamberFormBasicInfoProps> = React.m
         />
       </Grid>
 
-      <Grid size={12}>
+      <Grid item xs={12}>
         <Controller
           name="description"
           control={control}

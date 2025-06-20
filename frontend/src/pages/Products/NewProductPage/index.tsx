@@ -19,7 +19,6 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { useNewProductPage } from './hooks/useNewProductPage';
 import { NewProductForm } from './components/NewProductForm';
-import Toast from '../../../components/common/Toast';
 
 const NewProductPageSkeleton: React.FC = () => (
   <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -117,19 +116,15 @@ export const NewProductPage: React.FC = () => {
             chambers={pageLogic.chambers}
             availableLocations={pageLogic.availableLocations}
             allLocations={pageLogic.allLocations}
+            isLoading={pageLogic.isLoading}
+            formLoading={pageLogic.formLoading}
             handleSubmit={pageLogic.handleSubmit}
             handleCancel={pageLogic.handleCancel}
           />
         </CardContent>
       </Card>
 
-      {/* Toast para feedback */}
-      <Toast
-        open={pageLogic.toast.open}
-        message={pageLogic.toast.message}
-        severity={pageLogic.toast.severity}
-        onClose={pageLogic.closeToast}
-      />
+
     </Container>
   );
 }; 

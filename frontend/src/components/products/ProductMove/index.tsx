@@ -16,6 +16,11 @@ import {
   Autocomplete,
   Tabs,
   Tab,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormControl,
+  FormLabel,
 } from '@mui/material';
 import {
   SwapHoriz as MoveIcon,
@@ -25,11 +30,14 @@ import {
   CallSplit as PartialIcon,
   ViewInAr as ViewInArIcon,
   List as ListIcon,
+  RadioButtonChecked as RadioIcon,
+  Done as DoneIcon,
 } from '@mui/icons-material';
 import { ProductWithRelations, Chamber, LocationWithChamber } from '../../../types';
 import { useLocationsWithChambers } from '../../../hooks/useLocationsWithChambers';
 import { useAllLocationsWithChambers } from '../../../hooks/useAllLocationsWithChambers';
 import { useChambers } from '../../../hooks/useChambers';
+import { useAuth } from '../../../hooks/useAuth';
 import { sanitizeChipProps } from '../../../utils/chipUtils';
 import LocationMap3D from '../../ui/LocationMap';
 
@@ -61,7 +69,10 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
   const [reason, setReason] = useState<string>('');
   const [operationLoading, setOperationLoading] = useState(false);
   const [locationViewMode, setLocationViewMode] = useState<'map' | 'list'>('map');
+  const [withdrawalType, setWithdrawalType] = useState<'TOTAL' | 'PARCIAL'>('PARCIAL');
   
+  // Hooks para dados
+  const { user } = useAuth();
   const { 
     availableLocationsWithChambers,
     loading: locationsLoading,
@@ -107,8 +118,10 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
     },
     {
       value: 'exit_partial' as OperationType,
-      label: 'Saída',
-      description: 'Remove quantidade do estoque (saída do sistema)',
+      label: user?.role === 'ADMIN' ? 'Solicitar Saída' : 'Saída',
+      description: user?.role === 'ADMIN' 
+        ? 'Criar solicitação de retirada (AGUARDANDO_RETIRADA)' 
+        : 'Remove quantidade do estoque (saída do sistema)',
       icon: <ExitIcon />,
       color: 'warning',
       requiresLocation: false,
@@ -133,6 +146,7 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
     setSelectedLocation(null);
     setQuantity(1);
     setReason('');
+    setWithdrawalType('PARCIAL');
   }, [operationType]);
 
   // Validações
@@ -140,7 +154,11 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
     if (!currentOperation?.requiresQuantity) return true;
     
     if (operationType === 'move_partial' || operationType === 'exit_partial') {
-      return quantity > 0 && quantity < product.quantity;
+      // Para retirada total, quantidade é ignorada (usa todo o estoque)
+      if (operationType === 'exit_partial' && withdrawalType === 'TOTAL') {
+        return true;
+      }
+      return quantity > 0 && quantity <= product.quantity;
     }
     
     if (operationType === 'add_stock') {
@@ -148,7 +166,7 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
     }
     
     return true;
-  }, [operationType, quantity, product.quantity, currentOperation]);
+  }, [operationType, quantity, product.quantity, currentOperation, withdrawalType]);
 
   const canExecute = useMemo(() => {
     if (operationLoading || loading) return false;
@@ -181,7 +199,9 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
           break;
           
         case 'exit_partial':
-          await onPartialExit(quantity, reason.trim());
+          // Para retirada total, passar a quantidade total do produto
+          const exitQuantity = withdrawalType === 'TOTAL' ? product.quantity : quantity;
+          await onPartialExit(exitQuantity, reason.trim());
           break;
           
         case 'add_stock':
@@ -251,12 +271,12 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <LocationIcon fontSize="small" color="action" />
                 <Typography variant="body2">
-                  <strong>Localização Atual:</strong> {product.location?.code || 'N/A'}
+                  <strong>Localização Atual:</strong> {product.locationId?.code || 'N/A'}
                 </Typography>
               </Box>
               
               <Typography variant="body2">
-                <strong>Câmara Atual:</strong> {product.location?.chamber?.name || 'N/A'}
+                <strong>Câmara Atual:</strong> {product.locationId?.chamberId?.name || 'N/A'}
               </Typography>
             </Box>
             
@@ -317,8 +337,37 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
         </Typography>
         
         <Stack spacing={3}>
+          {/* Seletor de Tipo de Retirada (apenas para exit_partial) */}
+          {operationType === 'exit_partial' && (
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Tipo de Retirada</FormLabel>
+              <RadioGroup
+                row
+                value={withdrawalType}
+                onChange={(e) => setWithdrawalType(e.target.value as 'TOTAL' | 'PARCIAL')}
+              >
+                <FormControlLabel 
+                  value="PARCIAL" 
+                  control={<Radio />} 
+                  label="Retirada Parcial" 
+                />
+                <FormControlLabel 
+                  value="TOTAL" 
+                  control={<Radio />} 
+                  label="Retirada Total" 
+                />
+              </RadioGroup>
+              <Typography variant="caption" color="text.secondary">
+                {withdrawalType === 'TOTAL' 
+                  ? `Retira toda a quantidade: ${product.quantity} ${product.storageType}s`
+                  : 'Retira quantidade específica'
+                }
+              </Typography>
+            </FormControl>
+          )}
+
           {/* Campo de Quantidade (para operações que requerem) */}
-          {currentOperation?.requiresQuantity && (
+          {currentOperation?.requiresQuantity && !(operationType === 'exit_partial' && withdrawalType === 'TOTAL') && (
             <TextField
               label="Quantidade"
               type="number"
@@ -326,17 +375,19 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
               inputProps={{ 
                 min: 1, 
-                max: operationType === 'add_stock' ? undefined : product.quantity - 1 
+                max: operationType === 'add_stock' ? undefined : product.quantity 
               }}
               error={!isValidQuantity}
               helperText={
                 !isValidQuantity
                   ? operationType === 'add_stock'
                     ? 'Quantidade deve ser maior que zero'
-                    : `Quantidade deve ser entre 1 e ${product.quantity - 1}`
+                    : `Quantidade deve ser entre 1 e ${product.quantity}`
                   : operationType === 'add_stock'
                     ? 'Quantidade a ser adicionada ao estoque atual'
-                    : `Disponível: ${product.quantity} ${product.storageType}s`
+                    : operationType === 'exit_partial' && withdrawalType === 'PARCIAL'
+                      ? `Disponível: ${product.quantity} ${product.storageType}s`
+                      : `Disponível: ${product.quantity} ${product.storageType}s`
               }
               fullWidth
               disabled={operationLoading || loading}

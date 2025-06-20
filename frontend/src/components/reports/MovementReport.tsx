@@ -186,7 +186,7 @@ export const MovementReport: React.FC = () => {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <TextField
                 type="date"
                 label="Data Inicial"
@@ -198,7 +198,7 @@ export const MovementReport: React.FC = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <TextField
                 type="date"
                 label="Data Final"
@@ -210,7 +210,7 @@ export const MovementReport: React.FC = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Movimentação</InputLabel>
                 <Select
@@ -227,7 +227,7 @@ export const MovementReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Câmara</InputLabel>
                 <Select
@@ -266,7 +266,7 @@ export const MovementReport: React.FC = () => {
             </Typography>
             
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
@@ -279,7 +279,7 @@ export const MovementReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="success.main">
@@ -292,7 +292,7 @@ export const MovementReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="error.main">
@@ -305,7 +305,7 @@ export const MovementReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="info.main">

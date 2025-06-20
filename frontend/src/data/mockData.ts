@@ -6,7 +6,7 @@ export const mockUsers: User[] = [
     id: '1',
     name: 'Administrador',
     email: 'admin@sistema-sementes.com',
-    role: 'admin',
+    role: 'ADMIN',
     isActive: true,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
@@ -15,16 +15,7 @@ export const mockUsers: User[] = [
     id: '2',
     name: 'Operador Silva',
     email: 'operador@sistema-sementes.com', 
-    role: 'operator',
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '3',
-    name: 'Visualizador Santos',
-    email: 'viewer@sistema-sementes.com',
-    role: 'viewer',
+    role: 'OPERATOR',
     isActive: true,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
@@ -166,7 +157,7 @@ export const mockProducts: Product[] = [
     locationId: '1',
     entryDate: '2024-01-15T00:00:00Z',
     expirationDate: '2025-01-15T00:00:00Z',
-    status: 'stored',
+    status: 'LOCADO',
     notes: 'Lote de alta qualidade',
     tracking: {
       batchNumber: 'BATCH001',

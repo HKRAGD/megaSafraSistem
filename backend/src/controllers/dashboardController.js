@@ -24,7 +24,7 @@ const User = require('../models/User');
 const getSummary = async (req, res) => {
   try {
     const { period = 7 } = req.query;
-    
+
     // 1. Usar reportService para dashboard executivo
     const executiveDashboard = await reportService.generateExecutiveDashboard({
       period: parseInt(period),
@@ -32,7 +32,11 @@ const getSummary = async (req, res) => {
       includeTrends: true
     });
 
-    // 2. Estatísticas básicas adicionais
+    // 2. Obter breakdown detalhado dos produtos por status
+    const dashboardService = require('../services/dashboardService');
+    const systemSummaryFromDashboardService = await dashboardService.generateSystemSummary();
+
+    // 3. Estatísticas básicas adicionais
     const [totalUsers, totalSeedTypes, totalLocations, totalChambers] = await Promise.all([
       User.countDocuments({ isActive: true }),
       SeedType.countDocuments({ isActive: true }),
@@ -40,7 +44,7 @@ const getSummary = async (req, res) => {
       Chamber.countDocuments({ status: 'active' })
     ]);
 
-    // 3. Status do sistema em tempo real
+    // 4. Status do sistema em tempo real
     const systemStatus = {
       totalUsers,
       totalSeedTypes,
@@ -49,13 +53,15 @@ const getSummary = async (req, res) => {
       lastUpdate: new Date()
     };
 
-    // 4. Alertas críticos resumidos
+    // 5. Alertas críticos resumidos
     const criticalAlerts = await getCriticalAlertsCount();
 
     const summary = {
       ...executiveDashboard.data,
       systemStatus,
       criticalAlerts,
+      // Adicionar breakdown detalhado dos produtos
+      productStatusBreakdown: systemSummaryFromDashboardService.productStatusBreakdown,
       metadata: {
         ...executiveDashboard.data.metadata,
         generatedBy: req.user?.name || 'Sistema',

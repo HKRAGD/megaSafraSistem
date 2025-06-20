@@ -14,7 +14,15 @@
 const express = require('express');
 const router = express.Router();
 
-const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const { 
+  authenticateToken, 
+  authorizeRole,
+  canCreateProduct,
+  canLocateProduct,
+  canMoveProduct,
+  canRemoveProduct,
+  canRequestWithdrawal
+} = require('../middleware/auth');
 const { validateRequest, validateBody, productSchemas } = require('../middleware/validation');
 const productController = require('../controllers/productController');
 
@@ -26,67 +34,97 @@ router.get('/', productController.getProducts);
 
 // Rotas de análise (admin e operador) - ANTES do /:id
 router.get('/distribution-analysis', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   productController.getDistributionAnalysis
 );
 
 // Rotas de validação e utilitários (admin e operador) - ANTES do /:id
 router.post('/validate-data', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   productController.validateProductData
 );
 
 router.post('/find-optimal-location', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   productController.findOptimalLocation
 );
 
 router.post('/generate-code', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   productController.generateProductCode
 );
 
 // Rota específica por ID - SEMPRE POR ÚLTIMO
 router.get('/:id', productController.getProduct);
 
-// Rotas de CRUD (admin e operador)
+// Rotas de CRUD com permissões específicas
 router.post('/', 
-  authorizeRole(['admin', 'operator']), 
+  canCreateProduct, // Apenas ADMIN pode criar produtos
   validateBody(productSchemas.create),
   productController.createProduct
 );
 
 router.put('/:id', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), // Ambos podem atualizar dados básicos
   validateBody(productSchemas.update),
   productController.updateProduct
 );
 
 router.delete('/:id', 
-  authorizeRole(['admin', 'operator']), 
+  canRemoveProduct, // Apenas ADMIN pode remover produtos
   productController.deleteProduct
 );
 
-// Rota de movimentação (admin e operador)
+// Rota de movimentação (apenas OPERATOR)
 router.post('/:id/move', 
-  authorizeRole(['admin', 'operator']), 
+  canMoveProduct, // Apenas OPERATOR pode mover produtos
   validateBody(productSchemas.move),
   productController.moveProduct
 );
 
-// Novas rotas de movimentação avançada (admin e operador)
+// ============================================================================
+// NOVAS ROTAS FSM (FINITE STATE MACHINE)
+// ============================================================================
+
+// Localizar produto aguardando locação (OPERATOR)
+router.post('/:id/locate', 
+  canLocateProduct, // Apenas OPERATOR pode localizar produtos
+  productController.locateProduct
+);
+
+// Solicitar retirada de produto (ADMIN)
+router.post('/:id/request-withdrawal', 
+  canRequestWithdrawal, // Apenas ADMIN pode solicitar retiradas
+  productController.requestWithdrawal
+);
+
+// Buscar produtos aguardando locação
+router.get('/pending-location', 
+  canLocateProduct, // Apenas OPERATOR precisa ver isso
+  productController.getProductsPendingLocation
+);
+
+// Buscar produtos aguardando retirada
+router.get('/pending-withdrawal', 
+  authorizeRole(['ADMIN', 'OPERATOR']), // Ambos podem ver
+  productController.getProductsPendingWithdrawal
+);
+
+// ============================================================================
+// ROTAS DE MOVIMENTAÇÃO AVANÇADA (EXISTENTES)
+// ============================================================================
 router.post('/:id/partial-exit', 
-  authorizeRole(['admin', 'operator']), 
+  canRemoveProduct, // Apenas ADMIN pode fazer saída parcial
   productController.partialExit
 );
 
 router.post('/:id/partial-move', 
-  authorizeRole(['admin', 'operator']), 
+  canMoveProduct, // Apenas OPERATOR pode fazer movimentação parcial
   productController.partialMove
 );
 
 router.post('/:id/add-stock', 
-  authorizeRole(['admin', 'operator']), 
+  canCreateProduct, // Apenas ADMIN pode adicionar estoque
   productController.addStock
 );
 

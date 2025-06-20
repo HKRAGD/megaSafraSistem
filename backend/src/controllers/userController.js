@@ -90,14 +90,51 @@ const getUsers = asyncHandler(async (req, res, next) => {
             }
           };
         } catch (error) {
-          // Se falhar a análise, retornar usuário sem analytics
-          return {
-            ...user.toObject(),
-            analytics: null
-          };
+          console.warn(`Erro ao processar usuário ${user._id} para analytics:`, error.message);
+          // Retornar objeto básico de usuário para prevenir crash
+          try {
+            return {
+              ...user.toObject(),
+              analytics: null
+            };
+          } catch (toObjectError) {
+            console.warn(`Erro crítico ao serializar usuário ${user._id}:`, toObjectError.message);
+            // Fallback seguro se até toObject() falhar
+            return {
+              _id: user._id,
+              id: user._id.toString(),
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              isActive: user.isActive,
+              createdAt: user.createdAt,
+              updatedAt: user.updatedAt,
+              analytics: null
+            };
+          }
         }
       })
     );
+  } else {
+    // Mesmo quando não incluir analytics, proteger contra falhas de toObject()
+    usersWithAnalytics = users.map(user => {
+      try {
+        return user.toObject();
+      } catch (error) {
+        console.warn(`Erro ao serializar usuário ${user._id}:`, error.message);
+        // Fallback seguro
+        return {
+          _id: user._id,
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        };
+      }
+    });
   }
 
   // 5. Detectar usuários inativos se solicitado
@@ -235,9 +272,10 @@ const createUser = asyncHandler(async (req, res, next) => {
   }
 
   // 4. Validar role se fornecido
-  const validRoles = ['admin', 'operator', 'viewer'];
+  const validRoles = ['ADMIN', 'OPERATOR']; // Usar maiúsculas conforme modelo
+  // Se role for fornecido, validar contra os valores corretos em maiúsculas
   if (role && !validRoles.includes(role)) {
-    return next(new AppError('Role inválido. Valores permitidos: admin, operator, viewer', 400));
+    return next(new AppError('Role inválido. Valores permitidos: ADMIN ou OPERATOR', 400));
   }
 
   // 5. Verificar se usuário já existe
@@ -252,7 +290,8 @@ const createUser = asyncHandler(async (req, res, next) => {
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password,
-    role: role || 'viewer'
+    // Usar role diretamente se fornecido e válido, sem conversão para minúsculas
+    ...(role && { role: role })
   };
 
   const newUser = await User.create(userData);
@@ -312,9 +351,10 @@ const updateUser = asyncHandler(async (req, res, next) => {
   }
 
   // 3. Validar role se fornecido
-  const validRoles = ['admin', 'operator', 'viewer'];
+  const validRoles = ['ADMIN', 'OPERATOR']; // Usar maiúsculas conforme modelo
+  // Se role for fornecido, validar contra os valores corretos em maiúsculas
   if (role && !validRoles.includes(role)) {
-    return next(new AppError('Role inválido. Valores permitidos: admin, operator, viewer', 400));
+    return next(new AppError('Role inválido. Valores permitidos: ADMIN ou OPERATOR', 400));
   }
 
   // 4. Verificar se email será alterado e se já existe
@@ -331,7 +371,7 @@ const updateUser = asyncHandler(async (req, res, next) => {
   
   if (name) updateData.name = name.trim();
   if (email) updateData.email = email.toLowerCase().trim();
-  if (role) updateData.role = role;
+  if (role) updateData.role = role; // Usar role diretamente se fornecido e válido
   if (isActive !== undefined) updateData.isActive = isActive;
 
   // 6. Atualizar usuário

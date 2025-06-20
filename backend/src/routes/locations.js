@@ -31,7 +31,7 @@ router.get('/stats', locationController.getLocationStats);
 
 // Rotas de análise avançada (admin e operador)
 router.get('/occupancy-analysis', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   locationController.getOccupancyAnalysis
 );
 
@@ -44,20 +44,20 @@ router.get('/:id', locationController.getLocation);
 
 // Rotas de criação e modificação (admin e operador)
 router.post('/generate', 
-  authorizeRole(['admin']), 
+  authorizeRole(['ADMIN']), 
   validateRequest('generateLocations'),
   locationController.generateLocations
 );
 
 router.post('/validate-capacity', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   validateRequest('validateLocationCapacity'),
   locationController.validateLocationCapacity
 );
 
 // Rotas de atualização (admin e operador)
 router.put('/:id', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   validateRequest('updateLocation'),
   locationController.updateLocation
 );

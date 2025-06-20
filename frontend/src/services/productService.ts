@@ -372,6 +372,187 @@ export const productService = {
       throw error;
     }
   },
+
+  // ============================================================================
+  // NOVAS FUNÇÕES FSM (FINITE STATE MACHINE)
+  // ============================================================================
+
+  /**
+   * Localizar produto aguardando locação
+   * POST /api/products/:id/locate
+   */
+  locateProduct: async (id: string, locationId: string, reason?: string): Promise<Product> => {
+    try {
+      const response = await apiPost<ApiResponse<{ product: Product }>>(`/products/${id}/locate`, {
+        locationId,
+        reason
+      });
+      
+      console.log('✅ Produto localizado com sucesso');
+      
+      return response.data.product;
+    } catch (error: any) {
+      console.error('❌ Erro ao localizar produto:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Solicitar retirada de produto
+   * POST /api/products/:id/request-withdrawal
+   */
+  requestWithdrawal: async (
+    id: string, 
+    type: 'TOTAL' | 'PARCIAL', 
+    quantity?: number, 
+    reason?: string
+  ): Promise<any> => {
+    try {
+      const response = await apiPost<ApiResponse<any>>(`/products/${id}/request-withdrawal`, {
+        type,
+        quantity,
+        reason
+      });
+      
+      console.log('✅ Solicitação de retirada criada com sucesso');
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Erro ao solicitar retirada:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Buscar produtos aguardando locação
+   * GET /api/products/pending-location
+   */
+  getProductsPendingLocation: async (): Promise<Product[]> => {
+    try {
+      const response = await apiGet<ApiResponse<{ products: Product[] }>>('/products/pending-location');
+      
+      console.log(`✅ ${response.data.products.length} produtos aguardando locação`);
+      
+      return response.data.products;
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar produtos aguardando locação:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Buscar produtos aguardando retirada
+   * GET /api/products/pending-withdrawal
+   */
+  getProductsPendingWithdrawal: async (): Promise<Product[]> => {
+    try {
+      const response = await apiGet<ApiResponse<{ products: Product[] }>>('/products/pending-withdrawal');
+      
+      console.log(`✅ ${response.data.products.length} produtos aguardando retirada`);
+      
+      return response.data.products;
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar produtos aguardando retirada:', error);
+      throw error;
+    }
+  },
+
+  // ============================================================================
+  // FUNÇÕES DE CONVENIÊNCIA PARA HOOKS
+  // ============================================================================
+
+  /**
+   * Criar produto (versão simplificada para hook)
+   */
+  createProductForHook: async (data: CreateProductFormData): Promise<Product> => {
+    const response = await productService.create(data);
+    return response.data;
+  },
+
+  /**
+   * Atualizar produto (versão simplificada para hook)
+   */
+  updateProductForHook: async (id: string, data: Partial<CreateProductFormData>): Promise<Product> => {
+    const response = await productService.update(id, data);
+    return response.data;
+  },
+
+  /**
+   * Mover produto (versão simplificada para hook)
+   */
+  moveProductForHook: async (id: string, newLocationId: string, reason?: string): Promise<Product> => {
+    const response = await productService.move(id, { newLocationId, reason });
+    return response.data;
+  },
+
+  /**
+   * Remover produto (versão simplificada para hook)
+   */
+  deleteProductForHook: async (id: string, reason?: string): Promise<void> => {
+    await productService.delete(id);
+  },
+
+  /**
+   * Encontrar localização ótima (versão simplificada para hook)
+   */
+  findOptimalLocationForHook: async (quantity: number, weightPerUnit: number): Promise<any> => {
+    const response = await productService.findOptimalLocation({
+      seedTypeId: '', // Será preenchido conforme necessário
+      totalWeight: quantity * weightPerUnit
+    });
+    return response.data;
+  },
+
+  /**
+   * Validar dados de produto (versão simplificada para hook)
+   */
+  validateProductDataForHook: async (data: any): Promise<any> => {
+    const response = await productService.validateData(data);
+    return response.data;
+  },
+
+  /**
+   * Gerar código de produto (versão simplificada para hook)
+   */
+  generateProductCodeForHook: async (data: any): Promise<any> => {
+    const response = await productService.generateCode(data);
+    return response.data;
+  },
+
+  /**
+   * Saída parcial (versão simplificada para hook)
+   */
+  partialExitForHook: async (id: string, quantity: number, reason?: string): Promise<Product> => {
+    const response = await productService.partialExit(id, {
+      quantity,
+      reason: reason || 'Saída manual de estoque'
+    });
+    return response.data.product;
+  },
+
+  /**
+   * Movimentação parcial (versão simplificada para hook)
+   */
+  partialMoveForHook: async (id: string, quantity: number, newLocationId: string, reason?: string): Promise<any> => {
+    const response = await productService.partialMove(id, {
+      quantity,
+      newLocationId,
+      reason: reason || 'Movimentação parcial'
+    });
+    return response.data;
+  },
+
+  /**
+   * Adicionar estoque (versão simplificada para hook)
+   */
+  addStockForHook: async (id: string, quantity: number, reason?: string, weightPerUnit?: number): Promise<Product> => {
+    const response = await productService.addStock(id, {
+      quantity,
+      reason: reason || 'Adição de estoque',
+      weightPerUnit
+    });
+    return response.data.product;
+  }
 };
 
 export default productService; 

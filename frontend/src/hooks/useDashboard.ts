@@ -47,8 +47,18 @@ export const useDashboard = (): UseDashboardReturn => {
       
       // Mapear estrutura complexa da API para DashboardSummary
       const apiData = response.data;
+      const productStatusBreakdown = apiData.productStatusBreakdown || {
+        totalActive: 0,
+        cadastrado: 0,
+        aguardandoLocacao: 0,
+        locado: 0,
+        aguardandoRetirada: 0,
+        retirado: 0,
+        removido: 0
+      };
+      
       const dashboardSummary: DashboardSummary = {
-        totalProducts: apiData.kpis?.totalProducts || 0,
+        totalProducts: apiData.kpis?.totalProducts || productStatusBreakdown.totalActive || 0,
         totalChambers: apiData.systemStatus?.totalChambers || 0,
         totalLocations: apiData.systemStatus?.totalLocations || 0,
         occupiedLocations: apiData.kpis?.occupiedLocations || 0,
@@ -56,10 +66,18 @@ export const useDashboard = (): UseDashboardReturn => {
         availableCapacity: apiData.kpis?.availableCapacity || 0,
         productsNearExpiration: apiData.kpis?.expiringProducts || 0,
         alertsCount: apiData.criticalAlerts?.total || 0,
+        // Propriedades adicionais para o novo workflow usando productStatusBreakdown
+        totalUsers: apiData.systemStatus?.totalUsers || 0,
+        productsCreatedToday: productStatusBreakdown.cadastrado || 0, // Produtos recém cadastrados
+        totalCapacity: apiData.kpis?.totalCapacity || 0,
+        productsAwaitingLocation: productStatusBreakdown.aguardandoLocacao || 0, // ✅ Agora usando dados reais
+        productsAwaitingWithdrawal: productStatusBreakdown.aguardandoRetirada || 0, // ✅ Agora usando dados reais
+        productsLocated: productStatusBreakdown.locado || 0, // ✅ Produtos efetivamente localizados
+        tasksCompletedToday: apiData.kpis?.movementsToday || 0, // Movimentações do dia como proxy para tarefas
       };
       
       setSummary(dashboardSummary);
-      console.log('✅ Dashboard summary processado:', dashboardSummary);
+
     } catch (error: any) {
       handleError(error, 'carregar resumo do dashboard');
     }
@@ -90,7 +108,7 @@ export const useDashboard = (): UseDashboardReturn => {
       }
       
       setChamberStatus(chamberStatusData);
-      console.log('✅ Chamber status processado:', chamberStatusData.length, 'câmaras');
+
     } catch (error: any) {
       handleError(error, 'carregar status das câmaras');
     }
@@ -130,7 +148,7 @@ export const useDashboard = (): UseDashboardReturn => {
       }
       
       setCapacityData(capacityDataArray);
-      console.log('✅ Capacity data processado:', capacityDataArray.length, 'câmaras');
+
     } catch (error: any) {
       handleError(error, 'carregar dados de capacidade');
     }

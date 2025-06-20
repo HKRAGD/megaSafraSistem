@@ -32,10 +32,10 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: {
-      values: ['admin', 'operator', 'viewer'],
-      message: 'Role deve ser: admin, operator ou viewer'
+      values: ['ADMIN', 'OPERATOR'],
+      message: 'Role deve ser: ADMIN ou OPERATOR'
     },
-    default: 'viewer'
+    default: 'OPERATOR'
   },
   isActive: {
     type: Boolean,
@@ -117,12 +117,45 @@ userSchema.methods.passwordChangedAfter = function(JWTTimestamp) {
 
 // Método de instância para verificar se o usuário é admin
 userSchema.methods.isAdmin = function() {
-  return this.role === 'admin';
+  return this.role === 'ADMIN';
 };
 
-// Método de instância para verificar se o usuário pode operar
-userSchema.methods.canOperate = function() {
-  return ['admin', 'operator'].includes(this.role);
+// Método de instância para verificar se o usuário é operador
+userSchema.methods.isOperator = function() {
+  return this.role === 'OPERATOR';
+};
+
+// Método de instância para verificar permissões específicas
+userSchema.methods.canCreateProduct = function() {
+  return this.role === 'ADMIN';
+};
+
+userSchema.methods.canLocateProduct = function() {
+  return this.role === 'OPERATOR';
+};
+
+userSchema.methods.canMoveProduct = function() {
+  return this.role === 'OPERATOR';
+};
+
+userSchema.methods.canRemoveProduct = function() {
+  return this.role === 'ADMIN';
+};
+
+userSchema.methods.canRequestWithdrawal = function() {
+  return this.role === 'ADMIN';
+};
+
+userSchema.methods.canConfirmWithdrawal = function() {
+  return this.role === 'OPERATOR';
+};
+
+userSchema.methods.canManageUsers = function() {
+  return this.role === 'ADMIN';
+};
+
+userSchema.methods.canAccessReports = function() {
+  return this.role === 'ADMIN';
 };
 
 // Método estático para buscar por email

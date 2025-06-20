@@ -185,7 +185,7 @@ export const SeedTypesManager: React.FC = () => {
 
       <Grid container spacing={3}>
         {seedTypes.map((seedType) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={seedType.id}>
+          <Grid item xs={12} sm={6} md={4} key={seedType.id}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -258,7 +258,7 @@ export const SeedTypesManager: React.FC = () => {
         ))}
 
         {seedTypes.length === 0 && (
-          <Grid size={12}>
+          <Grid item xs={12}>
             <Card>
               <CardContent sx={{ textAlign: 'center', py: 6 }}>
                 <SeedIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
@@ -284,7 +284,7 @@ export const SeedTypesManager: React.FC = () => {
           
           <DialogContent>
             <Grid container spacing={3} sx={{ mt: 1 }}>
-              <Grid size={12}>
+              <Grid item xs={12}>
                 <TextField
                   {...register('name')}
                   label="Nome"
@@ -294,7 +294,7 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={12}>
+              <Grid item xs={12}>
                 <TextField
                   {...register('description')}
                   label="Descrição"
@@ -306,7 +306,7 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   {...register('optimalTemperature')}
                   label="Temperatura Ideal"
@@ -320,7 +320,7 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   {...register('optimalHumidity')}
                   label="Umidade Ideal"
@@ -334,7 +334,7 @@ export const SeedTypesManager: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={12}>
+              <Grid item xs={12}>
                 <TextField
                   {...register('maxStorageTimeDays')}
                   label="Tempo Máximo de Armazenamento"

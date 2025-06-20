@@ -13,6 +13,18 @@ interface AuthContextType extends UseAuthState {
   hasPermission: (requiredRole?: UserRole) => boolean;
   refreshUserData: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
+  // Novos métodos específicos de permissão
+  isAdmin: () => boolean;
+  isOperator: () => boolean;
+  canCreateProduct: () => boolean;
+  canLocateProduct: () => boolean;
+  canMoveProduct: () => boolean;
+  canRemoveProduct: () => boolean;
+  canRequestWithdrawal: () => boolean;
+  canConfirmWithdrawal: () => boolean;
+  canManageUsers: () => boolean;
+  canAccessReports: () => boolean;
+  can: (action: string) => boolean;
 }
 
 interface AuthAction {
@@ -131,9 +143,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // ============================================================================
   
   const roleHierarchy = useMemo<Record<UserRole, number>>(() => ({
-    viewer: 1,
-    operator: 2,
-    admin: 3,
+    OPERATOR: 1,
+    ADMIN: 2,
   }), []);
 
   // ============================================================================
@@ -264,6 +275,74 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return userRoleLevel >= requiredRoleLevel;
   }, [state.user, state.isAuthenticated, roleHierarchy]);
+
+  // ============================================================================
+  // MÉTODOS ESPECÍFICOS DE PERMISSÃO (CONFORME ESPECIFICAÇÃO)
+  // ============================================================================
+
+  const isAdmin = useCallback((): boolean => {
+    return state.user?.role === 'ADMIN' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
+
+  const isOperator = useCallback((): boolean => {
+    return state.user?.role === 'OPERATOR' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
+
+  const canCreateProduct = useCallback((): boolean => {
+    return isAdmin();
+  }, [isAdmin]);
+
+  const canLocateProduct = useCallback((): boolean => {
+    return isOperator();
+  }, [isOperator]);
+
+  const canMoveProduct = useCallback((): boolean => {
+    return isOperator();
+  }, [isOperator]);
+
+  const canRemoveProduct = useCallback((): boolean => {
+    return isAdmin();
+  }, [isAdmin]);
+
+  const canRequestWithdrawal = useCallback((): boolean => {
+    return isAdmin();
+  }, [isAdmin]);
+
+  const canConfirmWithdrawal = useCallback((): boolean => {
+    return isOperator();
+  }, [isOperator]);
+
+  const canManageUsers = useCallback((): boolean => {
+    return isAdmin();
+  }, [isAdmin]);
+
+  const canAccessReports = useCallback((): boolean => {
+    return isAdmin();
+  }, [isAdmin]);
+
+  // Método para verificar múltiplas ações
+  const can = useCallback((action: string): boolean => {
+    switch (action) {
+      case 'create_product':
+        return canCreateProduct();
+      case 'locate_product':
+        return canLocateProduct();
+      case 'move_product':
+        return canMoveProduct();
+      case 'remove_product':
+        return canRemoveProduct();
+      case 'request_withdrawal':
+        return canRequestWithdrawal();
+      case 'confirm_withdrawal':
+        return canConfirmWithdrawal();
+      case 'manage_users':
+        return canManageUsers();
+      case 'access_reports':
+        return canAccessReports();
+      default:
+        return false;
+    }
+  }, [canCreateProduct, canLocateProduct, canMoveProduct, canRemoveProduct, canRequestWithdrawal, canConfirmWithdrawal, canManageUsers, canAccessReports]);
 
   /**
    * Atualizar dados do usuário
@@ -458,6 +537,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasPermission,
     refreshUserData,
     refreshToken,
+    // Novos métodos específicos de permissão
+    isAdmin,
+    isOperator,
+    canCreateProduct,
+    canLocateProduct,
+    canMoveProduct,
+    canRemoveProduct,
+    canRequestWithdrawal,
+    canConfirmWithdrawal,
+    canManageUsers,
+    canAccessReports,
+    can,
   };
 
   return (
@@ -512,20 +603,6 @@ export const withRoleProtection = (
   };
 };
 
-// ============================================================================
-// Hook para permissões
-// ============================================================================
-
-export const usePermissions = () => {
-  const { hasPermission, user } = useAuth();
-  
-  return {
-    hasPermission,
-    isAdmin: hasPermission('admin'),
-    isOperator: hasPermission('operator'),
-    isViewer: hasPermission('viewer'),
-    currentRole: user?.role,
-  };
-};
+// Hook usePermissions foi movido para hooks/usePermissions.ts
 
 export default AuthContext; 

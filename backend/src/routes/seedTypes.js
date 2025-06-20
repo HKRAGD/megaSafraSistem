@@ -41,7 +41,7 @@ router.get('/by-conditions', authenticateToken, getSeedTypesByConditions);
  * @access  Private (Admin/Operator)
  * @query   seedTypeIds, timeframe, includeRecommendations
  */
-router.get('/performance-comparison', authenticateToken, authorizeRole(['admin', 'operator']), getPerformanceComparison);
+router.get('/performance-comparison', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), getPerformanceComparison);
 
 /**
  * @desc    Obter tipo de semente específico com análises opcionais
@@ -57,27 +57,27 @@ router.get('/:id', authenticateToken, getSeedType);
  * @access  Private (Admin/Operator)
  * @query   timeframe, includeRecommendations
  */
-router.get('/:id/condition-violations', authenticateToken, authorizeRole(['admin', 'operator']), getConditionViolations);
+router.get('/:id/condition-violations', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), getConditionViolations);
 
 /**
  * @desc    Criar novo tipo de semente
  * @route   POST /api/seed-types
  * @access  Private (Admin/Operator)
  */
-router.post('/', authenticateToken, authorizeRole(['admin', 'operator']), createSeedType);
+router.post('/', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), createSeedType);
 
 /**
  * @desc    Atualizar tipo de semente
  * @route   PUT /api/seed-types/:id
  * @access  Private (Admin/Operator)
  */
-router.put('/:id', authenticateToken, authorizeRole(['admin', 'operator']), updateSeedType);
+router.put('/:id', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), updateSeedType);
 
 /**
  * @desc    Desativar tipo de semente
  * @route   DELETE /api/seed-types/:id
  * @access  Private (Admin only)
  */
-router.delete('/:id', authenticateToken, authorizeRole(['admin']), deleteSeedType);
+router.delete('/:id', authenticateToken, authorizeRole(['ADMIN']), deleteSeedType);
 
 module.exports = router; 

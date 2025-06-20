@@ -82,44 +82,6 @@ export const ExecutiveReport: React.FC = () => {
         setMetrics(executiveData);
         return;
       }
-      
-      // Fallback para mock data apenas se a API falhar
-      const mockMetrics: ExecutiveMetrics = {
-        totalProducts: 342,
-        totalChambers: 8,
-        totalCapacityKg: 45000,
-        usedCapacityKg: 31500,
-        occupancyRate: 70,
-        totalMovements: 1247,
-        expiringProducts: 23,
-        criticalAlerts: 3,
-        trends: {
-          productsGrowth: 12.5,
-          movementsGrowth: 8.2,
-          occupancyGrowth: 15.3
-        },
-        topPerformers: {
-          chambers: [
-            { name: 'Câmara A1', occupancyRate: 95, efficiency: 98 },
-            { name: 'Câmara B2', occupancyRate: 87, efficiency: 92 },
-            { name: 'Câmara C1', occupancyRate: 82, efficiency: 89 }
-          ],
-          users: [
-            { name: 'João Silva', movementsCount: 234, efficiency: 96 },
-            { name: 'Maria Santos', movementsCount: 198, efficiency: 94 },
-            { name: 'Pedro Costa', movementsCount: 156, efficiency: 91 }
-          ]
-        },
-        alerts: [
-          { type: 'error', message: 'Produtos próximos ao vencimento', count: 23 },
-          { type: 'warning', message: 'Câmaras com alta ocupação', count: 3 },
-          { type: 'info', message: 'Manutenções programadas', count: 2 }
-        ]
-      };
-
-      // Usar dados mockados apenas como fallback
-      console.warn('Usando dados mockados para ExecutiveReport');
-      setMetrics(mockMetrics);
     } catch (err) {
       setError('Erro ao carregar dados executivos');
       console.error('Erro ao carregar relatório executivo:', err);

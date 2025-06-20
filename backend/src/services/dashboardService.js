@@ -16,10 +16,23 @@ const User = require('../models/User');
 const generateSystemSummary = async () => {
   try {
     // Métricas básicas
-    const totalProducts = await Product.countDocuments({ status: 'stored' });
     const totalChambers = await Chamber.countDocuments({ status: 'active' });
     const totalLocations = await Location.countDocuments();
     const totalMovements = await Movement.countDocuments();
+
+    // Contagem detalhada por status de produtos
+    const productStatusCounts = await Product.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const productCounts = productStatusCounts.reduce((acc, item) => {
+      acc[item._id] = item.count;
+      return acc;
+    }, {});
+
+    // Define os status ativos para contagem total
+    const activeStatuses = ['CADASTRADO', 'AGUARDANDO_LOCACAO', 'LOCADO', 'AGUARDANDO_RETIRADA'];
+    const totalActiveProducts = activeStatuses.reduce((sum, status) => sum + (productCounts[status] || 0), 0);
 
     // Análise de utilização
     const totalCapacity = await Location.aggregate([
@@ -41,15 +54,17 @@ const generateSystemSummary = async () => {
       timestamp: { $gte: today }
     });
 
-    // Alertas críticos (simulação baseada em utilização)
-    const criticalAlerts = utilizationRate > 0.9 ? 2 : utilizationRate > 0.8 ? 1 : 0;
+    // Alertas críticos baseados nos produtos aguardando
+    const aguardandoLocacao = productCounts['AGUARDANDO_LOCACAO'] || 0;
+    const aguardandoRetirada = productCounts['AGUARDANDO_RETIRADA'] || 0;
+    const criticalAlerts = aguardandoLocacao + aguardandoRetirada + (utilizationRate > 0.9 ? 2 : utilizationRate > 0.8 ? 1 : 0);
 
     // Eficiência (baseada na taxa de sucesso de movimentações)
     const efficiency = Math.min(0.95, 0.8 + (utilizationRate * 0.15));
 
     return {
       overview: {
-        totalProducts,
+        totalProducts: totalActiveProducts,
         totalChambers,
         totalLocations,
         utilizationRate: Math.round(utilizationRate * 100) / 100
@@ -60,6 +75,15 @@ const generateSystemSummary = async () => {
         criticalAlerts,
         efficiency: Math.round(efficiency * 100) / 100
       },
+      productStatusBreakdown: {
+        totalActive: totalActiveProducts,
+        cadastrado: productCounts['CADASTRADO'] || 0,
+        aguardandoLocacao: productCounts['AGUARDANDO_LOCACAO'] || 0,
+        locado: productCounts['LOCADO'] || 0,
+        aguardandoRetirada: productCounts['AGUARDANDO_RETIRADA'] || 0,
+        retirado: productCounts['RETIRADO'] || 0,
+        removido: productCounts['REMOVIDO'] || 0
+      },
       trends: {
         storageGrowth: '+5.2%', // Simulado
         efficiencyTrend: 'stable',
@@ -67,7 +91,9 @@ const generateSystemSummary = async () => {
       },
       insights: [
         utilizationRate > 0.85 ? 'Sistema próximo da capacidade máxima' : 'Capacidade adequada',
-        efficiency > 0.9 ? 'Eficiência operacional acima da média' : 'Oportunidades de melhoria identificadas'
+        efficiency > 0.9 ? 'Eficiência operacional acima da média' : 'Oportunidades de melhoria identificadas',
+        aguardandoLocacao > 0 ? `${aguardandoLocacao} produto(s) aguardando localização` : null,
+        aguardandoRetirada > 0 ? `${aguardandoRetirada} produto(s) aguardando retirada` : null
       ].filter(Boolean),
       generatedAt: new Date()
     };

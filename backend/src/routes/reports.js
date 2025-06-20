@@ -43,15 +43,15 @@ router.get('/capacity', authenticateToken, getCapacityReport);
 /**
  * @route   GET /api/reports/executive
  * @desc    Relatório executivo consolidado
- * @access  Private (Admin/Operator only)
+ * @access  Private (All authenticated users)
  */
-router.get('/executive', authenticateToken, authorizeRole(['admin', 'operator']), getExecutiveReport);
+router.get('/executive', authenticateToken, getExecutiveReport);
 
 /**
  * @route   GET /api/reports/custom
  * @desc    Relatório customizado com múltiplas dimensões
  * @access  Private (Admin/Operator only)
  */
-router.get('/custom', authenticateToken, authorizeRole(['admin', 'operator']), getCustomReport);
+router.get('/custom', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), getCustomReport);
 
 module.exports = router; 

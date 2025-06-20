@@ -32,6 +32,9 @@ export const productSchema = yup.object({
   locationId: yup
     .string()
     .required('Localização é obrigatória'),
+  clientId: yup
+    .string()
+    .optional(),
   expirationDate: yup
     .date()
     .min(new Date(), 'Data de expiração deve ser futura')

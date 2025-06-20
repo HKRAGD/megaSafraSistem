@@ -33,14 +33,14 @@ interface UserFormData {
   email: string;
   password?: string;
   confirmPassword?: string;
-  role: 'admin' | 'operator' | 'viewer';
+  role: 'ADMIN' | 'OPERATOR';
   isActive: boolean;
 }
 
 interface CreateUserData {
   name: string;
   email: string;
-  role: 'admin' | 'operator' | 'viewer';
+  role: 'ADMIN' | 'OPERATOR';
   isActive: boolean;
   password?: string;
 }
@@ -78,7 +78,7 @@ const createUserSchema = (isEditing: boolean) => yup.object({
   role: yup
     .string()
     .required('Função é obrigatória')
-    .oneOf(['admin', 'operator', 'viewer'], 'Função inválida'),
+    .oneOf(['ADMIN', 'OPERATOR'], 'Função inválida'),
   isActive: yup.boolean().required(),
 });
 
@@ -105,7 +105,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'viewer',
+      role: 'OPERATOR',
       isActive: true,
     },
   });
@@ -127,7 +127,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'viewer',
+        role: 'OPERATOR',
         isActive: true,
       });
     }
@@ -155,23 +155,17 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   const getRoleInfo = (role: string) => {
     switch (role) {
-      case 'admin':
+      case 'ADMIN':
         return {
           icon: <SecurityIcon />,
           label: 'Administrador',
           description: 'Acesso total ao sistema, incluindo gerenciamento de usuários',
         };
-      case 'operator':
+      case 'OPERATOR':
         return {
           icon: <PersonIcon />,
           label: 'Operador',
-          description: 'Pode criar/modificar produtos, câmaras e movimentações',
-        };
-      case 'viewer':
-        return {
-          icon: <VisibilityIcon />,
-          label: 'Visualizador',
-          description: 'Apenas visualização de dados e relatórios',
+          description: 'Pode localizar produtos, confirmar retiradas e acessar relatórios',
         };
       default:
         return {
@@ -303,22 +297,16 @@ export const UserForm: React.FC<UserFormProps> = ({
                         label="Função no Sistema"
                         disabled={isEditingSelf} // Não permitir alterar própria função
                       >
-                        <MenuItem value="admin">
+                        <MenuItem value="ADMIN">
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <SecurityIcon />
                             Administrador
                           </Box>
                         </MenuItem>
-                        <MenuItem value="operator">
+                        <MenuItem value="OPERATOR">
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <PersonIcon />
                             Operador
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="viewer">
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <VisibilityIcon />
-                            Visualizador
                           </Box>
                         </MenuItem>
                       </Select>

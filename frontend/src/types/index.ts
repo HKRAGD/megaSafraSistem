@@ -6,10 +6,12 @@
 // BASE TYPES
 // ============================================================================
 
-export type UserRole = 'admin' | 'operator' | 'viewer';
+export type UserRole = 'ADMIN' | 'OPERATOR';
 export type ChamberStatus = 'active' | 'maintenance' | 'inactive';
-export type ProductStatus = 'stored' | 'reserved' | 'removed';
+export type ProductStatus = 'CADASTRADO' | 'AGUARDANDO_LOCACAO' | 'LOCADO' | 'AGUARDANDO_RETIRADA' | 'RETIRADO' | 'REMOVIDO';
 export type ProductStorageType = 'saco' | 'bag';
+export type WithdrawalRequestStatus = 'PENDENTE' | 'CONFIRMADO' | 'CANCELADO';
+export type WithdrawalRequestType = 'TOTAL' | 'PARCIAL';
 export type MovementType = 'entry' | 'exit' | 'transfer' | 'adjustment';
 export type QualityGrade = 'A' | 'B' | 'C' | 'D';
 export type EnvironmentalStatus = 'low' | 'normal' | 'high' | 'unknown';
@@ -37,6 +39,28 @@ export interface SeedType {
   optimalTemperature?: number;
   optimalHumidity?: number;
   maxStorageTimeDays?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  document: string;
+  documentType: 'CPF' | 'CNPJ';
+  email?: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  notes?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -99,20 +123,29 @@ export interface LocationWithChamber extends Location {
   };
 }
 
-export interface ProductWithRelations extends Product {
-  seedType?: {
+export interface ProductWithRelations extends Omit<Product, 'seedTypeId' | 'locationId' | 'clientId'> {
+  seedTypeId?: {
     id: string;
     name: string;
+    optimalTemperature?: number;
+    optimalHumidity?: number;
+    status?: string;
   };
-  location?: {
+  locationId?: {
     id: string;
     code: string;
     maxCapacityKg: number;
     currentWeightKg: number;
-    chamber?: {
+    chamberId?: {
       id: string;
       name: string;
     };
+  };
+  clientId?: {
+    id: string;
+    name: string;
+    document: string;
+    documentType: 'CPF' | 'CNPJ';
   };
 }
 
@@ -125,11 +158,13 @@ export interface Product {
   storageType: ProductStorageType;
   weightPerUnit: number;
   totalWeight: number;
-  locationId: string;
+  locationId?: string; // Agora é opcional conforme especificação
+  clientId?: string; // Cliente associado (opcional)
   entryDate: string;
   expirationDate?: string;
   status: ProductStatus;
   notes?: string;
+  version?: number; // Para optimistic locking
   tracking?: {
     batchNumber?: string;
     origin?: string;
@@ -165,6 +200,59 @@ export interface Movement {
   updatedAt: string;
 }
 
+export interface WithdrawalRequest {
+  id: string;
+  productId: string;
+  requestedBy: string;
+  status: WithdrawalRequestStatus;
+  type: WithdrawalRequestType;
+  quantityRequested?: number;
+  reason?: string;
+  requestedAt: string;
+  confirmedAt?: string;
+  confirmedBy?: string;
+  canceledAt?: string;
+  canceledBy?: string;
+  notes?: string;
+  metadata?: {
+    originalProductData?: {
+      name: string;
+      lot: string;
+      quantity: number;
+      totalWeight: number;
+      locationCode: string;
+    };
+    systemNotes?: string;
+  };
+  // Campos virtuais do modelo
+  waitingTimeDays?: number;
+  urgencyStatus?: 'resolved' | 'overdue' | 'urgent' | 'normal';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WithdrawalRequestWithRelations extends Omit<WithdrawalRequest, 'productId' | 'requestedBy' | 'confirmedBy' | 'canceledBy'> {
+  productId?: ProductWithRelations; // Objeto populado ao invés de string
+  requestedBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
+  confirmedBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
+  canceledBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
+}
+
 // ============================================================================
 // DASHBOARD TYPES
 // ============================================================================
@@ -178,6 +266,14 @@ export interface DashboardSummary {
   availableCapacity: number;
   productsNearExpiration: number;
   alertsCount: number;
+  // Propriedades adicionais para o novo workflow
+  totalUsers: number;
+  productsCreatedToday: number;
+  totalCapacity: number;
+  productsAwaitingLocation: number;
+  productsAwaitingWithdrawal: number;
+  productsLocated: number;
+  tasksCompletedToday: number;
 }
 
 export interface DashboardApiResponse {
@@ -204,6 +300,7 @@ export interface DashboardApiResponse {
     availableCapacity: number;
     occupancyRate: number;
     expiringProducts: number;
+    movementsToday?: number;
     period: {
       startDate: string;
       endDate: string;
@@ -221,6 +318,15 @@ export interface DashboardApiResponse {
     overloadedChambers: number;
     inactiveChambers: number;
     total: number;
+  };
+  productStatusBreakdown?: {
+    totalActive: number;
+    cadastrado: number;
+    aguardandoLocacao: number;
+    locado: number;
+    aguardandoRetirada: number;
+    retirado: number;
+    removido: number;
   };
   comparisons?: any;
   trends?: any;
@@ -324,6 +430,19 @@ export interface ProductsResponse {
 
 export interface SeedTypesResponse {
   seedTypes: SeedType[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  analytics?: any;
+}
+
+export interface ClientsResponse {
+  clients: Client[];
   pagination: {
     currentPage: number;
     totalPages: number;
@@ -466,6 +585,43 @@ export interface CreateChamberFormData {
   };
 }
 
+export interface CreateClientFormData {
+  name: string;
+  document: string;
+  documentType: 'CPF' | 'CNPJ';
+  email?: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  notes?: string;
+}
+
+export interface UpdateClientFormData {
+  name?: string;
+  document?: string;
+  documentType?: 'CPF' | 'CNPJ';
+  email?: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  notes?: string;
+  isActive?: boolean;
+}
+
 export interface CreateProductFormData {
   name: string;
   lot: string;
@@ -473,7 +629,8 @@ export interface CreateProductFormData {
   quantity: number;
   storageType: ProductStorageType;
   weightPerUnit: number;
-  locationId: string;
+  locationId?: string; // Agora é opcional conforme especificação FSM
+  clientId?: string; // Cliente associado (opcional)
   expirationDate?: string;
   notes?: string;
   tracking?: {
@@ -492,6 +649,7 @@ export interface UpdateProductFormData {
   storageType?: ProductStorageType;
   weightPerUnit?: number;
   locationId?: string;
+  clientId?: string;
   expirationDate?: string;
   notes?: string;
   tracking?: {
@@ -532,11 +690,22 @@ export interface UserFilters {
   sort?: string;
 }
 
+export interface ClientFilters {
+  search?: string;
+  documentType?: 'CPF' | 'CNPJ';
+  isActive?: boolean;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  sortOrder?: SortDirection;
+}
+
 export interface ProductFilters {
   search?: string;
   seedTypeId?: string;
   locationId?: string;
   chamberId?: string;
+  clientId?: string;
   status?: ProductStatus;
   storageType?: ProductStorageType;
   isNearExpiration?: boolean;
@@ -580,6 +749,7 @@ export interface MovementFilters {
 export interface ReportFilters {
   chamberId?: string;
   seedTypeId?: string;
+  clientId?: string;
   startDate?: string;
   endDate?: string;
   status?: ProductStatus;

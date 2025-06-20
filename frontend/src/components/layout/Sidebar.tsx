@@ -23,11 +23,14 @@ import {
   Assessment as ReportsIcon,
   History as HistoryIcon,
   Settings as SettingsIcon,
+  Assignment as AssignmentIcon,
+  PlaylistAdd as PlaylistAddIcon,
   ExpandLess,
   ExpandMore,
   Close as CloseIcon,
 } from '@mui/icons-material';
-import { useAuth, usePermissions } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import { APP_CONFIG } from '../../config/app';
 
 // ============================================================================
@@ -45,7 +48,7 @@ interface MenuItemData {
   icon: React.ReactElement;
   path?: string;
   children?: MenuItemData[];
-  requiredRole?: string;
+  requiredRoles?: ('ADMIN' | 'OPERATOR')[];
   exact?: boolean;
 }
 
@@ -59,38 +62,55 @@ const menuItems: MenuItemData[] = [
     icon: <DashboardIcon />,
     path: '/dashboard',
     exact: true,
+    requiredRoles: ['ADMIN', 'OPERATOR'],
   },
   {
     label: 'Produtos',
     icon: <ProductsIcon />,
     path: '/products',
+    requiredRoles: ['ADMIN', 'OPERATOR'],
   },
   {
     label: 'Localizações',
     icon: <LocationsIcon />,
     path: '/locations',
+    requiredRoles: ['ADMIN', 'OPERATOR'],
   },
   {
     label: 'Relatórios',
     icon: <ReportsIcon />,
     path: '/reports',
+    requiredRoles: ['ADMIN', 'OPERATOR'],
   },
   {
     label: 'Histórico',
     icon: <HistoryIcon />,
     path: '/history',
+    requiredRoles: ['ADMIN', 'OPERATOR'],
+  },
+  {
+    label: 'Alocar Produtos',
+    icon: <PlaylistAddIcon />,
+    path: '/product-allocation',
+    requiredRoles: ['OPERATOR'],
+  },
+  {
+    label: 'Solicitações de Retirada',
+    icon: <AssignmentIcon />,
+    path: '/withdrawal-requests',
+    requiredRoles: ['ADMIN', 'OPERATOR'],
   },
   {
     label: 'Usuários',
     icon: <UsersIcon />,
     path: '/users',
-    requiredRole: 'admin',
+    requiredRoles: ['ADMIN'],
   },
   {
     label: 'Configurações',
     icon: <SettingsIcon />,
     path: '/settings',
-    requiredRole: 'admin',
+    requiredRoles: ['ADMIN'],
   },
 ];
 
@@ -102,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle, width }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasAnyRole } = usePermissions();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -143,8 +163,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle, width }) => {
   };
 
   const isItemVisible = (item: MenuItemData): boolean => {
-    if (!item.requiredRole) return true;
-    return hasPermission(item.requiredRole as any);
+    if (!item.requiredRoles || item.requiredRoles.length === 0) return true;
+    return hasAnyRole(item.requiredRoles);
   };
 
   // ============================================================================
@@ -278,8 +298,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle, width }) => {
           {user?.name}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {user?.role === 'admin' ? 'Administrador' : 
-           user?.role === 'operator' ? 'Operador' : 'Visualizador'}
+          {user?.role === 'ADMIN' ? 'Administrador' : 
+           user?.role === 'OPERATOR' ? 'Operador' : 'Visualizador'}
         </Typography>
       </Box>
 

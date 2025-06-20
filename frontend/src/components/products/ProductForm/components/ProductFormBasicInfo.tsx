@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { SeedType } from '../../../../types';
+import { ClientSelector } from '../../../ui/ClientSelector';
 
 interface ProductFormBasicInfoProps {
   form: UseFormReturn<any>;
@@ -24,7 +25,7 @@ export const ProductFormBasicInfo: React.FC<ProductFormBasicInfoProps> = React.m
   const { register, control } = form;
 
   return (
-    <Grid size={{ xs: 12 }}>
+    <Grid item xs={12}>
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -32,7 +33,7 @@ export const ProductFormBasicInfo: React.FC<ProductFormBasicInfoProps> = React.m
           </Typography>
           
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid item xs={12} md={8}>
               <TextField
                 fullWidth
                 label="Nome do Produto"
@@ -43,7 +44,7 @@ export const ProductFormBasicInfo: React.FC<ProductFormBasicInfoProps> = React.m
               />
             </Grid>
             
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Lote"
@@ -54,7 +55,7 @@ export const ProductFormBasicInfo: React.FC<ProductFormBasicInfoProps> = React.m
               />
             </Grid>
             
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Controller
                 name="seedTypeId"
                 control={control}
@@ -77,7 +78,7 @@ export const ProductFormBasicInfo: React.FC<ProductFormBasicInfoProps> = React.m
               />
             </Grid>
             
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Controller
                 name="storageType"
                 control={control}
@@ -93,6 +94,23 @@ export const ProductFormBasicInfo: React.FC<ProductFormBasicInfoProps> = React.m
                     <MenuItem value="saco">Saco</MenuItem>
                     <MenuItem value="bag">Bag</MenuItem>
                   </TextField>
+                )}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Controller
+                name="clientId"
+                control={control}
+                render={({ field }) => (
+                  <ClientSelector
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.clientId}
+                    helperText={errors.clientId?.message}
+                    label="Cliente (Opcional)"
+                    placeholder="Selecione um cliente..."
+                  />
                 )}
               />
             </Grid>

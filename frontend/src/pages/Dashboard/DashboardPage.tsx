@@ -14,12 +14,14 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { useDashboard } from '../../hooks/useDashboard';
+import { usePermissions } from '../../hooks/usePermissions';
 import { DashboardSummary } from '../../components/dashboard/DashboardSummary';
 import { RecentMovements } from '../../components/dashboard/RecentMovements';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const { loading, error, refreshDashboard } = useDashboard();
+  const { isAdmin, isOperator, canCreateProduct, canLocateProduct, canManageUsers } = usePermissions();
 
   // Carregar dados do dashboard ao acessar a página
   useEffect(() => {
@@ -46,10 +48,12 @@ export const DashboardPage: React.FC = () => {
           color="primary" 
           gutterBottom
         >
-          Dashboard
+          Dashboard {isAdmin ? 'Administrativo' : 'Operacional'}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Bem-vindo, {user?.name}! Aqui está um resumo do sistema.
+          Bem-vindo, {user?.name}! 
+          {isAdmin && ' Você tem acesso completo ao sistema de gerenciamento.'}
+          {isOperator && ' Aqui estão suas tarefas operacionais pendentes.'}
         </Typography>
       </Box>
 
@@ -67,11 +71,11 @@ export const DashboardPage: React.FC = () => {
 
       {/* Seção Principal */}
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid item xs={12} md={8}>
           <RecentMovements />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid item xs={12} md={4}>
           <Card elevation={2}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -101,17 +105,17 @@ export const DashboardPage: React.FC = () => {
                   sx={{ 
                     px: 2, 
                     py: 1, 
-                    bgcolor: user?.role === 'admin' ? 'error.light' : 
-                            user?.role === 'operator' ? 'warning.light' : 'info.light',
-                    color: user?.role === 'admin' ? 'error.contrastText' : 
-                           user?.role === 'operator' ? 'warning.contrastText' : 'info.contrastText',
+                    bgcolor: user?.role === 'ADMIN' ? 'error.light' : 
+                            user?.role === 'OPERATOR' ? 'warning.light' : 'info.light',
+                    color: user?.role === 'ADMIN' ? 'error.contrastText' : 
+                           user?.role === 'OPERATOR' ? 'warning.contrastText' : 'info.contrastText',
                     borderRadius: 1,
                     display: 'inline-block'
                   }}
                 >
-                  <Typography variant="body2" fontWeight="bold" sx={{ textTransform: 'capitalize' }}>
-                    {user?.role === 'admin' ? 'Administrador' : 
-                     user?.role === 'operator' ? 'Operador' : 'Visualizador'}
+                  <Typography variant="body2" fontWeight="bold">
+                    {user?.role === 'ADMIN' ? 'Administrador' : 
+                     user?.role === 'OPERATOR' ? 'Operador' : 'Visualizador'}
                   </Typography>
                 </Box>
               </Box>
@@ -130,23 +134,49 @@ export const DashboardPage: React.FC = () => {
           <Card elevation={2} sx={{ mt: 2 }}>
             <CardContent>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Acesso Rápido
+                {isAdmin ? 'Ações Administrativas' : 'Tarefas Operacionais'}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Use os links de navegação na barra lateral para acessar:
+                {isAdmin 
+                  ? 'Acesso completo às funcionalidades administrativas:'
+                  : 'Suas principais responsabilidades operacionais:'
+                }
               </Typography>
               <Box component="ul" sx={{ pl: 2, mt: 2 }}>
-                <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  📦 Gerenciar Produtos
-                </Typography>
-                <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  🏢 Câmaras e Localizações
-                </Typography>
-                <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  📊 Relatórios Completos
-                </Typography>
+                {isAdmin && (
+                  <>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      ➕ Criar e gerenciar produtos
+                    </Typography>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      👥 Administração de usuários
+                    </Typography>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      📋 Solicitar retiradas de produtos
+                    </Typography>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      📊 Relatórios gerenciais
+                    </Typography>
+                  </>
+                )}
+                {isOperator && (
+                  <>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      📍 Localizar produtos aguardando
+                    </Typography>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      ✅ Confirmar retiradas pendentes
+                    </Typography>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      📦 Mover produtos entre localizações
+                    </Typography>
+                    <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      📊 Visualizar relatórios operacionais
+                    </Typography>
+                  </>
+                )}
                 <Typography component="li" variant="body2" color="text.secondary">
-                  👥 Administração de Usuários
+                  🏢 Câmaras e localizações
                 </Typography>
               </Box>
             </CardContent>

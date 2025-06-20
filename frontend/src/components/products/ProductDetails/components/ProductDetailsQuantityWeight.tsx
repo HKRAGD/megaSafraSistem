@@ -25,7 +25,7 @@ export const ProductDetailsQuantityWeight: React.FC<ProductDetailsQuantityWeight
   if (!quantityInfo) return null;
 
   return (
-    <Grid size={{ xs: 12, md: 6 }}>
+    <Grid item xs={12} md={6}>
       <Card variant="outlined">
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -36,7 +36,7 @@ export const ProductDetailsQuantityWeight: React.FC<ProductDetailsQuantityWeight
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid size={6}>
+                <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
                     Quantidade
                   </Typography>
@@ -45,7 +45,7 @@ export const ProductDetailsQuantityWeight: React.FC<ProductDetailsQuantityWeight
                   </Typography>
                 </Grid>
                 
-                <Grid size={6}>
+                <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
                     Peso por Unidade
                   </Typography>
@@ -54,7 +54,7 @@ export const ProductDetailsQuantityWeight: React.FC<ProductDetailsQuantityWeight
                   </Typography>
                 </Grid>
                 
-                <Grid size={12}>
+                <Grid item xs={12}>
                   <Typography variant="body2" color="text.secondary">
                     Peso Total
                   </Typography>

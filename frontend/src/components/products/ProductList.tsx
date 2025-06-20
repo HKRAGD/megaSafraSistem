@@ -34,12 +34,17 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   Inventory as InventoryIcon,
+  LocationOn as LocationOnIcon,
+  Assignment as RequestIcon,
+  Done as ConfirmIcon,
 } from '@mui/icons-material';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Product, ProductWithRelations, ProductFilters } from '../../types';
 import { DataTable } from '../common/DataTable';
 import { Loading } from '../common/Loading';
+import { usePermissions } from '../../hooks/usePermissions';
+import { ProductStatusBadge } from '../ui';
 
 interface ProductListProps {
   products: ProductWithRelations[];
@@ -74,6 +79,7 @@ export const ProductList: React.FC<ProductListProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithRelations | null>(null);
+  const { canCreateProduct, canLocateProduct, canRequestWithdrawal, canConfirmWithdrawal } = usePermissions();
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, product: ProductWithRelations) => {
     setAnchorEl(event.currentTarget);
@@ -94,25 +100,7 @@ export const ProductList: React.FC<ProductListProps> = ({
     });
   };
 
-  const getStatusChip = (status: string) => {
-    const statusConfig = {
-      stored: { label: 'Armazenado', color: 'success' as const, icon: <CheckCircleIcon /> },
-      reserved: { label: 'Reservado', color: 'warning' as const, icon: <WarningIcon /> },
-      removed: { label: 'Removido', color: 'error' as const, icon: <CancelIcon /> },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.stored;
-
-    return (
-      <Chip
-        label={config.label}
-        color={config.color}
-        size="small"
-        variant="outlined"
-        icon={config.icon}
-      />
-    );
-  };
+  // Removida função getStatusChip - agora usando ProductStatusBadge padronizado
 
   const getExpirationStatus = (expirationDate?: string) => {
     if (!expirationDate) return null;
@@ -201,7 +189,7 @@ export const ProductList: React.FC<ProductListProps> = ({
       sortable: false,
       render: (product: ProductWithRelations) => (
         <Typography variant="body2">
-          {product.seedType?.name || 'N/A'}
+          {product.seedTypeId?.name || 'N/A'}
         </Typography>
       ),
     },
@@ -224,22 +212,34 @@ export const ProductList: React.FC<ProductListProps> = ({
       id: 'location',
       label: 'Localização',
       sortable: false,
-      render: (product: ProductWithRelations) => (
-        <Box>
-          <Typography variant="body2">
-            {product.location?.code || 'N/A'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {product.location?.chamber?.name || ''}
-          </Typography>
-        </Box>
-      ),
+      render: (product: ProductWithRelations) => {
+        // Debug temporário
+        console.log('🔍 Product location data:', {
+          productName: product.name,
+          locationId: product.locationId,
+          code: product.locationId?.code,
+          chamberName: product.locationId?.chamberId?.name
+        });
+        
+        return (
+          <Box>
+            <Typography variant="body2">
+              {product.locationId?.code || 'N/A'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {product.locationId?.chamberId?.name || ''}
+            </Typography>
+          </Box>
+        );
+      },
     },
     {
       id: 'status',
       label: 'Status',
       sortable: true,
-      render: (product: ProductWithRelations) => getStatusChip(product.status),
+      render: (product: ProductWithRelations) => (
+        <ProductStatusBadge status={product.status} />
+      ),
     },
     {
       id: 'expiration',
@@ -267,11 +267,11 @@ export const ProductList: React.FC<ProductListProps> = ({
       label: 'Capacidade',
       sortable: false,
       render: (product: ProductWithRelations) => {
-        if (!product.location?.maxCapacityKg) return <Typography variant="body2">N/A</Typography>;
+        if (!product.locationId?.maxCapacityKg) return <Typography variant="body2">N/A</Typography>;
         
         const percentage = calculateCapacityPercentage(
-          product.location.currentWeightKg || 0,
-          product.location.maxCapacityKg
+          product.locationId.currentWeightKg || 0,
+          product.locationId.maxCapacityKg
         );
         
         return (
@@ -335,7 +335,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             <IconButton
               size="small"
               onClick={() => onMove(product)}
-              disabled={product.status !== 'stored'}
+              disabled={!canLocateProduct || (product.status !== 'CADASTRADO' && product.status !== 'LOCADO')}
             >
               <MoveIcon />
             </IconButton>
@@ -390,6 +390,51 @@ export const ProductList: React.FC<ProductListProps> = ({
           </ListItemIcon>
           <ListItemText>Histórico</ListItemText>
         </MenuItem>
+
+        {/* Ação de localizar produto - para OPERATOR quando produto está AGUARDANDO_LOCACAO */}
+        {canLocateProduct && selectedProduct?.status === 'AGUARDANDO_LOCACAO' && (
+          <MenuItem 
+            onClick={() => {
+              if (selectedProduct) onMove(selectedProduct);
+              handleMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              <LocationOnIcon fontSize="small" color="warning" />
+            </ListItemIcon>
+            <ListItemText>Localizar Produto</ListItemText>
+          </MenuItem>
+        )}
+
+        {/* Ação de solicitar retirada - para ADMIN quando produto está LOCADO */}
+        {canRequestWithdrawal && selectedProduct?.status === 'LOCADO' && (
+          <MenuItem 
+            onClick={() => {
+              // TODO: Implementar solicitação de retirada
+              handleMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              <RequestIcon fontSize="small" color="primary" />
+            </ListItemIcon>
+            <ListItemText>Solicitar Retirada</ListItemText>
+          </MenuItem>
+        )}
+
+        {/* Ação de confirmar retirada - para OPERATOR quando produto está AGUARDANDO_RETIRADA */}
+        {canConfirmWithdrawal && selectedProduct?.status === 'AGUARDANDO_RETIRADA' && (
+          <MenuItem 
+            onClick={() => {
+              // TODO: Implementar confirmação de retirada
+              handleMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              <ConfirmIcon fontSize="small" color="success" />
+            </ListItemIcon>
+            <ListItemText>Confirmar Retirada</ListItemText>
+          </MenuItem>
+        )}
         
         <MenuItem 
           onClick={() => {
@@ -408,7 +453,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             if (selectedProduct) onMove(selectedProduct);
             handleMenuClose();
           }}
-          disabled={selectedProduct?.status !== 'stored'}
+          disabled={!canLocateProduct || (selectedProduct?.status !== 'CADASTRADO' && selectedProduct?.status !== 'LOCADO')}
         >
           <ListItemIcon>
             <MoveIcon fontSize="small" />
@@ -416,18 +461,20 @@ export const ProductList: React.FC<ProductListProps> = ({
           <ListItemText>Mover</ListItemText>
         </MenuItem>
         
-        <MenuItem 
-          onClick={() => {
-            if (selectedProduct) onDelete(selectedProduct.id);
-            handleMenuClose();
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Excluir</ListItemText>
-        </MenuItem>
+        {canCreateProduct && (
+          <MenuItem 
+            onClick={() => {
+              if (selectedProduct) onDelete(selectedProduct.id);
+              handleMenuClose();
+            }}
+            sx={{ color: 'error.main' }}
+          >
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Excluir</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
     </Paper>
   );

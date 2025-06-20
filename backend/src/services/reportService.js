@@ -35,7 +35,7 @@ const generateInventoryReport = async (filters = {}, options = {}) => {
     const {
       chamberId,
       seedTypeId,
-      status = ['stored', 'reserved'],
+      status,
       expirationDays,
       includeInactive = false
     } = filters;
@@ -255,35 +255,29 @@ const generateExpirationReport = async (criteria = {}) => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() + days);
 
-    // 1. Buscar produtos próximos ao vencimento
+    // 1. Buscar produtos próximos ao vencimento (incluindo vencidos)
     const expiringProducts = await Product.find({
-      status: { $in: ['stored', 'reserved'] },
-      expirationDate: { $lte: cutoffDate, $gte: new Date() }
+      status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] },
+      expirationDate: { $exists: true, $ne: null, $lte: cutoffDate }
     })
     .populate('seedTypeId', 'name maxStorageTimeDays')
     .populate('locationId', 'code coordinates chamberId')
     .populate({ path: 'locationId', populate: { path: 'chamberId', select: 'name' } })
     .sort({ expirationDate: 1 });
 
-    // 2. Classificar por urgência
-    const classification = classifyByExpiration(expiringProducts);
+    // 2. Separar produtos vencidos e próximos ao vencimento
+    const now = new Date();
+    const expiredProducts = expiringProducts.filter(p => p.expirationDate < now);
+    const futurerExpiringProducts = expiringProducts.filter(p => p.expirationDate >= now);
 
-    // 3. Agrupamento por câmara
+    // 3. Classificar por urgência (incluindo produtos vencidos)
+    const allProducts = [...expiredProducts, ...futurerExpiringProducts];
+    const classification = classifyByExpiration(allProducts);
+
+    // 4. Agrupamento por câmara
     let chamberGroups = {};
     if (groupByChamber) {
-      chamberGroups = groupProductsByChamber(expiringProducts);
-    }
-
-    // 4. Produtos já vencidos
-    let expiredProducts = [];
-    if (includeCritical) {
-      expiredProducts = await Product.find({
-        status: { $in: ['stored', 'reserved'] },
-        expirationDate: { $lt: new Date() }
-      })
-      .populate('seedTypeId', 'name')
-      .populate('locationId', 'code')
-      .populate({ path: 'locationId', populate: { path: 'chamberId', select: 'name' } });
+      chamberGroups = groupProductsByChamber(allProducts);
     }
 
     // 5. Recomendações
@@ -299,17 +293,20 @@ const generateExpirationReport = async (criteria = {}) => {
         criteria
       },
       summary: {
-        totalExpiring: expiringProducts.length,
+        totalExpiring: allProducts.length,
         totalExpired: expiredProducts.length,
         daysAnalyzed: days,
+        expiredCount: classification.expired?.length || 0,
         criticalCount: classification.critical?.length || 0,
-        warningCount: classification.warning?.length || 0
+        warningCount: classification.warning?.length || 0,
+        goodCount: classification.good?.length || 0
       },
       data: {
         classification,
         chamberGroups,
         expiredProducts,
-        recommendations
+        recommendations,
+        products: allProducts // Adicionando lista unificada para o frontend
       }
     };
 
@@ -661,10 +658,15 @@ const generateTopMovementsAnalysis = async (filters) => {
 const classifyByExpiration = (products) => {
   const now = new Date();
   return {
-    critical: products.filter(p => p.expirationDate && (p.expirationDate - now) <= 7 * 24 * 60 * 60 * 1000),
+    expired: products.filter(p => p.expirationDate && p.expirationDate < now),
+    critical: products.filter(p => p.expirationDate && 
+      p.expirationDate >= now && 
+      (p.expirationDate - now) <= 7 * 24 * 60 * 60 * 1000),
     warning: products.filter(p => p.expirationDate && 
       (p.expirationDate - now) > 7 * 24 * 60 * 60 * 1000 && 
-      (p.expirationDate - now) <= 30 * 24 * 60 * 60 * 1000)
+      (p.expirationDate - now) <= 30 * 24 * 60 * 60 * 1000),
+    good: products.filter(p => p.expirationDate && 
+      (p.expirationDate - now) > 30 * 24 * 60 * 60 * 1000)
   };
 };
 
@@ -762,12 +764,12 @@ const calculateMainKPIs = async (startDate, endDate) => {
     expiringProducts,
     productsWithWeight
   ] = await Promise.all([
-    Product.countDocuments({ status: { $in: ['stored', 'reserved'] } }),
+    Product.countDocuments({ status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] } }),
     Movement.countDocuments({ timestamp: { $gte: startDate, $lte: endDate } }),
     Chamber.countDocuments({ status: 'active' }),
     Location.find({}),
     Product.countDocuments({
-      status: { $in: ['stored', 'reserved'] },
+      status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] },
       expirationDate: { 
         $gte: new Date(),
         $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // próximos 30 dias
@@ -775,7 +777,7 @@ const calculateMainKPIs = async (startDate, endDate) => {
     }),
     // Buscar produtos para calcular peso total
     Product.find(
-      { status: { $in: ['stored', 'reserved'] } },
+      { status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] } },
       { totalWeight: 1 }
     )
   ]);
@@ -840,7 +842,7 @@ const getCriticalAlerts = async () => {
   
   // Produtos vencidos
   const expiredCount = await Product.countDocuments({
-    status: { $in: ['stored', 'reserved'] },
+    status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] },
     expirationDate: { $lt: new Date() }
   });
   
@@ -934,7 +936,7 @@ const calculateSystemHealth = async () => {
   const totalProducts = await Product.countDocuments();
   const expiredProducts = await Product.countDocuments({ 
     expirationDate: { $lt: new Date() },
-    status: { $in: ['stored', 'reserved'] }
+    status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] }
   });
   
   const healthScore = totalProducts > 0 ? 

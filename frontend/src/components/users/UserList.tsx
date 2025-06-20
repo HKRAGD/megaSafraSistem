@@ -75,12 +75,10 @@ export const UserList: React.FC<UserListProps> = ({
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin':
+      case 'ADMIN':
         return 'error';
-      case 'operator':
+      case 'OPERATOR':
         return 'warning';
-      case 'viewer':
-        return 'info';
       default:
         return 'default';
     }
@@ -88,12 +86,10 @@ export const UserList: React.FC<UserListProps> = ({
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'admin':
+      case 'ADMIN':
         return <SecurityIcon fontSize="small" />;
-      case 'operator':
+      case 'OPERATOR':
         return <PersonIcon fontSize="small" />;
-      case 'viewer':
-        return <VisibilityIcon fontSize="small" />;
       default:
         return <PersonIcon fontSize="small" />;
     }
@@ -101,12 +97,10 @@ export const UserList: React.FC<UserListProps> = ({
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'admin':
+      case 'ADMIN':
         return 'Administrador';
-      case 'operator':
+      case 'OPERATOR':
         return 'Operador';
-      case 'viewer':
-        return 'Visualizador';
       default:
         return role;
     }
@@ -138,9 +132,8 @@ export const UserList: React.FC<UserListProps> = ({
               onChange={(e) => handleFilterChange('role', e.target.value)}
             >
               <MenuItem value="">Todas</MenuItem>
-              <MenuItem value="admin">Administrador</MenuItem>
-              <MenuItem value="operator">Operador</MenuItem>
-              <MenuItem value="viewer">Visualizador</MenuItem>
+              <MenuItem value="ADMIN">Administrador</MenuItem>
+              <MenuItem value="OPERATOR">Operador</MenuItem>
             </Select>
           </FormControl>
 

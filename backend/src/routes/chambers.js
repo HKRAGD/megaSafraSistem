@@ -36,7 +36,7 @@ router.get('/', authenticateToken, getChambers);
  * @access  Private (Admin/Operator)
  * @query   timeframe, includeProjections
  */
-router.get('/:id/capacity-analysis', authenticateToken, authorizeRole(['admin', 'operator']), getCapacityAnalysis);
+router.get('/:id/capacity-analysis', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), getCapacityAnalysis);
 
 /**
  * @desc    Obter monitoramento de condições ambientais
@@ -44,7 +44,7 @@ router.get('/:id/capacity-analysis', authenticateToken, authorizeRole(['admin', 
  * @access  Private (Admin/Operator)
  * @query   timeframe, includeAlerts
  */
-router.get('/:id/environmental-monitoring', authenticateToken, authorizeRole(['admin', 'operator']), getEnvironmentalMonitoring);
+router.get('/:id/environmental-monitoring', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), getEnvironmentalMonitoring);
 
 /**
  * @desc    Obter cronograma de manutenção
@@ -52,7 +52,7 @@ router.get('/:id/environmental-monitoring', authenticateToken, authorizeRole(['a
  * @access  Private (Admin/Operator)
  * @query   includePreventive, timeframe
  */
-router.get('/:id/maintenance-schedule', authenticateToken, authorizeRole(['admin', 'operator']), getMaintenanceSchedule);
+router.get('/:id/maintenance-schedule', authenticateToken, authorizeRole(['ADMIN', 'OPERATOR']), getMaintenanceSchedule);
 
 /**
  * @desc    Obter otimizações de layout
@@ -60,7 +60,7 @@ router.get('/:id/maintenance-schedule', authenticateToken, authorizeRole(['admin
  * @access  Private (Admin only)
  * @query   includeReorganization
  */
-router.get('/:id/layout-optimization', authenticateToken, authorizeRole(['admin']), getLayoutOptimization);
+router.get('/:id/layout-optimization', authenticateToken, authorizeRole(['ADMIN']), getLayoutOptimization);
 
 /**
  * @desc    Obter câmara específica com análises detalhadas
@@ -77,7 +77,7 @@ router.get('/:id', authenticateToken, getChamber);
  */
 router.post('/', 
   authenticateToken, 
-  authorizeRole(['admin']), 
+  authorizeRole(['ADMIN']), 
   validateBody(chamberSchemas.create),
   createChamber
 );
@@ -89,7 +89,7 @@ router.post('/',
  */
 router.post('/:id/generate-locations', 
   authenticateToken, 
-  authorizeRole(['admin']), 
+  authorizeRole(['ADMIN']), 
   validateBody(chamberSchemas.generateLocations),
   generateLocations
 );
@@ -101,7 +101,7 @@ router.post('/:id/generate-locations',
  */
 router.put('/:id', 
   authenticateToken, 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   validateBody(chamberSchemas.update),
   updateChamber
 );
@@ -111,6 +111,6 @@ router.put('/:id',
  * @route   DELETE /api/chambers/:id
  * @access  Private (Admin only)
  */
-router.delete('/:id', authenticateToken, authorizeRole(['admin']), deleteChamber);
+router.delete('/:id', authenticateToken, authorizeRole(['ADMIN']), deleteChamber);
 
 module.exports = router; 

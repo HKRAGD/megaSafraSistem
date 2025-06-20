@@ -170,29 +170,7 @@ const mapApiExecutiveToExecutiveMetrics = (apiData: any): any => {
     }))
   };
   
-  // Se não há dados reais, usar fallbacks mais realistas
-  if (mappedData.totalProducts === 0 && mappedData.totalMovements === 0) {
-    console.warn('⚠️ Nenhum dado real encontrado, usando fallbacks');
-    mappedData.topPerformers.chambers = [
-      { name: 'Câmara A1', occupancyRate: 95, efficiency: 98 },
-      { name: 'Câmara B2', occupancyRate: 87, efficiency: 92 },
-      { name: 'Câmara C1', occupancyRate: 82, efficiency: 89 }
-    ];
-    mappedData.topPerformers.users = [
-      { name: 'João Silva', movementsCount: 234, efficiency: 96 },
-      { name: 'Maria Santos', movementsCount: 198, efficiency: 94 },
-      { name: 'Pedro Costa', movementsCount: 156, efficiency: 91 }
-    ];
-    mappedData.alerts = [
-      { type: 'error', message: 'Produtos próximos ao vencimento', count: 23 },
-      { type: 'warning', message: 'Câmaras com alta ocupação', count: 3 },
-      { type: 'info', message: 'Manutenções programadas', count: 2 }
-    ];
-  }
-  
-  console.log('🔍 DEBUG ExecutiveReport - Dados mapeados:', mappedData);
-  console.log('🔍 DEBUG ExecutiveReport - alerts array length:', mappedData.alerts?.length);
-  console.log('🔍 DEBUG ExecutiveReport - topPerformers.chambers length:', mappedData.topPerformers?.chambers?.length);
+  // Remover mock data - sempre usar dados reais da API, mesmo que sejam zeros
   
   return mappedData;
 };
@@ -225,8 +203,7 @@ export const useReports = (): UseReportsReturn => {
     try {
       const response = await reportService.getInventoryReport(filters);
       
-      console.log('🔍 DEBUG - Resposta RAW da API:', response);
-      console.log('🔍 DEBUG - response.data:', response.data);
+
       
       // Mapear a estrutura da API para o que o frontend espera
       // Lidar com diferentes estruturas de resposta que a API pode retornar
@@ -235,14 +212,14 @@ export const useReports = (): UseReportsReturn => {
       if (response.data && response.data.data) {
         // Estrutura padrão: {success: true, data: {summary: {...}, data: {products: [...]}}}
         mappedData = {
-          summary: response.data.summary,
+          summary: response.data.data.summary || {},
           products: response.data.data.products || [],
           chamberBreakdown: response.data.data.chamberBreakdown || {},
           expirationAnalysis: response.data.data.expirationAnalysis || {},
           optimizationSuggestions: response.data.data.optimizationSuggestions || [],
-          metadata: response.data.metadata
+          metadata: response.data.data.metadata || response.data.metadata
         };
-        console.log('✅ Usando estrutura padrão da API');
+
       } else if (response.data && response.data.summary) {
         // Estrutura direta: {summary: {...}, products: [...]}
         mappedData = {
@@ -253,7 +230,7 @@ export const useReports = (): UseReportsReturn => {
           optimizationSuggestions: response.data.optimizationSuggestions || [],
           metadata: response.data.metadata
         };
-        console.log('✅ Usando estrutura direta da API');
+
       } else {
         // Fallback para qualquer outra estrutura
         mappedData = {
@@ -264,12 +241,10 @@ export const useReports = (): UseReportsReturn => {
           optimizationSuggestions: [],
           metadata: {}
         };
-        console.warn('⚠️ Estrutura da API não reconhecida, usando fallback');
+
       }
       
-      console.log('🔍 DEBUG - Dados mapeados:', mappedData);
-      console.log('🔍 DEBUG - Summary fields:', Object.keys(mappedData.summary || {}));
-      console.log('🔍 DEBUG - Products count:', mappedData.products?.length || 0);
+
       
       setInventoryData(mappedData);
       console.log('✅ Relatório de estoque gerado com sucesso:', mappedData);
@@ -289,8 +264,7 @@ export const useReports = (): UseReportsReturn => {
     try {
       const response = await reportService.getMovementReport(filters);
       
-      console.log('🔍 DEBUG MovementReport - Resposta RAW da API:', response);
-      console.log('🔍 DEBUG MovementReport - response.data:', response.data);
+
       
       // Mapear a estrutura da API para o que o frontend espera
       const typeDistribution = response.data.summary?.typeDistribution || [];
@@ -307,16 +281,7 @@ export const useReports = (): UseReportsReturn => {
       // CORREÇÃO: Buscar movimentações no local correto
       const movements = response.data.movements || response.data.analysis?.patterns?.movements || [];
       
-      console.log('🔍 DEBUG MovementReport - Movements encontradas:', movements.length);
-      console.log('🔍 DEBUG MovementReport - Primeira movimentação:', movements[0]);
-      
-      // Debug específico dos dados do usuário
-      if (movements.length > 0) {
-        const firstMovement = movements[0];
-        console.log('🔍 DEBUG MovementReport - userId da primeira movimentação:', firstMovement.userId);
-        console.log('🔍 DEBUG MovementReport - Tipo do userId:', typeof firstMovement.userId);
-        console.log('🔍 DEBUG MovementReport - user da primeira movimentação:', firstMovement.user);
-      }
+
       
       const mappedData = {
         summary: mappedSummary,
@@ -346,10 +311,10 @@ export const useReports = (): UseReportsReturn => {
       
       // Mapear a estrutura da API para o que o frontend espera
       const mappedData = {
-        products: response.data.analysis?.byUrgency?.critical || response.data.analysis?.byUrgency?.warning || response.data.expiringProducts || [],
-        summary: response.data.summary || {},
-        analysis: response.data.analysis || {},
-        metadata: response.data.metadata
+        products: response.data.products || response.data.data?.products || response.data.analysis?.byUrgency?.critical || response.data.analysis?.byUrgency?.warning || response.data.expiringProducts || [],
+        summary: response.data.summary || response.data.data?.summary || {},
+        analysis: response.data.analysis || response.data.data?.analysis || {},
+        metadata: response.data.metadata || response.data.data?.metadata || {}
       };
       
       setExpirationData(mappedData);
@@ -370,8 +335,7 @@ export const useReports = (): UseReportsReturn => {
     try {
       const response = await reportService.getCapacityReport();
       
-      console.log('🔍 DEBUG CapacityReport - Resposta RAW da API:', response);
-      console.log('🔍 DEBUG CapacityReport - response.data:', response.data);
+
       
       // Mapear a estrutura da API para o que o frontend espera
       let mappedData: any;
@@ -394,7 +358,7 @@ export const useReports = (): UseReportsReturn => {
           },
           metadata: response.data.metadata || response.data.data.metadata || {}
         };
-        console.log('✅ Usando estrutura padrão da API para capacity');
+
       } else if (response.data && response.data.summary) {
         // Estrutura direta
         const rawChamberAnalysis = response.data.chamberAnalysis || [];
@@ -413,7 +377,7 @@ export const useReports = (): UseReportsReturn => {
           },
           metadata: response.data.metadata || {}
         };
-        console.log('✅ Usando estrutura direta da API para capacity');
+
       } else {
         // Fallback para qualquer outra estrutura
         mappedData = {
@@ -425,21 +389,10 @@ export const useReports = (): UseReportsReturn => {
           },
           metadata: {}
         };
-        console.warn('⚠️ Estrutura da API de capacity não reconhecida, usando fallback');
+
       }
       
-      console.log('🔍 DEBUG CapacityReport - Dados mapeados:', mappedData);
-      console.log('🔍 DEBUG CapacityReport - Summary fields:', Object.keys(mappedData.summary || {}));
-      console.log('🔍 DEBUG CapacityReport - Chamber analysis count:', mappedData.data?.chamberAnalysis?.length || 0);
-      console.log('🔍 DEBUG CapacityReport - averageUtilization RAW:', mappedData.summary?.averageUtilization);
-      console.log('🔍 DEBUG CapacityReport - totalCapacity:', mappedData.summary?.totalCapacity);
-      console.log('🔍 DEBUG CapacityReport - totalUsed:', mappedData.summary?.totalUsed);
-      
-      // Debug das câmaras individuais
-      if (mappedData.data?.chamberAnalysis?.length > 0) {
-        console.log('🔍 DEBUG CapacityReport - Primeira câmara:', mappedData.data.chamberAnalysis[0]);
-        console.log('🔍 DEBUG CapacityReport - utilizationRate da primeira câmara:', mappedData.data.chamberAnalysis[0].utilizationRate);
-      }
+
       
       setCapacityData(mappedData);
       console.log('✅ Relatório de capacidade gerado com sucesso:', mappedData);
@@ -459,8 +412,7 @@ export const useReports = (): UseReportsReturn => {
     try {
       const response = await reportService.getExecutiveReport();
       
-      console.log('🔍 DEBUG ExecutiveReport - Resposta RAW da API:', response);
-      console.log('🔍 DEBUG ExecutiveReport - response.data:', response.data);
+
       
       // Mapear a estrutura da API para o que o frontend espera
       let mappedData: any;
@@ -468,42 +420,30 @@ export const useReports = (): UseReportsReturn => {
       if (response.data) {
         // Usar função de mapeamento para converter dados da API
         mappedData = mapApiExecutiveToExecutiveMetrics(response.data);
-        console.log('✅ Usando dados reais da API para executive report');
+
       } else {
-        // Fallback para mock data apenas se a API falhar completamente
+        // Se não há dados da API, retornar estrutura vazia
         mappedData = {
-          totalProducts: 342,
-          totalChambers: 8,
-          totalCapacityKg: 45000,
-          usedCapacityKg: 31500,
-          occupancyRate: 70,
-          totalMovements: 1247,
-          expiringProducts: 23,
-          criticalAlerts: 3,
+          totalProducts: 0,
+          totalChambers: 0,
+          totalCapacityKg: 0,
+          usedCapacityKg: 0,
+          occupancyRate: 0,
+          totalMovements: 0,
+          expiringProducts: 0,
+          criticalAlerts: 0,
           trends: {
-            productsGrowth: 12.5,
-            movementsGrowth: 8.2,
-            occupancyGrowth: 15.3
+            productsGrowth: 0,
+            movementsGrowth: 0,
+            occupancyGrowth: 0
           },
           topPerformers: {
-            chambers: [
-              { name: 'Câmara A1', occupancyRate: 95, efficiency: 98 },
-              { name: 'Câmara B2', occupancyRate: 87, efficiency: 92 },
-              { name: 'Câmara C1', occupancyRate: 82, efficiency: 89 }
-            ],
-            users: [
-              { name: 'João Silva', movementsCount: 234, efficiency: 96 },
-              { name: 'Maria Santos', movementsCount: 198, efficiency: 94 },
-              { name: 'Pedro Costa', movementsCount: 156, efficiency: 91 }
-            ]
+            chambers: [],
+            users: []
           },
-          alerts: [
-            { type: 'error', message: 'Produtos próximos ao vencimento', count: 23 },
-            { type: 'warning', message: 'Câmaras com alta ocupação', count: 3 },
-            { type: 'info', message: 'Manutenções programadas', count: 2 }
-          ]
+          alerts: []
         };
-        console.warn('⚠️ Estrutura da API executive não reconhecida, usando fallback');
+        console.warn('⚠️ Estrutura da API executive não reconhecida, retornando dados vazios');
       }
       
       setExecutiveData(mappedData);
@@ -511,42 +451,8 @@ export const useReports = (): UseReportsReturn => {
       return mappedData;
     } catch (error: any) {
       handleError(error, 'gerar relatório executivo');
-      // Retornar dados mock em caso de erro para não quebrar a interface
-      const fallbackData = {
-        totalProducts: 342,
-        totalChambers: 8,
-        totalCapacityKg: 45000,
-        usedCapacityKg: 31500,
-        occupancyRate: 70,
-        totalMovements: 1247,
-        expiringProducts: 23,
-        criticalAlerts: 3,
-        trends: {
-          productsGrowth: 12.5,
-          movementsGrowth: 8.2,
-          occupancyGrowth: 15.3
-        },
-        topPerformers: {
-          chambers: [
-            { name: 'Câmara A1', occupancyRate: 95, efficiency: 98 },
-            { name: 'Câmara B2', occupancyRate: 87, efficiency: 92 },
-            { name: 'Câmara C1', occupancyRate: 82, efficiency: 89 }
-          ],
-          users: [
-            { name: 'João Silva', movementsCount: 234, efficiency: 96 },
-            { name: 'Maria Santos', movementsCount: 198, efficiency: 94 },
-            { name: 'Pedro Costa', movementsCount: 156, efficiency: 91 }
-          ]
-        },
-        alerts: [
-          { type: 'error', message: 'Produtos próximos ao vencimento', count: 23 },
-          { type: 'warning', message: 'Câmaras com alta ocupação', count: 3 },
-          { type: 'info', message: 'Manutenções programadas', count: 2 }
-        ]
-      };
-      setExecutiveData(fallbackData);
-      console.warn('⚠️ Usando dados fallback para executive report devido a erro:', error);
-      return fallbackData;
+      // Retornar null em caso de erro - o componente deve lidar com isso
+      return null;
     } finally {
       setLoading(false);
     }

@@ -25,10 +25,12 @@ import { UserForm } from '../../components/users/UserForm';
 import { StatsCard } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useUsers } from '../../hooks/useUsers';
+import { usePermissions } from '../../hooks/usePermissions';
 import { User } from '../../types';
 
 export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const { canManageUsers } = usePermissions();
   const {
     users,
     loading,
@@ -50,8 +52,8 @@ export const UsersPage: React.FC = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Verificação de permissão - apenas admin pode acessar
-  if (currentUser?.role !== 'admin') {
+  // Verificação de permissão - apenas ADMIN pode acessar
+  if (!canManageUsers) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -61,9 +63,8 @@ export const UsersPage: React.FC = () => {
     total: safeUsers.length,
     active: safeUsers.filter((user: User) => user.isActive).length,
     inactive: safeUsers.filter((user: User) => !user.isActive).length,
-    admins: safeUsers.filter((user: User) => user.role === 'admin').length,
-    operators: safeUsers.filter((user: User) => user.role === 'operator').length,
-    viewers: safeUsers.filter((user: User) => user.role === 'viewer').length,
+    admins: safeUsers.filter((user: User) => user.role === 'ADMIN').length,
+    operators: safeUsers.filter((user: User) => user.role === 'OPERATOR').length,
   };
 
   const handleCreateUser = () => {
@@ -148,11 +149,7 @@ export const UsersPage: React.FC = () => {
         {/* Cards de estatísticas */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 2
-            }}>
+            item xs={12} sm={6} md={2}>
             <StatsCard
               title="Total"
               value={stats.total}
@@ -161,11 +158,7 @@ export const UsersPage: React.FC = () => {
             />
           </Grid>
           <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 2
-            }}>
+            item xs={12} sm={6} md={2}>
             <StatsCard
               title="Ativos"
               value={stats.active}
@@ -174,11 +167,7 @@ export const UsersPage: React.FC = () => {
             />
           </Grid>
           <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 2
-            }}>
+            item xs={12} sm={6} md={2}>
             <StatsCard
               title="Inativos"
               value={stats.inactive}
@@ -187,11 +176,7 @@ export const UsersPage: React.FC = () => {
             />
           </Grid>
           <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 2
-            }}>
+            item xs={12} sm={6} md={2}>
             <StatsCard
               title="Admins"
               value={stats.admins}
@@ -200,29 +185,12 @@ export const UsersPage: React.FC = () => {
             />
           </Grid>
           <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 2
-            }}>
+            item xs={12} sm={6} md={2}>
             <StatsCard
               title="Operadores"
               value={stats.operators}
               icon={PersonIcon}
               iconColor="info"
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 2
-            }}>
-            <StatsCard
-              title="Visualizadores"
-              value={stats.viewers}
-              icon={PersonIcon}
-              iconColor="primary"
             />
           </Grid>
         </Grid>
@@ -244,12 +212,11 @@ export const UsersPage: React.FC = () => {
         {/* Informações importantes */}
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            <strong>Níveis de Permissão:</strong>
+            <strong>Níveis de Permissão no Sistema:</strong>
           </Typography>
           <Typography variant="body2" component="div" sx={{ mt: 1 }}>
-            • <strong>Admin:</strong> Acesso total ao sistema, incluindo gerenciamento de usuários<br/>
-            • <strong>Operador:</strong> Pode criar/modificar produtos, câmaras e movimentações<br/>
-            • <strong>Visualizador:</strong> Apenas visualização de dados e relatórios
+            • <strong>Administrador:</strong> Acesso total ao sistema, criar produtos, solicitar retiradas, gerenciar usuários<br/>
+            • <strong>Operador:</strong> Localizar produtos aguardando, confirmar retiradas, mover produtos entre localizações, visualizar relatórios
           </Typography>
         </Alert>
 

@@ -90,7 +90,7 @@ const register = asyncHandler(async (req, res, next) => {
   }
 
   // 3. Validar role (se fornecido)
-  const validRoles = ['admin', 'operator', 'viewer'];
+  const validRoles = ['ADMIN', 'OPERATOR'];
   if (role && !validRoles.includes(role)) {
     return next(new AppError(`Role inválido. Deve ser um de: ${validRoles.join(', ')}`, 400));
   }
@@ -100,7 +100,7 @@ const register = asyncHandler(async (req, res, next) => {
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password,
-    role: role || 'viewer'
+    role: role || 'OPERATOR'
   };
 
   const newUser = await User.create(userData);

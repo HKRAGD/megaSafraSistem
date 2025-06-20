@@ -43,6 +43,7 @@ export const useProductFormLogic = ({
       storageType: product?.storageType || 'saco',
       weightPerUnit: product?.weightPerUnit || 50,
       locationId: product?.locationId || '',
+      clientId: product?.clientId || '',
       expirationDate: product?.expirationDate ? new Date(product.expirationDate) : null,
       notes: product?.notes || '',
       tracking: {

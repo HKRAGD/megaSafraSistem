@@ -142,10 +142,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
             </Typography>
             <Grid container spacing={2}>
               <Grid
-                size={{
-                  xs: 6,
-                  sm: 3
-                }}>
+                item xs={6} sm={3}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="primary.main">
                     {location.coordinates.quadra}
@@ -156,10 +153,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
                 </Box>
               </Grid>
               <Grid
-                size={{
-                  xs: 6,
-                  sm: 3
-                }}>
+                item xs={6} sm={3}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="primary.main">
                     {typeof location.coordinates.lado === 'number' ? numeroParaLetra(location.coordinates.lado) : location.coordinates.lado}
@@ -170,10 +164,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
                 </Box>
               </Grid>
               <Grid
-                size={{
-                  xs: 6,
-                  sm: 3
-                }}>
+                item xs={6} sm={3}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="primary.main">
                     {location.coordinates.fila}
@@ -184,10 +175,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
                 </Box>
               </Grid>
               <Grid
-                size={{
-                  xs: 6,
-                  sm: 3
-                }}>
+                item xs={6} sm={3}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="primary.main">
                     {location.coordinates.andar}
@@ -246,7 +234,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
             ) : (
               <Box sx={{ mb: 2 }}>
                 <Grid container spacing={2}>
-                  <Grid size={4}>
+                  <Grid item xs={4}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h5" color="success.main">
                         {location.maxCapacityKg}
@@ -256,7 +244,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid size={4}>
+                  <Grid item xs={4}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h5" color="warning.main">
                         {location.currentWeightKg}
@@ -266,7 +254,7 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid size={4}>
+                  <Grid item xs={4}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h5" color="info.main">
                         {location.maxCapacityKg - location.currentWeightKg}

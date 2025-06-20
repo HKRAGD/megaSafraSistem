@@ -84,10 +84,10 @@ export const Loading: React.FC<LoadingProps> = ({
 
         {/* Content skeleton */}
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid item xs={12} md={8}>
             <Skeleton variant="rectangular" height={400} />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Skeleton variant="rectangular" height={200} sx={{ mb: 2 }} />
             <Skeleton variant="rectangular" height={180} />
           </Grid>
@@ -132,7 +132,7 @@ export const Loading: React.FC<LoadingProps> = ({
     return (
       <Grid container spacing={3}>
         {Array.from({ length: count }).map((_, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+          <Grid item xs={12} sm={6} md={4} key={index}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -165,7 +165,7 @@ export const Loading: React.FC<LoadingProps> = ({
         {/* Cards de métricas */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {Array.from({ length: 4 }).map((_, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+            <Grid item xs={12} sm={6} md={3} key={index}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -182,7 +182,7 @@ export const Loading: React.FC<LoadingProps> = ({
 
         {/* Gráficos e conteúdo */}
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid item xs={12} md={8}>
             <Card>
               <CardContent>
                 <Skeleton variant="text" width="30%" height={24} sx={{ mb: 2 }} />
@@ -190,7 +190,7 @@ export const Loading: React.FC<LoadingProps> = ({
               </CardContent>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
                 <Skeleton variant="text" width="40%" height={24} sx={{ mb: 2 }} />
@@ -214,37 +214,48 @@ export const Loading: React.FC<LoadingProps> = ({
 
   if (variant === 'form') {
     return (
-      <Box sx={{ maxWidth: 600 }}>
-        <Skeleton variant="text" width="40%" height={32} sx={{ mb: 3 }} />
-        
+      <Box sx={{ p: 2 }}>
         {Array.from({ length: count }).map((_, index) => (
           <Box key={index} sx={{ mb: 3 }}>
-            <Skeleton variant="text" width="20%" height={20} sx={{ mb: 1 }} />
-            <Skeleton variant="rectangular" width="100%" height={56} />
+            <Skeleton variant="text" width="30%" height={24} sx={{ mb: 1 }} />
+            <Skeleton variant="rectangular" height={56} />
           </Box>
         ))}
-
-        <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-          <Skeleton variant="rectangular" width={120} height={36} />
+        
+        {/* Botões do formulário */}
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
           <Skeleton variant="rectangular" width={100} height={36} />
+          <Skeleton variant="rectangular" width={120} height={36} />
         </Box>
       </Box>
     );
   }
 
-  // Fallback para circular
+  // ============================================================================
+  // DEFAULT - CIRCULAR
+  // ============================================================================
+
   return (
     <Box
       sx={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: height,
+        gap: 2,
       }}
     >
-      <CircularProgress />
+      <CircularProgress size={40} />
+      <Typography variant="body2" color="text.secondary">
+        {text}
+      </Typography>
     </Box>
   );
 };
+
+// ============================================================================
+// EXPORTAÇÃO PADRÃO
+// ============================================================================
 
 export default Loading; 

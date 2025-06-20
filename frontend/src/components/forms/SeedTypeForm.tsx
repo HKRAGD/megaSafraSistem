@@ -130,7 +130,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
       )}
 
       <Grid container spacing={3}>
-        <Grid size={12}>
+        <Grid item xs={12}>
           <TextField
             {...register('name')}
             label="Nome do Tipo de Semente"
@@ -141,7 +141,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid size={12}>
+        <Grid item xs={12}>
           <TextField
             {...register('description')}
             label="Descrição"
@@ -154,7 +154,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <TextField
             {...register('optimalTemperature')}
             label="Temperatura Ótima (°C)"
@@ -166,7 +166,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <TextField
             {...register('optimalHumidity')}
             label="Umidade Ótima (%)"
@@ -178,7 +178,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
           />
         </Grid>
 
-        <Grid size={12}>
+        <Grid item xs={12}>
           <TextField
             {...register('maxStorageTimeDays')}
             label="Tempo Máximo de Armazenamento (dias)"
@@ -191,7 +191,7 @@ const SeedTypeForm: React.FC<SeedTypeFormProps> = ({ seedType, onClose }) => {
         </Grid>
 
         {seedType && (
-          <Grid size={12}>
+          <Grid item xs={12}>
             <FormControlLabel
               control={
                 <Switch

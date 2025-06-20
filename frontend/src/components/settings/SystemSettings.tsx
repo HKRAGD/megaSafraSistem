@@ -129,7 +129,7 @@ export const SystemSettings: React.FC = () => {
 
       <Grid container spacing={3}>
         {/* Configurações de Alertas */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -192,7 +192,7 @@ export const SystemSettings: React.FC = () => {
         </Grid>
 
         {/* Configurações de Segurança */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -238,7 +238,7 @@ export const SystemSettings: React.FC = () => {
         </Grid>
 
         {/* Configurações de Armazenamento */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -294,7 +294,7 @@ export const SystemSettings: React.FC = () => {
         </Grid>
 
         {/* Configurações de Performance */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -334,7 +334,7 @@ export const SystemSettings: React.FC = () => {
           <Divider sx={{ mb: 3 }} />
 
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ textAlign: 'center' }}>
                 <Chip 
                   label="Backend" 
@@ -348,7 +348,7 @@ export const SystemSettings: React.FC = () => {
               </Box>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ textAlign: 'center' }}>
                 <Chip 
                   label="MongoDB" 
@@ -362,7 +362,7 @@ export const SystemSettings: React.FC = () => {
               </Box>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ textAlign: 'center' }}>
                 <Chip 
                   label="Autenticação" 
@@ -376,7 +376,7 @@ export const SystemSettings: React.FC = () => {
               </Box>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ textAlign: 'center' }}>
                 <Chip 
                   label="Cache" 

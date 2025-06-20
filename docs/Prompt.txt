@@ -1,0 +1,6 @@
+Na página de alocar produtos, os produtos criados sem localização estão aparecendo corretamente, mas eu gostaria que adicionasse algo, quando eu clico para alocar o
+  produto aparece um formulário para mim selecionar aonde eu vou alocar os produtos, mas eu gostaria que aparecesse o mesmo mapa que tem na página de Produtos quando eu clico para
+  cadastrar um produto, lá tem a opção para quando o administrador for cadastrar um produto, se ele quiser já adicionar a localização também, e para selecionar a localização aparecesse       
+  um mapa 3d para ele, eu gostaria que esse mapa aparecesse para o operador também quando ele for alocar a localização dos produtos sem localização também. Use o zen para te ajudar a
+  analisar como esse mapa está integrado na página de criação de produtos, converse com ele até realizar um planejamento adequado prevendo todo e qualquer tipo de problemas que podemos       
+  ter, e eu não quero que você recrie o mapa, mas simplesmente implemente o que já está criado nessa página de alocar produtos também

@@ -114,7 +114,7 @@ const ReportsPage: React.FC = () => {
   ];
 
   const availableReports = reportCards.filter(report => 
-    !report.requiresAdmin || user?.role === 'admin'
+    !report.requiresAdmin || user?.role === 'ADMIN'
   );
 
   return (
@@ -143,7 +143,7 @@ const ReportsPage: React.FC = () => {
         {/* Grid de cards dos relatórios */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {availableReports.map((report) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={report.id}>
+            <Grid item xs={12} sm={6} md={4} key={report.id}>
               <Card 
                 sx={{ 
                   height: '100%',
@@ -225,7 +225,7 @@ const ReportsPage: React.FC = () => {
                 id="reports-tab-3"
                 aria-controls="reports-tabpanel-3"
               />
-              {user?.role === 'admin' && (
+              {user?.role === 'ADMIN' && (
                 <Tab 
                   icon={<ExecutiveIcon />} 
                   label="Executivo" 
@@ -253,7 +253,7 @@ const ReportsPage: React.FC = () => {
             <CapacityReport />
           </TabPanel>
 
-          {user?.role === 'admin' && (
+          {user?.role === 'ADMIN' && (
             <TabPanel value={tabValue} index={4}>
               <ExecutiveReport />
             </TabPanel>
@@ -268,7 +268,7 @@ const ReportsPage: React.FC = () => {
             </Typography>
             
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <PdfIcon color="error" />
                   <Typography variant="body2">
@@ -277,7 +277,7 @@ const ReportsPage: React.FC = () => {
                 </Box>
               </Grid>
               
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <TableIcon color="success" />
                   <Typography variant="body2">
@@ -286,7 +286,7 @@ const ReportsPage: React.FC = () => {
                 </Box>
               </Grid>
               
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <FilterIcon color="primary" />
                   <Typography variant="body2">
@@ -295,7 +295,7 @@ const ReportsPage: React.FC = () => {
                 </Box>
               </Grid>
               
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <DownloadIcon color="info" />
                   <Typography variant="body2">

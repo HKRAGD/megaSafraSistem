@@ -31,7 +31,7 @@ export const ProductDetailsBasicInfo: React.FC<ProductDetailsBasicInfoProps> = R
   if (!basicInfo) return null;
 
   return (
-    <Grid size={12}>
+    <Grid item xs={12}>
       <Card variant="outlined">
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -42,7 +42,7 @@ export const ProductDetailsBasicInfo: React.FC<ProductDetailsBasicInfoProps> = R
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
                     Lote
                   </Typography>
@@ -51,7 +51,7 @@ export const ProductDetailsBasicInfo: React.FC<ProductDetailsBasicInfoProps> = R
                   </Typography>
                 </Grid>
                 
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
                     Tipo de Semente
                   </Typography>
@@ -60,7 +60,7 @@ export const ProductDetailsBasicInfo: React.FC<ProductDetailsBasicInfoProps> = R
                   </Typography>
                 </Grid>
                 
-                <Grid size={12}>
+                <Grid item xs={12}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Status
                   </Typography>

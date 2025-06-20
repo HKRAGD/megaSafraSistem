@@ -64,7 +64,7 @@ router.get('/location/:locationId',
  * @access  Private (Admin/Operator)
  */
 router.get('/patterns', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   getMovementPatterns
 );
 
@@ -74,7 +74,7 @@ router.get('/patterns',
  * @access  Private (Admin/Operator)
  */
 router.get('/audit', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   getAuditReport
 );
 
@@ -93,7 +93,7 @@ router.get('/product/:id/detailed-history',
  * @access  Private (Admin/Operator)
  */
 router.post('/',
-  authorizeRole(['admin', 'operator']),
+  authorizeRole(['ADMIN', 'OPERATOR']),
   validateBody(movementSchemas.create),
   createMovement
 );
@@ -104,7 +104,7 @@ router.post('/',
  * @access  Private (Admin/Operator)
  */
 router.post('/manual', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   registerManualMovement
 );
 
@@ -114,7 +114,7 @@ router.post('/manual',
  * @access  Private (Admin/Operator)
  */
 router.post('/verify-pending', 
-  authorizeRole(['admin', 'operator']), 
+  authorizeRole(['ADMIN', 'OPERATOR']), 
   verifyPendingMovements
 );
 

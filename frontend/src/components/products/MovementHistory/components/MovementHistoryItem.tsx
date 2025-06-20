@@ -92,7 +92,7 @@ export const MovementHistoryItem: React.FC<MovementHistoryItemProps> = React.mem
             </Box>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <PersonIcon fontSize="small" color="action" />
                   <Typography variant="body2">
@@ -113,7 +113,7 @@ export const MovementHistoryItem: React.FC<MovementHistoryItemProps> = React.mem
                 </Box>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 {movement.fromLocationId && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <LocationIcon fontSize="small" color="action" />

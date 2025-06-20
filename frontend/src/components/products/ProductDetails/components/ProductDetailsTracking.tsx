@@ -42,7 +42,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
   const { tracking, notes } = trackingInfo;
 
   return (
-    <Grid size={{ xs: 12, md: 6 }}>
+    <Grid item xs={12} md={6}>
       <Card variant="outlined">
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -54,7 +54,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
               
               <Grid container spacing={2}>
                 {tracking?.batchNumber && (
-                  <Grid size={12}>
+                  <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
                       Número do Lote
                     </Typography>
@@ -65,7 +65,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
                 )}
                 
                 {tracking?.origin && (
-                  <Grid size={12}>
+                  <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
                       Origem
                     </Typography>
@@ -76,7 +76,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
                 )}
                 
                 {tracking?.supplier && (
-                  <Grid size={12}>
+                  <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
                       Fornecedor
                     </Typography>
@@ -87,7 +87,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
                 )}
                 
                 {tracking?.qualityGrade && (
-                  <Grid size={12}>
+                  <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Grau de Qualidade
                     </Typography>
@@ -101,7 +101,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
                 )}
                 
                 {notes && (
-                  <Grid size={12}>
+                  <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
                       Observações
                     </Typography>
@@ -113,7 +113,7 @@ export const ProductDetailsTracking: React.FC<ProductDetailsTrackingProps> = Rea
                 
                 {!tracking?.batchNumber && !tracking?.origin && !tracking?.supplier && 
                  !tracking?.qualityGrade && !notes && (
-                  <Grid size={12}>
+                  <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
                       Nenhuma informação de rastreamento disponível
                     </Typography>

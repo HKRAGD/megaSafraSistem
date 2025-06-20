@@ -27,16 +27,46 @@ const mapApiProductToProductWithRelations = (apiProduct: any): ProductWithRelati
     name: apiProduct.name,
     lot: apiProduct.lot,
     seedTypeId: (() => {
+      // CORRIGIDO: seedTypeId deve ser o objeto populado conforme interface ProductWithRelations
       const seedTypeData = apiProduct.seedType || apiProduct.seedTypeId;
-      return typeof seedTypeData === 'object' ? (seedTypeData._id || seedTypeData.id) : seedTypeData;
+      if (seedTypeData && typeof seedTypeData === 'object') {
+        return {
+          id: seedTypeData._id || seedTypeData.id,
+          name: seedTypeData.name,
+          optimalTemperature: seedTypeData.optimalTemperature,
+          optimalHumidity: seedTypeData.optimalHumidity,
+          status: seedTypeData.status,
+        };
+      }
+      return undefined;
     })(),
     quantity: apiProduct.quantity,
     storageType: apiProduct.storageType,
     weightPerUnit: apiProduct.weightPerUnit,
     totalWeight: apiProduct.totalWeight || apiProduct.calculatedTotalWeight,
     locationId: (() => {
+      // CORRIGIDO: locationId deve ser o objeto populado conforme interface ProductWithRelations
       const locationData = apiProduct.location || apiProduct.locationId;
-      return typeof locationData === 'object' ? (locationData._id || locationData.id) : locationData;
+      if (locationData && typeof locationData === 'object') {
+        return {
+          id: locationData._id || locationData.id,
+          code: locationData.code,
+          maxCapacityKg: locationData.maxCapacityKg,
+          currentWeightKg: locationData.currentWeightKg,
+          chamberId: (() => {
+            // Renomeado de 'chamber' para 'chamberId' para corresponder à interface
+            const chamberData = locationData.chamberId || locationData.chamber;
+            if (chamberData && typeof chamberData === 'object') {
+              return {
+                id: chamberData._id || chamberData.id,
+                name: chamberData.name,
+              };
+            }
+            return undefined;
+          })(),
+        };
+      }
+      return undefined; // Para produtos AGUARDANDO_LOCACAO
     })(),
     entryDate: apiProduct.entryDate,
     expirationDate: apiProduct.expirationDate,
@@ -51,43 +81,7 @@ const mapApiProductToProductWithRelations = (apiProduct: any): ProductWithRelati
     createdAt: apiProduct.createdAt,
     updatedAt: apiProduct.updatedAt,
 
-    // Relacionamentos mapeados - Lidar com diferentes estruturas da API
-    seedType: (() => {
-      // A API pode retornar tanto seedType quanto seedTypeId
-      const seedTypeData = apiProduct.seedType || apiProduct.seedTypeId;
-      if (seedTypeData && typeof seedTypeData === 'object') {
-        return {
-          id: seedTypeData._id || seedTypeData.id,
-          name: seedTypeData.name,
-        };
-      }
-      return undefined;
-    })(),
-
-    location: (() => {
-      // A API pode retornar tanto location quanto locationId
-      const locationData = apiProduct.location || apiProduct.locationId;
-      if (locationData && typeof locationData === 'object') {
-        return {
-          id: locationData._id || locationData.id,
-          code: locationData.code,
-          maxCapacityKg: locationData.maxCapacityKg,
-          currentWeightKg: locationData.currentWeightKg,
-          chamber: (() => {
-            // A câmara pode estar em chamberId ou diretamente em chamber
-            const chamberData = locationData.chamberId || locationData.chamber;
-            if (chamberData && typeof chamberData === 'object') {
-              return {
-                id: chamberData._id || chamberData.id,
-                name: chamberData.name,
-              };
-            }
-            return undefined;
-          })(),
-        };
-      }
-      return undefined;
-    })(),
+    // Relacionamentos mapeados: agora seedTypeId e locationId já são os objetos populados
   };
 
   // ✅ Retornar produto mapeado
@@ -366,7 +360,7 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
       }
 
       // 2. Verificar se não está tentando mover para a mesma localização
-      if (currentProduct.locationId === moveData.newLocationId) {
+      if (currentProduct.locationId?.id === moveData.newLocationId) {
         throw new Error('O produto já está nesta localização');
       }
 
@@ -392,8 +386,8 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
       }
       
       console.log('✅ Produto movido com sucesso');
-      console.log('📍 De:', currentProduct.location?.code);
-      console.log('📍 Para:', mappedProduct.location?.code);
+      console.log('📍 De:', currentProduct.locationId?.code);
+      console.log('📍 Para:', mappedProduct.locationId?.code);
       console.log('🔄 Movimentação automática registrada pela API');
     } catch (error: any) {
       handleError(error, 'mover produto');
@@ -430,8 +424,8 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
       const mappedProduct = mapApiProductToProductWithRelations(apiProduct);
       
       console.log('✅ Produto carregado e mapeado:', mappedProduct.name);
-      console.log('🔗 SeedType mapeado:', mappedProduct.seedType);
-      console.log('📍 Location mapeada:', mappedProduct.location);
+      console.log('🔗 SeedType mapeado:', mappedProduct.seedTypeId);
+      console.log('📍 Location mapeada:', mappedProduct.locationId);
       return mappedProduct;
     } catch (error: any) {
       console.error('❌ Erro no getProduct:', error);
@@ -506,19 +500,19 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
     clearError();
 
     try {
-      // 1. Buscar produto atual para validações
-      const currentProduct = data.find(p => p.id === id);
-      if (!currentProduct) {
-        throw new Error('Produto não encontrado na lista local');
+      // 1. Fetch the latest product data from the backend to ensure up-to-date quantity
+      const latestProduct = await getProduct(id);
+      if (!latestProduct) {
+        throw new Error('Produto não encontrado ou dados desatualizados. Por favor, recarregue a página.');
       }
 
-      // 2. Validações básicas
+      // 2. Validações básicas usando dados atualizados
       if (quantity <= 0) {
         throw new Error('Quantidade deve ser maior que zero');
       }
 
-      if (quantity > currentProduct.quantity) {
-        throw new Error(`Quantidade solicitada (${quantity}) excede disponível (${currentProduct.quantity})`);
+      if (quantity > latestProduct.quantity) {
+        throw new Error(`Quantidade solicitada (${quantity}) excede disponível (${latestProduct.quantity})`);
       }
 
       // 3. Executar saída parcial
@@ -564,7 +558,7 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
     } finally {
       setLoading(false);
     }
-  }, [data, selectedProduct, handleError, clearError]);
+  }, [getProduct, selectedProduct, handleError, clearError]);
 
   /**
    * Movimentação parcial de produto
@@ -595,7 +589,7 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
         throw new Error('Para mover todo o estoque, use a movimentação total');
       }
 
-      if (currentProduct.locationId === newLocationId) {
+      if (currentProduct.locationId?.id === newLocationId) {
         throw new Error('Nova localização deve ser diferente da atual');
       }
 

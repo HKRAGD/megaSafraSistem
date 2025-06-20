@@ -89,35 +89,98 @@ const getProducts = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // 2. Configurar paginação
+  // 2. Configurar paginação e ordenação com priorização
   const skip = (page - 1) * limit;
-  const sortObj = {};
   
-  // Parse do sort
-  if (sort.startsWith('-')) {
-    sortObj[sort.substring(1)] = -1;
-  } else {
-    sortObj[sort] = 1;
-  }
-
-  // 3. Executar consulta com paginação
-  const [products, total] = await Promise.all([
-    Product.find(filter)
-      .populate('seedTypeId', 'name optimalTemperature optimalHumidity maxStorageTimeDays')
-      .populate('locationId', 'code coordinates chamberId')
-      .populate({
-        path: 'locationId',
-        populate: {
-          path: 'chamberId',
-          select: 'name status'
+  // PRIORIZAÇÃO: AGUARDANDO_LOCACAO e AGUARDANDO_RETIRADA sempre primeiro
+  const sortPipeline = [
+    {
+      $addFields: {
+        // Criar campo de prioridade baseado no status
+        statusPriority: {
+          $switch: {
+            branches: [
+              { case: { $eq: ["$status", "AGUARDANDO_LOCACAO"] }, then: 1 },
+              { case: { $eq: ["$status", "AGUARDANDO_RETIRADA"] }, then: 2 }
+            ],
+            default: 99 // Todos os outros status têm prioridade baixa
+          }
         }
-      })
-      .sort(sortObj)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean(),
+      }
+    },
+    {
+      $sort: {
+        statusPriority: 1, // Prioridade primeiro (1 = AGUARDANDO_LOCACAO, 2 = AGUARDANDO_RETIRADA, 99 = outros)
+        // Ordenação secundária baseada no parâmetro sort
+        ...(sort.startsWith('-') 
+          ? { [sort.substring(1)]: -1 }
+          : { [sort]: 1 }
+        )
+      }
+    }
+  ];
+
+  // 3. Executar consulta com agregação para priorização
+  const [productsResult, total] = await Promise.all([
+    Product.aggregate([
+      { $match: filter },
+      ...sortPipeline,
+      { $skip: skip },
+      { $limit: parseInt(limit) },
+      {
+        $lookup: {
+          from: 'seedtypes',
+          localField: 'seedTypeId',
+          foreignField: '_id',
+          as: 'seedType',
+          pipeline: [{ $project: { name: 1, optimalTemperature: 1, optimalHumidity: 1, maxStorageTimeDays: 1 } }]
+        }
+      },
+      {
+        $lookup: {
+          from: 'locations',
+          localField: 'locationId',
+          foreignField: '_id',
+          as: 'location',
+          pipeline: [
+            { $project: { code: 1, coordinates: 1, chamberId: 1 } },
+            {
+              $lookup: {
+                from: 'chambers',
+                localField: 'chamberId',
+                foreignField: '_id',
+                as: 'chamber',
+                pipeline: [{ $project: { name: 1, status: 1 } }]
+              }
+            }
+          ]
+        }
+      },
+      {
+        $addFields: {
+          seedTypeId: { $arrayElemAt: ['$seedType', 0] },
+          locationId: { $arrayElemAt: ['$location', 0] }
+        }
+      },
+      {
+        $project: {
+          statusPriority: 0, // Remover campo temporário
+          seedType: 0,
+          location: 0
+        }
+      }
+    ]),
     Product.countDocuments(filter)
   ]);
+
+  // Ajustar estrutura para compatibilidade com população
+  const products = productsResult.map(product => ({
+    ...product,
+    locationId: product.locationId ? {
+      ...product.locationId,
+      chamberId: product.locationId.chamber?.[0] || null
+    } : null
+  }));
 
   // 4. Adicionar campos virtuais manualmente para lean()
   const productsWithVirtuals = products.map(product => {
@@ -209,7 +272,7 @@ const getProduct = asyncHandler(async (req, res, next) => {
   // 3. Verificar se há produtos similares (mesmo tipo de semente)
   const similarProducts = await Product.find({
     seedTypeId: product.seedTypeId._id,
-    status: { $in: ['stored', 'reserved'] },
+    status: { $in: ['LOCADO', 'AGUARDANDO_RETIRADA'] },
     _id: { $ne: product._id }
   })
     .populate('locationId', 'code coordinates')
@@ -285,7 +348,7 @@ const createProduct = asyncHandler(async (req, res, next) => {
   try {
     // Usar productService que implementa todas as regras críticas
     const result = await productService.createProduct(req.body, req.user._id, {
-      autoFindLocation: !req.body.locationId, // Se não especificou localização, buscar automaticamente
+      autoFindLocation: false, // ADMIN não busca localização automaticamente - produto fica AGUARDANDO_LOCACAO
       validateSeedType: true,
       generateTrackingCode: true
     });
@@ -324,7 +387,7 @@ const updateProduct = asyncHandler(async (req, res, next) => {
   }
 
   // 2. Verificar se produto pode ser editado
-  if (product.status === 'removed') {
+  if (product.status === 'REMOVIDO') {
     return next(new AppError('Produtos removidos não podem ser editados', 400));
   }
 
@@ -667,6 +730,95 @@ const addStock = asyncHandler(async (req, res, next) => {
   }
 });
 
+/**
+ * @desc    Localizar produto aguardando locação
+ * @route   POST /api/products/:id/locate
+ * @access  Private (OPERATOR only)
+ */
+const locateProduct = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { locationId, reason } = req.body;
+
+  if (!locationId) {
+    return next(new AppError('ID da localização é obrigatório', 400));
+  }
+
+  const result = await productService.locateProduct(
+    id, 
+    locationId, 
+    req.user._id,
+    { reason: reason || 'Localização de produto', validateCapacity: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Produto localizado com sucesso',
+    data: result.data
+  });
+});
+
+/**
+ * @desc    Solicitar retirada de produto
+ * @route   POST /api/products/:id/request-withdrawal
+ * @access  Private (ADMIN only)
+ */
+const requestWithdrawal = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { type = 'TOTAL', quantity, reason } = req.body;
+
+  if (!['TOTAL', 'PARCIAL'].includes(type)) {
+    return next(new AppError('Tipo deve ser TOTAL ou PARCIAL', 400));
+  }
+
+  if (type === 'PARCIAL' && (!quantity || quantity <= 0)) {
+    return next(new AppError('Quantidade é obrigatória para retirada parcial', 400));
+  }
+
+  const result = await productService.requestProductWithdrawal(
+    id, 
+    req.user._id,
+    { 
+      reason: reason || 'Solicitação de retirada', 
+      type, 
+      quantity: type === 'PARCIAL' ? quantity : null 
+    }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Solicitação de retirada criada com sucesso',
+    data: result.data
+  });
+});
+
+/**
+ * @desc    Buscar produtos aguardando locação
+ * @route   GET /api/products/pending-location
+ * @access  Private (OPERATOR only)
+ */
+const getProductsPendingLocation = asyncHandler(async (req, res, next) => {
+  const result = await productService.getProductsPendingLocation();
+
+  res.status(200).json({
+    success: true,
+    data: result.data
+  });
+});
+
+/**
+ * @desc    Buscar produtos aguardando retirada
+ * @route   GET /api/products/pending-withdrawal
+ * @access  Private (ADMIN/OPERATOR)
+ */
+const getProductsPendingWithdrawal = asyncHandler(async (req, res, next) => {
+  const result = await productService.getProductsPendingWithdrawal();
+
+  res.status(200).json({
+    success: true,
+    data: result.data
+  });
+});
+
 module.exports = {
   getProducts,
   getProduct,
@@ -682,5 +834,10 @@ module.exports = {
   // Novos endpoints de movimentação avançada
   partialExit,
   partialMove,
-  addStock
+  addStock,
+  // Novos endpoints FSM
+  locateProduct,
+  requestWithdrawal,
+  getProductsPendingLocation,
+  getProductsPendingWithdrawal
 }; 

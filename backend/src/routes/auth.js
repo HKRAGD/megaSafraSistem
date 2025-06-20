@@ -29,7 +29,7 @@ router.post('/login', login);
  * @route   POST /api/auth/register
  * @access  Private (Admin only)
  */
-router.post('/register', authenticateToken, authorizeRole('admin'), register);
+router.post('/register', authenticateToken, authorizeRole(['ADMIN']), register);
 
 /**
  * @desc    Refresh access token

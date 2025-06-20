@@ -18,17 +18,17 @@ const SeedType = require('../models/SeedType');
  * GET /api/reports/inventory
  * Relatório completo de estoque atual
  */
-const getInventoryReport = async (req, res) => {
-  try {
-    const {
-      chamberId,
-      seedTypeId,
-      status = 'stored,reserved',
-      expirationDays,
-      includeInactive = false,
-      format = 'detailed',
-      export: exportFormat
-    } = req.query;
+  const getInventoryReport = async (req, res) => {
+    try {
+      const {
+        chamberId,
+        seedTypeId,
+        status = 'LOCADO,AGUARDANDO_RETIRADA',
+        expirationDays,
+        includeInactive = false,
+        format = 'detailed',
+        export: exportFormat
+      } = req.query;
 
     // Construir filtros
     const filters = {
@@ -222,6 +222,36 @@ const getExpirationReport = async (req, res) => {
     // Gerar relatório usando reportService
     const report = await reportService.generateExpirationReport(criteria);
 
+    // Extrair produtos da estrutura de classificação
+    let allProducts = [];
+    if (report.data?.data?.classification) {
+      // Estrutura aninhada: report.data.data.classification
+      const classification = report.data.data.classification;
+      allProducts = [
+        ...(classification.expired || []),
+        ...(classification.critical || []),
+        ...(classification.warning || []),
+        ...(classification.good || [])
+      ];
+    } else if (report.data?.classification) {
+      // Estrutura direta: report.data.classification
+      const classification = report.data.classification;
+      allProducts = [
+        ...(classification.expired || []),
+        ...(classification.critical || []),
+        ...(classification.warning || []),
+        ...(classification.good || [])
+      ];
+    } else if (report.data?.products) {
+      // Estrutura simples: report.data.products
+      allProducts = report.data.products || [];
+    }
+
+    // Se ainda não encontrou produtos, usar a nova estrutura simplificada
+    if (allProducts.length === 0 && report.data?.data?.products) {
+      allProducts = report.data.data.products;
+    }
+
     // Análise adicional por urgência
     const urgencyAnalysis = await analyzeExpirationUrgency(report.data, criteria);
 
@@ -233,7 +263,10 @@ const getExpirationReport = async (req, res) => {
 
     // Processamento para exportação
     if (exportFormat) {
-      const exportData = await processExportData(report.data, exportFormat, 'expiration');
+      const exportData = await processExportData({
+        products: allProducts,
+        classification: report.data?.data?.classification || report.data?.classification
+      }, exportFormat, 'expiration');
       return res.status(200).json({
         success: true,
         message: 'Relatório de expiração gerado para exportação',
@@ -249,6 +282,8 @@ const getExpirationReport = async (req, res) => {
       success: true,
       message: 'Relatório de expiração gerado com sucesso',
       data: {
+        products: allProducts, // Produtos extraídos para o frontend
+        classification: report.data?.data?.classification || report.data?.classification, // Classificação original
         ...report.data,
         urgencyAnalysis,
         expiredHistory,
@@ -530,7 +565,8 @@ const processExportData = async (reportData, format, reportType) => {
  * Análise de urgência de expiração
  */
 const analyzeExpirationUrgency = async (reportData, criteria) => {
-  const { classification } = reportData.data;
+  // Buscar classificação em diferentes estruturas possíveis
+  const classification = reportData?.data?.classification || reportData?.classification || {};
   
   return {
     critical: {

@@ -133,13 +133,13 @@ export const ProductEdit: React.FC<ProductEditProps> = ({
               <strong>Lote:</strong> {product.lot}
             </Typography>
             <Typography variant="body2">
-              <strong>Tipo de Semente:</strong> {product.seedType?.name || 'N/A'}
+              <strong>Tipo de Semente:</strong> {product.seedTypeId?.name || 'N/A'}
             </Typography>
             <Typography variant="body2">
               <strong>Tipo de Armazenamento:</strong> {product.storageType}
             </Typography>
             <Typography variant="body2">
-              <strong>Localização:</strong> {product.location?.code || 'N/A'} - {product.location?.chamber?.name || 'N/A'}
+              <strong>Localização:</strong> {product.locationId?.code || 'N/A'} - {product.locationId?.chamberId?.name || 'N/A'}
             </Typography>
           </Stack>
         </CardContent>

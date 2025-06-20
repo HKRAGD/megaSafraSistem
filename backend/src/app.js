@@ -46,7 +46,7 @@ app.use(cors({
     return callback(new Error(msg), false);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
@@ -90,6 +90,7 @@ app.get('/api/health', (req, res) => {
 // Rotas da API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/clients', require('./routes/clients')); // Nova rota de clientes
 app.use('/api/seed-types', require('./routes/seedTypes'));
 app.use('/api/chambers', require('./routes/chambers'));
 app.use('/api/locations', require('./routes/locations'));
@@ -97,6 +98,7 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/movements', require('./routes/movements'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/withdrawal-requests', require('./routes/withdrawalRequests'));
 
 // Rota 404
 app.use('*', (req, res) => {

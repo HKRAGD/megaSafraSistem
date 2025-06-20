@@ -21,7 +21,7 @@ interface UseLocationsReturn extends UseDataState<Location> {
   // Estado adicional específico
   selectedLocation: Location | null;
   filters: LocationFilters;
-  availableLocations: Location[];
+  availableLocations: LocationWithChamber[];
   locations: Location[]; // Getter conveniente para data
   
   // Operações principais
@@ -131,7 +131,7 @@ export const useLocations = (options: UseLocationsOptions = {}): UseLocationsRet
   // Estado específico de localizações
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [filters, setFilters] = useState<LocationFilters>(initialFilters);
-  const [availableLocations, setAvailableLocations] = useState<Location[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<LocationWithChamber[]>([]);
 
   // ============================================================================
   // FUNÇÕES AUXILIARES
@@ -199,24 +199,17 @@ export const useLocations = (options: UseLocationsOptions = {}): UseLocationsRet
       // Estrutura correta da API: { success: true, data: { locations: [...] } }
       const apiLocations = response.data.locations || [];
       
-      // NORMALIZAR DADOS: Converter para LocationWithChamber quando possível
-      const normalizedLocations = apiLocations.map((apiLocation: any) => {
-        // Se tem dados da câmara, usar LocationWithChamber
-        if (typeof apiLocation.chamberId === 'object' && apiLocation.chamberId !== null) {
-          return convertToLocationWithChamber(apiLocation);
-        }
-        // Senão, normalizar como Location padrão
-        return normalizeLocationData(apiLocation);
-      });
-      
-      // Validar que todas as localizações estão realmente disponíveis
-      const validAvailableLocations = normalizedLocations.filter((location: Location) => {
-        if (location.isOccupied) {
-          console.warn(`⚠️ Localização ${location.code} marcada como disponível mas está ocupada`);
-          return false;
-        }
-        return true;
-      });
+      // FILTRAR e NORMALIZAR: Apenas localizações com dados da câmara populados
+      const validAvailableLocations = apiLocations
+        .filter((apiLocation: any) => typeof apiLocation.chamberId === 'object' && apiLocation.chamberId !== null)
+        .map((apiLocation: any) => convertToLocationWithChamber(apiLocation))
+        .filter((location: LocationWithChamber) => {
+          if (location.isOccupied) {
+            console.warn(`⚠️ Localização ${location.code} marcada como disponível mas está ocupada`);
+            return false;
+          }
+          return true;
+        });
       
       setAvailableLocations(validAvailableLocations);
       
@@ -298,12 +291,18 @@ export const useLocations = (options: UseLocationsOptions = {}): UseLocationsRet
         )
       );
       
-      // Atualizar na lista de disponíveis se aplicável
-      setAvailableLocations(prevData => 
-        prevData.map(location => 
-          location.id === id ? normalizedLocation : location
-        )
-      );
+      // Atualizar na lista de disponíveis se aplicável (apenas se a localização está na lista)
+      setAvailableLocations(prevData => {
+        const locationExists = prevData.some(loc => loc.id === id);
+        if (locationExists && response.data.chamberId && typeof response.data.chamberId === 'object') {
+          // Converter para LocationWithChamber se tem dados de câmara
+          const locationWithChamber = convertToLocationWithChamber(response.data);
+          return prevData.map(location => 
+            location.id === id ? locationWithChamber : location
+          );
+        }
+        return prevData; // Não atualizar se não tem dados de câmara ou não está na lista
+      });
       
       console.log('✅ Localização atualizada:', normalizedLocation.code);
     } catch (error: any) {

@@ -37,6 +37,9 @@ import { useLocations } from '../../hooks/useLocations';
 import { useLocationsWithChambers } from '../../hooks/useLocationsWithChambers';
 import { useAllLocationsWithChambers } from '../../hooks/useAllLocationsWithChambers';
 import { useDebounce } from '../../hooks/useDebounce';
+import { usePermissions } from '../../hooks/usePermissions';
+import { useProductActions } from '../../hooks/useProductActions';
+import { useAuth } from '../../hooks/useAuth';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
@@ -101,6 +104,9 @@ export const ProductsPage: React.FC = () => {
   // ============================================================================
   
   const navigate = useNavigate();
+  const { canCreateProduct } = usePermissions();
+  const { user } = useAuth();
+  const { requestWithdrawal } = useProductActions();
   
   const {
     data: products,
@@ -172,6 +178,15 @@ export const ProductsPage: React.FC = () => {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+
+  // ============================================================================
+  // PRODUTOS (PRIORIZAÇÃO É FEITA NO BACKEND)
+  // ============================================================================
+  // ✅ A priorização é feita no backend usando agregação MongoDB:
+  // - AGUARDANDO_LOCACAO aparece sempre primeiro (prioridade 1)
+  // - AGUARDANDO_RETIRADA aparece em segundo (prioridade 2)  
+  // - Outros status aparecem depois (prioridade 99)
+  // 🚀 Não precisamos re-ordenar no frontend, apenas usar a ordem da API
 
   // ============================================================================
   // CARREGAR DADOS
@@ -354,13 +369,33 @@ export const ProductsPage: React.FC = () => {
     if (!selectedProduct) return;
 
     try {
-      await partialExit(selectedProduct.id, quantity, reason);
-      setShowMoveModal(false);
-      setSelectedProduct(null);
-      showToast('Saída realizada com sucesso!', 'success');
-      await loadProducts(); // Recarregar lista
+      // Se é ADMIN, deve criar uma solicitação de retirada ao invés de fazer saída direta
+      if (user?.role === 'ADMIN') {
+        // Determinar se é saída total ou parcial
+        const isTotal = quantity >= selectedProduct.quantity;
+        const withdrawalType = isTotal ? 'TOTAL' : 'PARCIAL';
+        
+        await requestWithdrawal(
+          selectedProduct.id, 
+          withdrawalType, 
+          isTotal ? undefined : quantity, 
+          reason
+        );
+        
+        setShowMoveModal(false);
+        setSelectedProduct(null);
+        showToast('Solicitação de retirada criada com sucesso! Aguardando confirmação do operador.', 'success');
+        await loadProducts(); // Recarregar lista
+      } else {
+        // Se é OPERATOR, pode fazer saída direta (caso raro, mas possível)
+        await partialExit(selectedProduct.id, quantity, reason);
+        setShowMoveModal(false);
+        setSelectedProduct(null);
+        showToast('Saída realizada com sucesso!', 'success');
+        await loadProducts(); // Recarregar lista
+      }
     } catch (error: any) {
-      showToast(error.message || 'Erro na saída de produto', 'error');
+      showToast(error.message || 'Erro na operação de saída', 'error');
     }
   };
 
@@ -409,7 +444,7 @@ export const ProductsPage: React.FC = () => {
       id: 'seedType',
       label: 'Tipo de Semente',
       render: (product: ProductWithRelations) => {
-        return product.seedType?.name || 'N/A';
+        return product.seedTypeId?.name || 'N/A';
       },
     },
     {
@@ -434,10 +469,10 @@ export const ProductsPage: React.FC = () => {
         return (
           <Box>
             <Typography variant="body2">
-              {product.location?.code || 'N/A'}
+              {product.locationId?.code || 'N/A'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {product.location?.chamber?.name || ''}
+              {product.locationId?.chamberId?.name || ''}
             </Typography>
           </Box>
         );
@@ -450,12 +485,20 @@ export const ProductsPage: React.FC = () => {
       render: (product: ProductWithRelations) => (
         <Chip
           label={
-            product.status === 'stored' ? 'Armazenado' :
-            product.status === 'reserved' ? 'Reservado' : 'Removido'
+            product.status === 'LOCADO' ? 'Armazenado' :
+            product.status === 'AGUARDANDO_RETIRADA' ? 'Aguardando Retirada' :
+            product.status === 'REMOVIDO' ? 'Removido' :
+            product.status === 'CADASTRADO' ? 'Cadastrado' :
+            product.status === 'AGUARDANDO_LOCACAO' ? 'Aguardando Locação' :
+            product.status === 'RETIRADO' ? 'Retirado' : 'Desconhecido'
           }
           color={
-            product.status === 'stored' ? 'success' :
-            product.status === 'reserved' ? 'warning' : 'default'
+            product.status === 'LOCADO' ? 'success' :
+            product.status === 'AGUARDANDO_RETIRADA' ? 'warning' :
+            product.status === 'REMOVIDO' ? 'error' :
+            product.status === 'CADASTRADO' ? 'info' :
+            product.status === 'AGUARDANDO_LOCACAO' ? 'warning' :
+            product.status === 'RETIRADO' ? 'default' : 'default'
           }
           size="small"
         />
@@ -526,13 +569,15 @@ export const ProductsPage: React.FC = () => {
             >
               Atualizar
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreateModal}
-            >
-              Novo Produto
-            </Button>
+            {canCreateProduct && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreateModal}
+              >
+                Novo Produto
+              </Button>
+            )}
           </>
         }
       />
@@ -547,7 +592,7 @@ export const ProductsPage: React.FC = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Buscar produtos"
@@ -563,7 +608,7 @@ export const ProductsPage: React.FC = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid item xs={12} md={2}>
               <TextField
                 fullWidth
                 select
@@ -572,13 +617,16 @@ export const ProductsPage: React.FC = () => {
                 onChange={(e) => handleFilterChange('status', e.target.value || undefined)}
               >
                 <MenuItem value="">Todos</MenuItem>
-                <MenuItem value="stored">Armazenado</MenuItem>
-                <MenuItem value="reserved">Reservado</MenuItem>
-                <MenuItem value="removed">Removido</MenuItem>
+                <MenuItem value="CADASTRADO">Cadastrado</MenuItem>
+                <MenuItem value="AGUARDANDO_LOCACAO">Aguardando Locação</MenuItem>
+                <MenuItem value="LOCADO">Armazenado</MenuItem>
+                <MenuItem value="AGUARDANDO_RETIRADA">Aguardando Retirada</MenuItem>
+                <MenuItem value="RETIRADO">Retirado</MenuItem>
+                <MenuItem value="REMOVIDO">Removido</MenuItem>
               </TextField>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 select
@@ -596,7 +644,7 @@ export const ProductsPage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid item xs={12} md={2}>
               <TextField
                 fullWidth
                 select
@@ -614,7 +662,7 @@ export const ProductsPage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 1 }}>
+            <Grid item xs={12} md={1}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -669,19 +717,21 @@ export const ProductsPage: React.FC = () => {
       </Card>
 
       {/* FAB para adicionar em mobile */}
-      <Fab
-        color="primary"
-        aria-label="adicionar produto"
-        sx={{
-          position: 'fixed',
-          bottom: 16,
-          right: 16,
-          display: { xs: 'flex', md: 'none' },
-        }}
-        onClick={handleOpenCreateModal}
-      >
-        <AddIcon />
-      </Fab>
+      {canCreateProduct && (
+        <Fab
+          color="primary"
+          aria-label="adicionar produto"
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            display: { xs: 'flex', md: 'none' },
+          }}
+          onClick={handleOpenCreateModal}
+        >
+          <AddIcon />
+        </Fab>
+      )}
 
       {/* Menu de Ações */}
       {selectedProduct && (

@@ -3,9 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { Loading } from './components/common/Loading';
+import { ToastContainer } from './components/common/ToastContainer';
 import { APP_CONFIG } from './config/app';
 import ChipErrorBoundary from './components/common/ChipErrorBoundary';
 // Sistema de debug avançado para Chips (automático em desenvolvimento)
@@ -21,6 +23,8 @@ const LocationsPage = React.lazy(() => import('./pages/Locations/LocationsPage')
 const HistoryPage = React.lazy(() => import('./pages/History/HistoryPage'));
 const SettingsPage = React.lazy(() => import('./pages/Settings/SettingsPage').then(module => ({ default: module.SettingsPage })));
 const ReportsPage = React.lazy(() => import('./pages/Reports/ReportsPage'));
+const WithdrawalRequestsPage = React.lazy(() => import('./pages/WithdrawalRequests').then(module => ({ default: module.WithdrawalRequestsPage })));
+const ProductAllocationPage = React.lazy(() => import('./pages/ProductAllocation').then(module => ({ default: module.ProductAllocationPage })));
 
 // Tema Material-UI aprimorado
 const theme = createTheme({
@@ -81,8 +85,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <ChipErrorBoundary>
-          <Router>
+        <ToastProvider>
+          <ChipErrorBoundary>
+            <Router>
           <Suspense fallback={<Loading variant="page" text="Carregando aplicação..." />}>
             <Routes>
               {/* Rota pública de login */}
@@ -118,7 +123,7 @@ function App() {
               <Route 
                 path="/products/new" 
                 element={
-                  <ProtectedRoute requiredRole="operator">
+                  <ProtectedRoute requiredRole="ADMIN">
                     <AppLayout>
                       <Suspense fallback={<Loading variant="page" text="Carregando formulário..." />}>
                         <NewProductPage />
@@ -131,7 +136,7 @@ function App() {
               <Route 
                 path="/users" 
                 element={
-                  <ProtectedRoute requiredRole="admin">
+                  <ProtectedRoute requiredRole="ADMIN">
                     <AppLayout>
                       <Suspense fallback={<Loading variant="table" text="Carregando usuários..." />}>
                         <UsersPage />
@@ -193,6 +198,32 @@ function App() {
                 } 
               />
               
+              <Route 
+                path="/withdrawal-requests" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<Loading variant="table" text="Carregando solicitações..." />}>
+                        <WithdrawalRequestsPage />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/product-allocation" 
+                element={
+                  <ProtectedRoute requiredRole="OPERATOR">
+                    <AppLayout>
+                      <Suspense fallback={<Loading variant="cards" text="Carregando produtos para alocação..." />}>
+                        <ProductAllocationPage />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
               {/* Redirecionar raiz para dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               
@@ -201,7 +232,9 @@ function App() {
             </Routes>
           </Suspense>
         </Router>
+        <ToastContainer />
         </ChipErrorBoundary>
+      </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );

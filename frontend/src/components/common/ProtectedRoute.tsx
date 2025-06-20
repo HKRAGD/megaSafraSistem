@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'operator' | 'viewer';
+  requiredRole?: 'ADMIN' | 'OPERATOR';
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
@@ -39,10 +39,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Verifica se o usuário tem a role necessária
   if (requiredRole && user.role !== requiredRole) {
     // Admin tem acesso a tudo
-    if (user.role !== 'admin') {
-      // Operator pode acessar suas próprias funcionalidades e viewer
-      if (requiredRole === 'admin' || 
-          (user.role === 'viewer' && requiredRole === 'operator')) {
+    if (user.role !== 'ADMIN') {
+      // Operator não pode acessar funcionalidades de Admin
+      if (requiredRole === 'ADMIN') {
         return <Navigate to="/dashboard" replace />;
       }
     }

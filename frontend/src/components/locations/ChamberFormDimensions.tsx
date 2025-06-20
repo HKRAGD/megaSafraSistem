@@ -53,7 +53,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
 
   return (
     <>
-      <Grid size={12}>
+      <Grid item xs={12}>
         <Divider sx={{ my: 2 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <DimensionsIcon />
@@ -67,11 +67,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
       </Grid>
 
       <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-          md: 3
-        }}
+        item xs={12} sm={6} md={3}
       >
         <Controller
           name="dimensions.quadras"
@@ -92,11 +88,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
       </Grid>
 
       <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-          md: 3
-        }}
+        item xs={12} sm={6} md={3}
       >
         <Controller
           name="dimensions.lados"
@@ -117,11 +109,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
       </Grid>
 
       <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-          md: 3
-        }}
+        item xs={12} sm={6} md={3}
       >
         <Controller
           name="dimensions.filas"
@@ -142,11 +130,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
       </Grid>
 
       <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-          md: 3
-        }}
+        item xs={12} sm={6} md={3}
       >
         <Controller
           name="dimensions.andares"
@@ -166,7 +150,7 @@ export const ChamberFormDimensions: React.FC<ChamberFormDimensionsProps> = React
         />
       </Grid>
 
-      <Grid size={12}>
+      <Grid item xs={12}>
         <Alert 
           severity={getEstimateColor()} 
           sx={{ mt: 2 }}

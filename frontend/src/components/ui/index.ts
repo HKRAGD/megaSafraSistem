@@ -30,9 +30,16 @@ export type { LocationHierarchyDisplayProps } from './LocationHierarchyDisplay';
 export { default as SeedTypeSelector } from './SeedTypeSelector';
 export type { SeedTypeSelectorProps } from './SeedTypeSelector';
 
+// Client Components
+export { ClientSelector } from './ClientSelector';
+export type { ClientSelectorProps } from './ClientSelector';
+
 // Stats Components
 export { default as StatsCard } from './StatsCard';
 export type { StatsCardProps } from './StatsCard';
 
 // Location Components (continued)
-export { default as LocationSelector } from './LocationSelector'; 
+export { default as LocationSelector } from './LocationSelector';
+
+// Status Components
+export { StatusBadge, ProductStatusBadge, WithdrawalStatusBadge, WithdrawalTypeBadge, StatusBadgeGroup } from './StatusBadge'; 

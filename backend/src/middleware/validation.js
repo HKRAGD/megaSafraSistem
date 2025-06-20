@@ -112,13 +112,13 @@ const userSchemas = {
     name: Joi.string().trim().min(2).max(100).required(),
     email: Joi.string().email().lowercase().required(),
     password: Joi.string().min(6).max(128).required(),
-    role: Joi.string().valid('admin', 'operator', 'viewer').default('viewer')
+    role: Joi.string().valid('ADMIN', 'OPERATOR').default('OPERATOR')
   }),
   
   update: Joi.object({
     name: Joi.string().trim().min(2).max(100),
     email: Joi.string().email().lowercase(),
-    role: Joi.string().valid('admin', 'operator', 'viewer'),
+    role: Joi.string().valid('ADMIN', 'OPERATOR'),
     isActive: Joi.boolean()
   }),
   
@@ -243,7 +243,8 @@ const productSchemas = {
     quantity: Joi.number().integer().min(1).required(),
     storageType: Joi.string().valid('saco', 'bag').required(),
     weightPerUnit: Joi.number().min(0.001).max(1000).required(),
-    locationId: objectIdSchema.required(),
+    locationId: objectIdSchema.allow('').optional(), // OPCIONAL: Produtos podem ser criados sem localização
+    clientId: objectIdSchema.optional(), // OPCIONAL: Cliente associado ao produto
     entryDate: Joi.date().iso().default(() => new Date()),
     expirationDate: Joi.date().iso(),
     notes: Joi.string().trim().max(1000).allow(''),
@@ -262,9 +263,10 @@ const productSchemas = {
     quantity: Joi.number().integer().min(1),
     storageType: Joi.string().valid('saco', 'bag'),
     weightPerUnit: Joi.number().min(0.001).max(1000),
-    locationId: objectIdSchema,
+    locationId: objectIdSchema.allow(''),
+    clientId: objectIdSchema, // Cliente associado ao produto
     expirationDate: Joi.date().iso(),
-    status: Joi.string().valid('stored', 'reserved', 'removed'),
+    status: Joi.string().valid('CADASTRADO', 'AGUARDANDO_LOCACAO', 'LOCADO', 'AGUARDANDO_RETIRADA', 'RETIRADO', 'REMOVIDO'),
     notes: Joi.string().trim().max(1000).allow(''),
     tracking: Joi.object({
       batchNumber: Joi.string().trim().max(50).allow(''),
@@ -322,7 +324,7 @@ const authSchemas = {
     name: Joi.string().trim().min(2).max(100).required(),
     email: Joi.string().email().lowercase().required(),
     password: Joi.string().min(6).max(128).required(),
-    role: Joi.string().valid('admin', 'operator', 'viewer').default('viewer')
+    role: Joi.string().valid('ADMIN', 'OPERATOR').default('OPERATOR')
   }),
   
   refreshToken: Joi.object({

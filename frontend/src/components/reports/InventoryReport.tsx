@@ -28,6 +28,7 @@ import {
   FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { useReports } from '../../hooks/useReports';
+import { useDashboard } from '../../hooks/useDashboard';
 import { ProductStatus } from '../../types';
 import { formatWeightWithUnit, formatWeight, formatWeightSmart } from '../../utils/displayHelpers';
 
@@ -35,9 +36,6 @@ import { formatWeightWithUnit, formatWeight, formatWeightSmart } from '../../uti
 const getSeedTypeName = (product: any) => {
   if (product.seedTypeId && typeof product.seedTypeId === 'object') {
     return product.seedTypeId.name || 'N/A';
-  }
-  if (product.seedType && typeof product.seedType === 'object') {
-    return product.seedType.name || 'N/A';
   }
   return 'N/A';
 };
@@ -54,18 +52,24 @@ const getLocationCode = (product: any) => {
 
 const getStatusLabel = (status: string) => {
   switch (status) {
-    case 'stored': return 'Armazenado';
-    case 'reserved': return 'Reservado';
-    case 'removed': return 'Removido';
+    case 'LOCADO': return 'Armazenado';
+    case 'AGUARDANDO_RETIRADA': return 'Aguardando Retirada';
+    case 'REMOVIDO': return 'Removido';
+    case 'CADASTRADO': return 'Cadastrado';
+    case 'AGUARDANDO_LOCACAO': return 'Aguardando Locação';
+    case 'RETIRADO': return 'Retirado';
     default: return status;
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'stored': return 'success';
-    case 'reserved': return 'warning';
-    case 'removed': return 'error';
+    case 'LOCADO': return 'success';
+    case 'AGUARDANDO_RETIRADA': return 'warning';
+    case 'REMOVIDO': return 'error';
+    case 'CADASTRADO': return 'info';
+    case 'AGUARDANDO_LOCACAO': return 'warning';
+    case 'RETIRADO': return 'default';
     default: return 'default';
   }
 };
@@ -86,10 +90,18 @@ export const InventoryReport: React.FC = () => {
     exportToExcel 
   } = useReports();
 
+  // Use useDashboard para dados de resumo
+  const { 
+    summary: dashboardSummary, 
+    refreshDashboard, 
+    loading: dashboardLoading 
+  } = useDashboard();
+
   // Carregar dados automaticamente quando o componente for montado
   useEffect(() => {
-    handleGenerateReport();
-  }, []);
+    handleGenerateReport(); // Para lista detalhada de produtos
+    refreshDashboard(); // Para dados de resumo
+  }, [refreshDashboard]);
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
@@ -123,15 +135,18 @@ export const InventoryReport: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             startIcon={<RefreshIcon />}
-            onClick={handleGenerateReport}
-            disabled={loading}
+            onClick={() => {
+              handleGenerateReport();
+              refreshDashboard();
+            }}
+            disabled={loading || dashboardLoading}
           >
             Atualizar
           </Button>
           <Button
             startIcon={<PdfIcon />}
             onClick={handleExportPDF}
-            disabled={!reportData || loading}
+            disabled={!reportData || loading || dashboardLoading}
             color="error"
           >
             PDF
@@ -139,7 +154,7 @@ export const InventoryReport: React.FC = () => {
           <Button
             startIcon={<ExcelIcon />}
             onClick={handleExportExcel}
-            disabled={!reportData || loading}
+            disabled={!reportData || loading || dashboardLoading}
             color="success"
           >
             Excel
@@ -156,7 +171,7 @@ export const InventoryReport: React.FC = () => {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <FormControl fullWidth size="small">
                 <InputLabel>Câmara</InputLabel>
                 <Select
@@ -172,7 +187,7 @@ export const InventoryReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Semente</InputLabel>
                 <Select
@@ -188,7 +203,7 @@ export const InventoryReport: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -197,9 +212,12 @@ export const InventoryReport: React.FC = () => {
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                 >
                   <MenuItem value="">Todos os status</MenuItem>
-                  <MenuItem value="stored">Armazenado</MenuItem>
-                  <MenuItem value="reserved">Reservado</MenuItem>
-                  <MenuItem value="removed">Removido</MenuItem>
+                  <MenuItem value="CADASTRADO">Cadastrado</MenuItem>
+                  <MenuItem value="AGUARDANDO_LOCACAO">Aguardando Locação</MenuItem>
+                  <MenuItem value="LOCADO">Armazenado</MenuItem>
+                  <MenuItem value="AGUARDANDO_RETIRADA">Aguardando Retirada</MenuItem>
+                  <MenuItem value="RETIRADO">Retirado</MenuItem>
+                  <MenuItem value="REMOVIDO">Removido</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -207,7 +225,7 @@ export const InventoryReport: React.FC = () => {
         </CardContent>
       </Card>
 
-      {loading && (
+      {(loading || dashboardLoading) && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
@@ -219,13 +237,13 @@ export const InventoryReport: React.FC = () => {
         </Alert>
       )}
 
-      {!reportData && !loading && !error && (
+      {!reportData && !loading && !dashboardLoading && !error && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Clique em "Atualizar" para gerar o relatório de inventário
         </Alert>
       )}
 
-      {reportData && !loading && (
+      {dashboardSummary && !loading && !dashboardLoading && (
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -233,11 +251,11 @@ export const InventoryReport: React.FC = () => {
             </Typography>
             
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {reportData.summary?.totalProducts || 0}
+                      {dashboardSummary.totalProducts || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Produtos
@@ -246,11 +264,11 @@ export const InventoryReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="success.main">
-                      {formatWeightSmart(reportData.summary?.totalWeight || 0)}
+                      {formatWeightSmart(dashboardSummary.totalWeight || 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Peso Total
@@ -259,11 +277,11 @@ export const InventoryReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="info.main">
-                      {reportData.summary?.locationsOccupied || 0}
+                      {dashboardSummary.occupiedLocations || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Localizações Ocupadas
@@ -272,11 +290,13 @@ export const InventoryReport: React.FC = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="warning.main">
-                      {reportData.summary?.occupancyRate || 0}%
+                      {dashboardSummary.totalLocations > 0 
+                        ? ((dashboardSummary.occupiedLocations / dashboardSummary.totalLocations) * 100).toFixed(2) 
+                        : 0}%
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Taxa de Ocupação
@@ -286,6 +306,14 @@ export const InventoryReport: React.FC = () => {
               </Grid>
             </Grid>
 
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tabela de produtos independente */}
+      {reportData && !loading && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
             <Typography variant="h6" gutterBottom>
               Detalhes do Inventário
             </Typography>

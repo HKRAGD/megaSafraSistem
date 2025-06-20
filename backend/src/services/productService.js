@@ -45,89 +45,101 @@ const createProduct = async (productData, userId, options = {}) => {
     // 3. Calcular peso total
     const totalWeight = productData.quantity * productData.weightPerUnit;
 
-    // 4. Buscar localização automaticamente se solicitado
+    // 4. Buscar localização automaticamente se solicitado E fornecido
     let locationId = productData.locationId;
+    
+    // Tratar string vazia como undefined (frontend envia "" quando não há localização)
+    if (locationId === '') {
+      locationId = undefined;
+    }
+    
+    let location = null;
+    let capacityValidation = { warnings: [] }; // Inicializar para evitar ReferenceError
+    
     if (autoFindLocation && !locationId) {
       const optimalLocation = await findOptimalLocation({
         quantity: productData.quantity,
         weightPerUnit: productData.weightPerUnit
       });
 
-      if (!optimalLocation.success) {
-        throw new Error('Nenhuma localização disponível');
+      if (optimalLocation.success) {
+        locationId = optimalLocation.data.location._id;
+      }
+      // MUDANÇA: Não é mais erro se não encontrar localização - produto fica aguardando locação
+    }
+
+    // 5. Validar localização APENAS se fornecida
+    if (locationId) {
+      location = await Location.findById(locationId);
+      if (!location) {
+        throw new Error('Localização não encontrada');
       }
 
-      locationId = optimalLocation.data.location._id;
-    }
-
-    // 5. Validar se localização está disponível
-    const location = await Location.findById(locationId);
-    if (!location) {
-      throw new Error('Localização não encontrada');
-    }
-
-    if (location.isOccupied) {
-      throw new Error('Localização já está ocupada');
-    }
-
-    // 6. Validar capacidade da localização
-    const capacityValidation = await locationService.validateLocationCapacity(
-      locationId, 
-      totalWeight, 
-      { includeSuggestions: true }
-    );
-
-    if (!capacityValidation.valid) {
-      let errorMessage = `Localização inválida: ${capacityValidation.reason}`;
-      if (capacityValidation.suggestions && capacityValidation.suggestions.length > 0) {
-        const suggestedCodes = capacityValidation.suggestions.map(s => s.code).join(', ');
-        errorMessage += `. Sugestões: ${suggestedCodes}`;
+      if (location.isOccupied) {
+        throw new Error('Localização já está ocupada');
       }
-      throw new Error(errorMessage);
+
+      // 6. Validar capacidade da localização
+      capacityValidation = await locationService.validateLocationCapacity(
+        locationId, 
+        totalWeight, 
+        { includeSuggestions: true }
+      );
+
+      if (!capacityValidation.valid) {
+        let errorMessage = `Localização inválida: ${capacityValidation.reason}`;
+        if (capacityValidation.suggestions && capacityValidation.suggestions.length > 0) {
+          const suggestedCodes = capacityValidation.suggestions.map(s => s.code).join(', ');
+          errorMessage += `. Sugestões: ${suggestedCodes}`;
+        }
+        throw new Error(errorMessage);
+      }
     }
 
     // 7. Construir dados completos do produto
     const completeProductData = {
       ...productData,
-      locationId,
+      locationId, // Pode ser undefined - o modelo definirá o status automaticamente
       totalWeight,
-      status: 'stored',
       entryDate: new Date(),
       metadata: {
         createdBy: userId,
         lastModifiedBy: userId,
         lastMovementDate: new Date()
       }
+      // REMOVIDO: status: 'stored' - deixar o modelo definir baseado em locationId
     };
 
     // 8. Criar produto
     const product = new Product(completeProductData);
     await product.save();
 
-    // 9. REGRA CRÍTICA: Ocupar localização automaticamente
-    await Location.findByIdAndUpdate(locationId, {
-      isOccupied: true,
-      currentWeightKg: totalWeight
-    });
+    // 9. REGRA CRÍTICA: Ocupar localização apenas se fornecida
+    if (locationId) {
+      await Location.findByIdAndUpdate(locationId, {
+        isOccupied: true,
+        currentWeightKg: totalWeight
+      });
 
-    // 10. REGRA CRÍTICA: Gerar movimento automático de entrada
-    const movementData = {
-      type: 'entry',
-      productId: product._id,
-      userId: userId,
-      toLocationId: locationId,
-      quantity: productData.quantity,
-      weight: totalWeight,
-      reason: 'Entrada automática na criação do produto',
-      timestamp: new Date(),
-      metadata: {
-        verified: true,
-        automatic: true
-      }
-    };
+      // 10. REGRA CRÍTICA: Gerar movimento automático de entrada apenas se localizado
+      const movementData = {
+        type: 'entry',
+        productId: product._id,
+        userId: userId,
+        toLocationId: locationId,
+        quantity: productData.quantity,
+        weight: totalWeight,
+        reason: 'Entrada automática na criação do produto',
+        timestamp: new Date(),
+        metadata: {
+          verified: true,
+          automatic: true
+        }
+      };
 
-    const movement = new Movement(movementData);
-    await movement.save();
+      const movement = new Movement(movementData);
+      await movement.save();
+    }
 
     // 11. Buscar produto completo com populações
     const fullProduct = await Product.findById(product._id)
@@ -137,11 +149,12 @@ const createProduct = async (productData, userId, options = {}) => {
 
     // 12. Análise de resultado
     const analysis = {
-      locationSelected: {
+      locationSelected: fullProduct.locationId ? {
         code: fullProduct.locationId.code,
         coordinates: fullProduct.locationId.coordinates,
         utilizationAfter: Math.round((totalWeight / fullProduct.locationId.maxCapacityKg) * 100)
-      },
+      } : null,
+      statusAssigned: fullProduct.status, // Mostra o status definido pelo FSM
       seedTypeCompatibility: seedType ? {
         temperatureMatch: seedType.optimalTemperature ? 'compatible' : 'unknown',
         humidityMatch: seedType.optimalHumidity ? 'compatible' : 'unknown',
@@ -191,8 +204,8 @@ const moveProduct = async (productId, newLocationId, userId, options = {}) => {
       throw new Error('Produto não encontrado');
     }
 
-    if (product.status !== 'stored') {
-      throw new Error(`Produto deve estar armazenado para ser movido. Status atual: ${product.status}`);
+    if (product.status !== 'LOCADO') {
+      throw new Error(`Produto deve estar locado para ser movido. Status atual: ${product.status}`);
     }
 
     // 2. Verificar se não é a mesma localização
@@ -364,7 +377,7 @@ const removeProduct = async (productId, userId, options = {}) => {
 
     // 2. REGRA CRÍTICA: Marcar produto como removido
     await Product.findByIdAndUpdate(productId, {
-      status: 'removed',
+      status: 'REMOVIDO',
       'metadata.lastModifiedBy': userId,
       'metadata.lastMovementDate': new Date()
     });
@@ -553,7 +566,7 @@ const analyzeProductDistribution = async (options = {}) => {
     } = options;
 
     // Buscar todos os produtos ativos
-    const products = await Product.find({ status: 'stored' })
+    const products = await Product.find({ status: 'LOCADO' })
       .populate('locationId', 'chamberId coordinates')
       .populate('seedTypeId', 'name');
 
@@ -663,11 +676,11 @@ const getProductsByConditions = async (conditions = {}, options = {}) => {
 
     if (conditions.temperature) {
       // Buscar produtos baseado nas condições das câmaras
-      query = query.where('status').equals('stored');
+      query = query.where('status').equals('LOCADO');
     }
 
     if (conditions.humidity) {
-      query = query.where('status').equals('stored');
+      query = query.where('status').equals('LOCADO');
     }
 
     // Populações
@@ -727,8 +740,8 @@ const partialExit = async (productId, quantity, userId, options = {}) => {
       throw new Error('Produto não encontrado');
     }
 
-    if (product.status !== 'stored') {
-      throw new Error(`Produto deve estar armazenado para saída. Status atual: ${product.status}`);
+    if (product.status !== 'LOCADO') {
+      throw new Error(`Produto deve estar locado para saída. Status atual: ${product.status}`);
     }
 
     // 2. Validar quantidade
@@ -769,7 +782,7 @@ const partialExit = async (productId, quantity, userId, options = {}) => {
     if (newQuantity === 0) {
       // Se saída total, remover produto e liberar localização
       await Product.findByIdAndUpdate(productId, { 
-        status: 'removed',
+        status: 'REMOVIDO',
         metadata: {
           ...product.metadata,
           lastModifiedBy: userId,
@@ -852,8 +865,8 @@ const partialMove = async (productId, quantity, newLocationId, userId, options =
       throw new Error('Produto não encontrado');
     }
 
-    if (product.status !== 'stored') {
-      throw new Error(`Produto deve estar armazenado para movimentação. Status atual: ${product.status}`);
+    if (product.status !== 'LOCADO') {
+      throw new Error(`Produto deve estar locado para movimentação. Status atual: ${product.status}`);
     }
 
     // 2. Validar quantidade
@@ -923,7 +936,7 @@ const partialMove = async (productId, quantity, newLocationId, userId, options =
       locationId: newLocationId,
       entryDate: new Date(),
       expirationDate: product.expirationDate,
-      status: 'stored',
+      status: 'LOCADO',
       notes: `Criado por movimentação parcial do produto ${product.name}`,
       tracking: {
         ...product.tracking,
@@ -1037,8 +1050,8 @@ const addStock = async (productId, quantity, userId, options = {}) => {
       throw new Error('Produto não encontrado');
     }
 
-    if (product.status !== 'stored') {
-      throw new Error(`Produto deve estar armazenado para adicionar estoque. Status atual: ${product.status}`);
+    if (product.status !== 'LOCADO') {
+      throw new Error(`Produto deve estar locado para adicionar estoque. Status atual: ${product.status}`);
     }
 
     // 2. Validar quantidade
@@ -1130,6 +1143,288 @@ const addStock = async (productId, quantity, userId, options = {}) => {
   }
 };
 
+/**
+ * Localizar produto aguardando locação (OPERATOR)
+ * @param {String} productId - ID do produto
+ * @param {String} locationId - ID da localização
+ * @param {String} userId - ID do usuário operador
+ * @param {Object} options - Opções da operação
+ * @returns {Object} Resultado da localização
+ */
+const locateProduct = async (productId, locationId, userId, options = {}) => {
+  try {
+    const { reason = 'Localização de produto', validateCapacity = true } = options;
+
+    // 1. Buscar produto
+    const product = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates');
+
+    if (!product) {
+      throw new Error('Produto não encontrado');
+    }
+
+    // 2. Validar capacidade da localização se solicitado
+    if (validateCapacity) {
+      const capacityValidation = await locationService.validateLocationCapacity(
+        locationId, 
+        product.totalWeight, 
+        { includeSuggestions: true }
+      );
+
+      if (!capacityValidation.valid) {
+        let errorMessage = `Localização inválida: ${capacityValidation.reason}`;
+        if (capacityValidation.suggestions && capacityValidation.suggestions.length > 0) {
+          const suggestedCodes = capacityValidation.suggestions.map(s => s.code).join(', ');
+          errorMessage += `. Sugestões: ${suggestedCodes}`;
+        }
+        throw new Error(errorMessage);
+      }
+    }
+
+    // 3. Usar método FSM do modelo
+    await product.locate(locationId, userId, reason);
+
+    // 4. Ocupar localização
+    await Location.findByIdAndUpdate(locationId, {
+      isOccupied: true,
+      currentWeightKg: product.totalWeight
+    });
+
+    // 4.1. Gerar movimento para alocação
+    const movement = new Movement({
+      type: 'entry',
+      productId: product._id,
+      userId: userId,
+      fromLocationId: null, // Produto não estava em localização específica antes da alocação
+      toLocationId: locationId,
+      quantity: product.quantity,
+      weight: product.totalWeight,
+      reason: reason || 'Alocação de produto',
+      timestamp: new Date(),
+      metadata: {
+        verified: true,
+        automatic: true // Marcar como automático pois faz parte do fluxo FSM principal
+      }
+    });
+    await movement.save();
+
+    // 5. Buscar produto atualizado
+    const updatedProduct = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg');
+
+    return {
+      success: true,
+      data: {
+        product: updatedProduct,
+        operation: {
+          type: 'locate',
+          previousStatus: 'AGUARDANDO_LOCACAO',
+          newStatus: 'LOCADO',
+          locationAssigned: updatedProduct.locationId.code
+        },
+        movement: { // Incluir detalhes do movimento na resposta
+          id: movement._id,
+          timestamp: movement.timestamp
+        }
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao localizar produto: ${error.message}`);
+  }
+};
+
+/**
+ * Solicitar retirada de produto (ADMIN)
+ * @param {String} productId - ID do produto
+ * @param {String} userId - ID do usuário admin
+ * @param {Object} options - Opções da solicitação
+ * @returns {Object} Resultado da solicitação
+ */
+const requestProductWithdrawal = async (productId, userId, options = {}) => {
+  try {
+    const { reason = 'Solicitação de retirada', type = 'TOTAL', quantity = null } = options;
+
+    // 1. Buscar produto
+    const product = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates');
+
+    if (!product) {
+      throw new Error('Produto não encontrado');
+    }
+
+    // 2. Criar solicitação de retirada
+    const WithdrawalRequest = require('../models/WithdrawalRequest');
+    const withdrawalData = {
+      productId: productId,
+      requestedBy: userId,
+      type: type,
+      quantityRequested: type === 'PARCIAL' ? quantity : null,
+      reason: reason
+    };
+
+    const withdrawalRequest = new WithdrawalRequest(withdrawalData);
+    await withdrawalRequest.save();
+
+    // 3. Usar método FSM do modelo
+    await product.requestWithdrawal(userId, reason);
+
+    // 4. Buscar dados atualizados
+    const updatedProduct = await Product.findById(productId)
+      .populate('seedTypeId', 'name')
+      .populate('locationId', 'code coordinates');
+
+    const fullWithdrawalRequest = await WithdrawalRequest.findById(withdrawalRequest._id)
+      .populate('requestedBy', 'name email');
+
+    return {
+      success: true,
+      data: {
+        product: updatedProduct,
+        withdrawalRequest: fullWithdrawalRequest,
+        operation: {
+          type: 'request_withdrawal',
+          previousStatus: 'LOCADO',
+          newStatus: 'AGUARDANDO_RETIRADA',
+          withdrawalType: type
+        }
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao solicitar retirada: ${error.message}`);
+  }
+};
+
+/**
+ * Confirmar retirada de produto (OPERATOR)
+ * @param {String} withdrawalRequestId - ID da solicitação de retirada
+ * @param {String} userId - ID do usuário operador
+ * @param {Object} options - Opções da confirmação
+ * @returns {Object} Resultado da confirmação
+ */
+const confirmProductWithdrawal = async (withdrawalRequestId, userId, options = {}) => {
+  try {
+    const { notes = '' } = options;
+
+    // 1. Buscar solicitação de retirada
+    const WithdrawalRequest = require('../models/WithdrawalRequest');
+    const withdrawalRequest = await WithdrawalRequest.findById(withdrawalRequestId)
+      .populate('productId')
+      .populate('requestedBy', 'name email');
+
+    if (!withdrawalRequest) {
+      throw new Error('Solicitação de retirada não encontrada');
+    }
+
+    // 2. Confirmar usando método do modelo WithdrawalRequest
+    await withdrawalRequest.confirm(userId, notes);
+
+    // 3. Liberar localização
+    const product = withdrawalRequest.productId;
+    if (product.locationId) {
+      await Location.findByIdAndUpdate(product.locationId, {
+        isOccupied: false,
+        currentWeightKg: 0
+      });
+    }
+
+    // 3.1. Gerar movimento para retirada
+    const quantityWithdrawn = withdrawalRequest.type === 'PARCIAL' ? withdrawalRequest.quantityRequested : product.quantity;
+    const weightWithdrawn = quantityWithdrawn * product.weightPerUnit;
+
+    const movement = new Movement({
+      type: 'withdrawal', // Tipo específico para retirada
+      productId: product._id,
+      userId: userId,
+      fromLocationId: product.locationId, // Produto estava nesta localização
+      toLocationId: null, // Produto está sendo retirado, sem localização de destino
+      quantity: quantityWithdrawn,
+      weight: weightWithdrawn,
+      reason: withdrawalRequest.reason || 'Retirada de produto',
+      timestamp: new Date(),
+      metadata: {
+        verified: true,
+        automatic: true // Marcar como automático
+      }
+    });
+    await movement.save();
+
+    // 4. Buscar dados atualizados
+    const updatedWithdrawalRequest = await WithdrawalRequest.findById(withdrawalRequestId)
+      .populate('productId')
+      .populate('requestedBy', 'name email')
+      .populate('confirmedBy', 'name email');
+
+    return {
+      success: true,
+      data: {
+        withdrawalRequest: updatedWithdrawalRequest,
+        operation: {
+          type: 'confirm_withdrawal',
+          previousStatus: 'AGUARDANDO_RETIRADA',
+          newStatus: 'RETIRADO',
+          confirmedAt: updatedWithdrawalRequest.confirmedAt
+        },
+        movement: { // Incluir detalhes do movimento na resposta
+          id: movement._id,
+          timestamp: movement.timestamp
+        }
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao confirmar retirada: ${error.message}`);
+  }
+};
+
+/**
+ * Buscar produtos aguardando locação
+ * @param {Object} filters - Filtros opcionais
+ * @returns {Object} Lista de produtos aguardando locação
+ */
+const getProductsPendingLocation = async (filters = {}) => {
+  try {
+    const products = await Product.findPendingLocation();
+    
+    return {
+      success: true,
+      data: {
+        products,
+        count: products.length
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao buscar produtos aguardando locação: ${error.message}`);
+  }
+};
+
+/**
+ * Buscar produtos aguardando retirada
+ * @param {Object} filters - Filtros opcionais
+ * @returns {Object} Lista de produtos aguardando retirada
+ */
+const getProductsPendingWithdrawal = async (filters = {}) => {
+  try {
+    const products = await Product.findPendingWithdrawal();
+    
+    return {
+      success: true,
+      data: {
+        products,
+        count: products.length
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao buscar produtos aguardando retirada: ${error.message}`);
+  }
+};
+
 module.exports = {
   createProduct,
   moveProduct,
@@ -1139,8 +1434,14 @@ module.exports = {
   generateProductCode,
   analyzeProductDistribution,
   getProductsByConditions,
-  // Novas funcionalidades
+  // Funcionalidades existentes
   partialExit,
   partialMove,
-  addStock
+  addStock,
+  // Novos métodos FSM
+  locateProduct,
+  requestProductWithdrawal,
+  confirmProductWithdrawal,
+  getProductsPendingLocation,
+  getProductsPendingWithdrawal
 }; 

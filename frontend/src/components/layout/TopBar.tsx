@@ -269,8 +269,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                 {user?.email}
               </Typography>
               <Typography variant="caption" display="block" color="primary">
-                {user?.role === 'admin' ? 'Administrador' : 
-                 user?.role === 'operator' ? 'Operador' : 'Visualizador'}
+                {user?.role === 'ADMIN' ? 'Administrador' : 
+                 user?.role === 'OPERATOR' ? 'Operador' : 'Visualizador'}
               </Typography>
             </Box>
             

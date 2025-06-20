@@ -96,15 +96,114 @@ const requireAdmin = (req, res, next) => {
 };
 
 /**
- * Middleware para verificar se pode operar (admin ou operator)
+ * Middleware para verificar se é operador
  */
 const requireOperator = (req, res, next) => {
   if (!req.user) {
     return next(new AppError('Usuário não autenticado', 401));
   }
 
-  if (!req.user.canOperate()) {
-    return next(new AppError('Acesso restrito a operadores e administradores', 403));
+  if (!req.user.isOperator()) {
+    return next(new AppError('Acesso restrito a operadores', 403));
+  }
+
+  next();
+};
+
+/**
+ * Middleware para verificar permissões específicas de produto
+ */
+const canCreateProduct = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canCreateProduct()) {
+    return next(new AppError('Apenas administradores podem cadastrar produtos', 403));
+  }
+
+  next();
+};
+
+const canLocateProduct = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canLocateProduct()) {
+    return next(new AppError('Apenas operadores podem localizar produtos', 403));
+  }
+
+  next();
+};
+
+const canMoveProduct = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canMoveProduct()) {
+    return next(new AppError('Apenas operadores podem mover produtos', 403));
+  }
+
+  next();
+};
+
+const canRemoveProduct = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canRemoveProduct()) {
+    return next(new AppError('Apenas administradores podem remover produtos', 403));
+  }
+
+  next();
+};
+
+const canRequestWithdrawal = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canRequestWithdrawal()) {
+    return next(new AppError('Apenas administradores podem solicitar retiradas', 403));
+  }
+
+  next();
+};
+
+const canConfirmWithdrawal = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canConfirmWithdrawal()) {
+    return next(new AppError('Apenas operadores podem confirmar retiradas', 403));
+  }
+
+  next();
+};
+
+const canManageUsers = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canManageUsers()) {
+    return next(new AppError('Apenas administradores podem gerenciar usuários', 403));
+  }
+
+  next();
+};
+
+const canAccessReports = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Usuário não autenticado', 401));
+  }
+
+  if (!req.user.canAccessReports()) {
+    return next(new AppError('Apenas administradores podem acessar relatórios completos', 403));
   }
 
   next();
@@ -222,5 +321,14 @@ module.exports = {
   optionalAuth,
   canAccessUser,
   userRateLimit,
-  auditLogger
+  auditLogger,
+  // Novos middlewares específicos por funcionalidade
+  canCreateProduct,
+  canLocateProduct,
+  canMoveProduct,
+  canRemoveProduct,
+  canRequestWithdrawal,
+  canConfirmWithdrawal,
+  canManageUsers,
+  canAccessReports
 }; 

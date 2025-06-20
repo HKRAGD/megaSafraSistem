@@ -40,10 +40,39 @@ export const ExpirationReport: React.FC = () => {
     console.log('🔍 DEBUG ExpirationReport - Result:', result);
   };
 
-  const getExpirationColor = (days: number) => {
-    if (days <= 7) return 'error';
-    if (days <= 15) return 'warning';
-    return 'info';
+  const getExpirationColor = (expirationDate: string) => {
+    const today = new Date();
+    const expDate = new Date(expirationDate);
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'error'; // Vencido
+    if (diffDays <= 7) return 'error'; // Crítico
+    if (diffDays <= 15) return 'warning'; // Atenção
+    return 'info'; // Normal
+  };
+
+  const getDaysToExpire = (expirationDate: string) => {
+    const today = new Date();
+    const expDate = new Date(expirationDate);
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return `Vencido há ${Math.abs(diffDays)} dias`;
+    if (diffDays === 0) return 'Vence hoje';
+    return `${diffDays} dias`;
+  };
+
+  const getStatusLabel = (expirationDate: string) => {
+    const today = new Date();
+    const expDate = new Date(expirationDate);
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'Vencido';
+    if (diffDays <= 7) return 'Crítico';
+    if (diffDays <= 15) return 'Atenção';
+    return 'Normal';
   };
 
   // Funções auxiliares para mapear dados relacionais
@@ -130,8 +159,8 @@ export const ExpirationReport: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Chip 
-                          label={`${product.daysToExpire} dias`}
-                          color={getExpirationColor(product.daysToExpire) as any}
+                          label={getDaysToExpire(product.expirationDate)}
+                          color={getExpirationColor(product.expirationDate) as any}
                           size="small"
                         />
                       </TableCell>
@@ -139,8 +168,8 @@ export const ExpirationReport: React.FC = () => {
                       <TableCell align="right">{formatWeight(product.totalWeight || product.weight || 0)}</TableCell>
                       <TableCell>
                         <Chip 
-                          label={product.daysToExpire <= 7 ? 'Crítico' : 'Atenção'}
-                          color={product.daysToExpire <= 7 ? 'error' : 'warning'}
+                          label={getStatusLabel(product.expirationDate)}
+                          color={getExpirationColor(product.expirationDate) as any}
                           size="small"
                         />
                       </TableCell>
