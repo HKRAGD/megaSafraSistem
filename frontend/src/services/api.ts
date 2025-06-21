@@ -20,10 +20,23 @@ function getApiBaseUrl(): string {
   const publicApiUrl = process.env.REACT_APP_API_URL_PUBLIC || `http://${publicIP}:3001/api`;
   const fallbackUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
   
-  console.log('🌐 Detecção automática de rede:');
+  console.log('\n🔧 ================= CONFIGURAÇÃO DO FRONTEND =================');
+  console.log(`📍 Host atual: ${currentHost}`);
+  console.log(`🏠 REACT_APP_LOCAL_IP: ${process.env.REACT_APP_LOCAL_IP || 'NÃO CONFIGURADO'}`);
+  console.log(`🌍 REACT_APP_PUBLIC_IP: ${process.env.REACT_APP_PUBLIC_IP || 'NÃO CONFIGURADO'}`);
+  console.log(`🔗 REACT_APP_API_URL_LOCAL: ${process.env.REACT_APP_API_URL_LOCAL || 'NÃO CONFIGURADO'}`);
+  console.log(`🌐 REACT_APP_API_URL_PUBLIC: ${process.env.REACT_APP_API_URL_PUBLIC || 'NÃO CONFIGURADO'}`);
+  console.log(`📦 REACT_APP_API_URL (fallback): ${process.env.REACT_APP_API_URL || 'NÃO CONFIGURADO'}`);
+  console.log(`🎯 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+  console.log('=============================================================');
+  
+  console.log('\n🌐 Detecção automática de rede:');
   console.log(`   📍 Host atual: ${currentHost}`);
-  console.log(`   🏠 IP Local: ${localIP}`);
-  console.log(`   🌍 IP Público: ${publicIP}`);
+  console.log(`   🏠 IP Local configurado: ${localIP}`);
+  console.log(`   🌍 IP Público configurado: ${publicIP}`);
+  console.log(`   🔗 URL Local: ${localApiUrl}`);
+  console.log(`   🌐 URL Pública: ${publicApiUrl}`);
+  console.log(`   📦 URL Fallback: ${fallbackUrl}`);
   
   // Se está sendo acessado pelo IP local, usar API local
   if (currentHost === localIP || currentHost === 'localhost' || currentHost === '127.0.0.1') {
@@ -33,7 +46,7 @@ function getApiBaseUrl(): string {
   
   // Se está sendo acessado pelo IP público, usar API pública  
   if (currentHost === publicIP && publicIP !== 'SEU_IP_PUBLICO_AQUI') {
-    console.log(`   ✅ Acesso PÚBLICO detectado - usando: ${publicApiUrl}`);
+    console.log(`   ✅ Acesso PÚBLICO via IP detectado - usando: ${publicApiUrl}`);
     return publicApiUrl;
   }
   
