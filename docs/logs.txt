@@ -1,15 +1,54 @@
-ReferenceError: Cannot access 'formatUtils' before initialization
-    at Module.formatUtils (expirationExport.ts:358:1)
-    at ./src/services/export/inventoryExport.ts (inventoryExport.ts:26:1)
-    at options.factory (react refresh:37:1)
-    at __webpack_require__ (bootstrap:22:1)
-    at fn (hot module replacement:61:1)
-    at hotRequire (react refresh:20:1)
-    at ./src/services/export/index.ts (expirationExport.ts:358:1)
-    at options.factory (react refresh:37:1)
-    at __webpack_require__ (bootstrap:22:1)
-    at fn (hot module replacement:61:1)
-
-The above error occurred in one of your React components.
-
-React will try to recreate this component tree from scratch using the error boundary you provided, ChipErrorBoundary.
+POST http://localhost:3001/api/auth/login 500 (Internal Server Error)
+(anonymous) @ xhr.js:195
+xhr @ xhr.js:15
+mt @ dispatchRequest.js:51
+Promise.then
+_request @ Axios.js:163
+request @ Axios.js:40
+(anonymous) @ Axios.js:226
+(anonymous) @ bind.js:5
+zt @ api.ts:312
+login @ authService.ts:57
+login @ AuthContext.tsx:232
+(anonymous) @ LoginPage.tsx:56
+push.24858.Ne.Oe @ createFormControl.ts:1254
+await in push.24858.Ne.Oe
+Iu @ react-dom-client.production.js:11858
+(anonymous) @ react-dom-client.production.js:12410
+It @ react-dom-client.production.js:1470
+Vu @ react-dom-client.production.js:11996
+ap @ react-dom-client.production.js:14699
+rp @ react-dom-client.production.js:14667Understand this error
+api.ts:237 🔥 Erro interno do servidor
+(anonymous) @ api.ts:237
+Promise.then
+_request @ Axios.js:163
+request @ Axios.js:40
+(anonymous) @ Axios.js:226
+(anonymous) @ bind.js:5
+zt @ api.ts:312
+login @ authService.ts:57
+login @ AuthContext.tsx:232
+(anonymous) @ LoginPage.tsx:56
+push.24858.Ne.Oe @ createFormControl.ts:1254
+await in push.24858.Ne.Oe
+Iu @ react-dom-client.production.js:11858
+(anonymous) @ react-dom-client.production.js:12410
+It @ react-dom-client.production.js:1470
+Vu @ react-dom-client.production.js:11996
+ap @ react-dom-client.production.js:14699
+rp @ react-dom-client.production.js:14667Understand this error
+authService.ts:128 ❌ Erro no login: W {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_RESPONSE"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 30000, …}message: "Request failed with status code 500"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 30000, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: {…}, status: 500, statusText: 'Internal Server Error', headers: xe, config: {…}, …}status: 500stack: "AxiosError: Request failed with status code 500\n    at Te (https://mega-safra-sistem-6lek.vercel.app/static/js/main.623c690d.js:2:520657)\n    at XMLHttpRequest.g (https://mega-safra-sistem-6lek.vercel.app/static/js/main.623c690d.js:2:525249)\n    at wt.request (https://mega-safra-sistem-6lek.vercel.app/static/js/main.623c690d.js:2:536424)\n    at async zt (https://mega-safra-sistem-6lek.vercel.app/static/js/main.623c690d.js:2:550037)\n    at async Object.login (https://mega-safra-sistem-6lek.vercel.app/static/js/main.623c690d.js:2:246989)\n    at async login (https://mega-safra-sistem-6lek.vercel.app/static/js/main.623c690d.js:2:258725)\n    at async https://mega-safra-sistem-6lek.vercel.app/static/js/255.368b066c.chunk.js:1:12751\n    at async push.24858.Ne.Oe (https://mega-safra-sistem-6lek.vercel.app/static/js/756.c1f8f277.chunk.js:1:20674)"[[Prototype]]: Error
+login @ authService.ts:128
+await in login
+login @ AuthContext.tsx:232
+(anonymous) @ LoginPage.tsx:56
+push.24858.Ne.Oe @ createFormControl.ts:1254
+await in push.24858.Ne.Oe
+Iu @ react-dom-client.production.js:11858
+(anonymous) @ react-dom-client.production.js:12410
+It @ react-dom-client.production.js:1470
+Vu @ react-dom-client.production.js:11996
+ap @ react-dom-client.production.js:14699
+rp @ react-dom-client.production.js:14667Understand this error
+AuthContext.tsx:254 ❌ Erro no login via authService: Cannot read properties of undefined (reading 'debug')

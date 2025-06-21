@@ -165,7 +165,8 @@ const createEmailLimiter = (maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
 const rateLimitLogger = (req, res, next) => {
   // Log estruturado para desenvolvimento e monitoramento
   if (process.env.NODE_ENV === 'development') {
-    logHelpers.logger.debug('Rate limit check', {
+    const { logger } = require('../config/logger');
+    logger.debug('Rate limit check', {
       category: 'rate-limit-check',
       ip: req.ip,
       endpoint: req.path,

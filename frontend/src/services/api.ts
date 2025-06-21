@@ -37,6 +37,12 @@ function getApiBaseUrl(): string {
     return publicApiUrl;
   }
   
+  // Se está sendo acessado via Vercel ou domínio externo, usar API pública
+  if (currentHost.includes('vercel.app') || currentHost.includes('.com') || currentHost.includes('.net')) {
+    console.log(`   🌐 Acesso EXTERNO detectado (${currentHost}) - usando: ${publicApiUrl}`);
+    return publicApiUrl;
+  }
+  
   // Fallback para desenvolvimento
   console.log(`   ⚠️ Host não reconhecido, usando fallback: ${fallbackUrl}`);
   return fallbackUrl;
