@@ -15,10 +15,19 @@ function getApiBaseUrl(): string {
   const localIP = process.env.REACT_APP_LOCAL_IP || '192.168.1.89';
   const publicIP = process.env.REACT_APP_PUBLIC_IP || '168.90.248.170';
   
-  // URLs da API
-  const localApiUrl = process.env.REACT_APP_API_URL_LOCAL || `http://${localIP}:3001/api`;
-  const publicApiUrl = process.env.REACT_APP_API_URL_PUBLIC || `http://${publicIP}:3001/api`;
-  const fallbackUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  // Helper para garantir protocolo correto
+  const ensureProtocol = (url: string, defaultProtocol: 'http' | 'https' = 'https'): string => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `${defaultProtocol}://${url}`;
+    }
+    return url;
+  };
+
+  // URLs da API com protocolo garantido
+  const localApiUrl = ensureProtocol(process.env.REACT_APP_API_URL_LOCAL || `http://${localIP}:3001/api`, 'http');
+  const publicApiUrlRaw = process.env.REACT_APP_API_URL_PUBLIC || `https://${publicIP}:3001/api`;
+  const publicApiUrl = ensureProtocol(publicApiUrlRaw, 'https');
+  const fallbackUrl = ensureProtocol(process.env.REACT_APP_API_URL || 'http://localhost:3001/api', 'http');
   
   console.log('\n🔧 ================= CONFIGURAÇÃO DO FRONTEND =================');
   console.log(`📍 Host atual: ${currentHost}`);
