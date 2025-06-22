@@ -194,8 +194,7 @@ export const useLocationsWithChambers = (
     if (autoFetch) {
       fetchAvailableLocations(initialFilters);
     }
-  }, [autoFetch]); // ✅ CORREÇÃO: Manter apenas autoFetch como dependência para evitar loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, fetchAvailableLocations, initialFilters]);
 
   // ============================================================================
   // COMPUTED VALUES

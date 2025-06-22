@@ -93,19 +93,13 @@ const mapApiProductToProductWithRelations = (apiProduct: any): ProductWithRelati
 // INTERFACE DO HOOK
 // ============================================================================
 
-interface UseProductsOptions {
-  autoFetch?: boolean;
-  initialFilters?: ProductFilters;
-}
-
 interface UseProductsReturn extends UseDataState<ProductWithRelations> {
   // Estado adicional específico
   selectedProduct: ProductWithRelations | null;
-  filters: ProductFilters;
   totalItems: number; // Getter conveniente para total
   
   // Operações CRUD
-  fetchProducts: (newFilters?: ProductFilters) => Promise<void>;
+  fetchProducts: (currentFilters: ProductFilters) => Promise<void>;
   createProduct: (productData: CreateProductFormData) => Promise<void>;
   updateProduct: (id: string, productData: Partial<CreateProductFormData>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -126,9 +120,7 @@ interface UseProductsReturn extends UseDataState<ProductWithRelations> {
   
   // Controle de estado
   setSelectedProduct: (product: ProductWithRelations | null) => void;
-  setFilters: (filters: ProductFilters) => void;
   clearError: () => void;
-  refetch: () => Promise<void>;
 }
 
 // ============================================================================
@@ -141,9 +133,7 @@ interface UseProductsReturn extends UseDataState<ProductWithRelations> {
  * REGRA CRÍTICA: Este é o ÚNICO lugar onde requisições de produtos devem ser feitas!
  * NUNCA fazer requisições HTTP relacionadas a produtos fora deste hook!
  */
-export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn => {
-  const { autoFetch = true, initialFilters = {} } = options;
-
+export const useProducts = (): UseProductsReturn => {
   // ============================================================================
   // ESTADO LOCAL
   // ============================================================================
@@ -159,7 +149,6 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
   
   // Estado específico de produtos
   const [selectedProduct, setSelectedProduct] = useState<ProductWithRelations | null>(null);
-  const [filters, setFilters] = useState<ProductFilters>(initialFilters);
 
   // ============================================================================
   // FUNÇÕES AUXILIARES
@@ -182,13 +171,12 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
   /**
    * Buscar produtos com filtros
    */
-  const fetchProducts = useCallback(async (newFilters?: ProductFilters): Promise<void> => {
+  const fetchProducts = useCallback(async (currentFilters: ProductFilters): Promise<void> => {
     setLoading(true);
     clearError();
 
     try {
-      const appliedFilters = newFilters || filters;
-      const response = await productService.getAll(appliedFilters);
+      const response = await productService.getAll(currentFilters);
       
       // Estrutura correta da API: { success: true, data: { products: [...], pagination: {...} } }
       const apiProducts = response.data.products || [];
@@ -204,16 +192,13 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
       setHasNextPage(pagination.hasNextPage || false);
       setHasPrevPage(pagination.hasPrevPage || false);
       
-      // Atualizar filtros aplicados
-      setFilters(appliedFilters);
-      
       console.log(`✅ ${mappedProducts.length} produtos carregados e mapeados`);
     } catch (error: any) {
       handleError(error, 'carregar produtos');
     } finally {
       setLoading(false);
     }
-  }, [filters, handleError, clearError]);
+  }, [handleError, clearError]);
 
   /**
    * Criar novo produto
@@ -688,22 +673,9 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
   }, [data, selectedProduct, handleError, clearError]);
 
   // ============================================================================
-  // FUNÇÃO DE REFETCH
+  // NOTA: useEffect de inicialização removido para evitar loops infinitos
+  // A página que usa este hook é responsável por chamar fetchProducts
   // ============================================================================
-
-  const refetch = useCallback(async (): Promise<void> => {
-    await fetchProducts();
-  }, [fetchProducts]);
-
-  // ============================================================================
-  // EFEITO DE INICIALIZAÇÃO
-  // ============================================================================
-
-  useEffect(() => {
-    if (autoFetch) {
-      fetchProducts();
-    }
-  }, [autoFetch, fetchProducts]); // Apenas na montagem inicial
 
   // ============================================================================
   // RETORNO DO HOOK
@@ -722,7 +694,6 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
     
     // Estado específico
     selectedProduct,
-    filters,
     totalItems: total, // Getter conveniente
     
     // Operações CRUD
@@ -747,9 +718,7 @@ export const useProducts = (options: UseProductsOptions = {}): UseProductsReturn
     
     // Controle de estado
     setSelectedProduct,
-    setFilters,
     clearError,
-    refetch,
   };
 };
 

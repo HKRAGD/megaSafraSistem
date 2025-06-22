@@ -123,7 +123,10 @@ export const ProductsPage: React.FC = () => {
     getProduct,
     partialExit,
     partialMove,
-    addStock
+    addStock,
+    selectedProduct,
+    setSelectedProduct,
+    clearError: clearProductsError
   } = useProducts();
 
   const { seedTypes, loading: seedTypesLoading } = useSeedTypes();
@@ -164,7 +167,6 @@ export const ProductsPage: React.FC = () => {
     sortOrder: 'desc',
   });
 
-  const [selectedProduct, setSelectedProduct] = useState<ProductWithRelations | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -192,7 +194,8 @@ export const ProductsPage: React.FC = () => {
   // CARREGAR DADOS
   // ============================================================================
 
-  const loadProducts = useCallback(async () => {
+  // Função para recarregar produtos após operações CRUD
+  const handleRefetchProducts = useCallback(async () => {
     try {
       await fetchProducts(filters);
     } catch (error) {
@@ -217,9 +220,10 @@ export const ProductsPage: React.FC = () => {
     navigate('/products/new');
   };
 
+  // Carregar produtos sempre que os filtros mudarem
   useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+    fetchProducts(filters);
+  }, [filters, fetchProducts]);
 
   // Atualizar quando a busca mudar (debounced)
   useEffect(() => {
@@ -306,7 +310,7 @@ export const ProductsPage: React.FC = () => {
       try {
         await deleteProduct(selectedProduct.id);
         showToast('Produto removido com sucesso!', 'success');
-        await loadProducts(); // Recarregar lista
+        await handleRefetchProducts(); // Recarregar lista
       } catch (error: any) {
         showToast(error.message || 'Erro ao remover produto', 'error');
       }
@@ -331,7 +335,7 @@ export const ProductsPage: React.FC = () => {
       setShowEditModal(false);
       setSelectedProduct(null);
       showToast('Produto atualizado com sucesso!', 'success');
-      await loadProducts(); // Recarregar lista
+      await handleRefetchProducts(); // Recarregar lista
     } catch (error: any) {
       showToast(error.message || 'Erro ao atualizar produto', 'error');
     }
@@ -345,7 +349,7 @@ export const ProductsPage: React.FC = () => {
       setShowMoveModal(false);
       setSelectedProduct(null);
       showToast('Produto movido com sucesso!', 'success');
-      await loadProducts(); // Recarregar lista
+      await handleRefetchProducts(); // Recarregar lista
     } catch (error: any) {
       showToast(error.message || 'Erro ao mover produto', 'error');
     }
@@ -359,7 +363,7 @@ export const ProductsPage: React.FC = () => {
       setShowMoveModal(false);
       setSelectedProduct(null);
       showToast('Movimentação parcial realizada com sucesso!', 'success');
-      await loadProducts(); // Recarregar lista
+      await handleRefetchProducts(); // Recarregar lista
     } catch (error: any) {
       showToast(error.message || 'Erro na movimentação parcial', 'error');
     }
@@ -385,14 +389,14 @@ export const ProductsPage: React.FC = () => {
         setShowMoveModal(false);
         setSelectedProduct(null);
         showToast('Solicitação de retirada criada com sucesso! Aguardando confirmação do operador.', 'success');
-        await loadProducts(); // Recarregar lista
+        await handleRefetchProducts(); // Recarregar lista
       } else {
         // Se é OPERATOR, pode fazer saída direta (caso raro, mas possível)
         await partialExit(selectedProduct.id, quantity, reason);
         setShowMoveModal(false);
         setSelectedProduct(null);
         showToast('Saída realizada com sucesso!', 'success');
-        await loadProducts(); // Recarregar lista
+        await handleRefetchProducts(); // Recarregar lista
       }
     } catch (error: any) {
       showToast(error.message || 'Erro na operação de saída', 'error');
@@ -407,7 +411,7 @@ export const ProductsPage: React.FC = () => {
       setShowMoveModal(false);
       setSelectedProduct(null);
       showToast('Estoque adicionado com sucesso!', 'success');
-      await loadProducts(); // Recarregar lista
+      await handleRefetchProducts(); // Recarregar lista
     } catch (error: any) {
       showToast(error.message || 'Erro ao adicionar estoque', 'error');
     }
@@ -564,7 +568,7 @@ export const ProductsPage: React.FC = () => {
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
-              onClick={loadProducts}
+              onClick={handleRefetchProducts}
               disabled={loading}
             >
               Atualizar
@@ -849,7 +853,7 @@ export const ProductsPage: React.FC = () => {
                   await createProduct(data as CreateProductFormData);
                   setShowCreateModal(false);
                   showToast('Produto criado com sucesso!', 'success');
-                  await loadProducts(); // Recarregar lista
+                  await handleRefetchProducts(); // Recarregar lista
                 } catch (error: any) {
                   showToast(error.message || 'Erro ao criar produto', 'error');
                 }

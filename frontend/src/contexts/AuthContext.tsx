@@ -289,36 +289,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [state.user?.role, state.isAuthenticated]);
 
   const canCreateProduct = useCallback((): boolean => {
-    return isAdmin();
-  }, [isAdmin]);
+    return state.user?.role === 'ADMIN' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canLocateProduct = useCallback((): boolean => {
-    return isOperator();
-  }, [isOperator]);
+    return state.user?.role === 'OPERATOR' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canMoveProduct = useCallback((): boolean => {
-    return isOperator();
-  }, [isOperator]);
+    return state.user?.role === 'OPERATOR' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canRemoveProduct = useCallback((): boolean => {
-    return isAdmin();
-  }, [isAdmin]);
+    return state.user?.role === 'ADMIN' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canRequestWithdrawal = useCallback((): boolean => {
-    return isAdmin();
-  }, [isAdmin]);
+    return state.user?.role === 'ADMIN' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canConfirmWithdrawal = useCallback((): boolean => {
-    return isOperator();
-  }, [isOperator]);
+    return state.user?.role === 'OPERATOR' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canManageUsers = useCallback((): boolean => {
-    return isAdmin();
-  }, [isAdmin]);
+    return state.user?.role === 'ADMIN' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   const canAccessReports = useCallback((): boolean => {
-    return isAdmin();
-  }, [isAdmin]);
+    return state.user?.role === 'ADMIN' && state.isAuthenticated;
+  }, [state.user?.role, state.isAuthenticated]);
 
   // Método para verificar múltiplas ações
   const can = useCallback((action: string): boolean => {
