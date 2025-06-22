@@ -47,10 +47,15 @@ const createProduct = async (productData, userId, options = {}) => {
 
     // 4. Buscar localização automaticamente se solicitado E fornecido
     let locationId = productData.locationId;
+    let clientId = productData.clientId;
     
-    // Tratar string vazia como undefined (frontend envia "" quando não há localização)
+    // Tratar string vazia como undefined (frontend envia "" quando não há localização/cliente)
     if (locationId === '') {
       locationId = undefined;
+    }
+    
+    if (clientId === '') {
+      clientId = undefined;
     }
     
     let location = null;
@@ -100,6 +105,7 @@ const createProduct = async (productData, userId, options = {}) => {
     const completeProductData = {
       ...productData,
       locationId, // Pode ser undefined - o modelo definirá o status automaticamente
+      clientId, // Pode ser undefined - cliente opcional
       totalWeight,
       entryDate: new Date(),
       metadata: {

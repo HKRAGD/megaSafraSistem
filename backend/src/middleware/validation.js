@@ -244,7 +244,7 @@ const productSchemas = {
     storageType: Joi.string().valid('saco', 'bag').required(),
     weightPerUnit: Joi.number().min(0.001).max(1000).required(),
     locationId: objectIdSchema.allow('').optional(), // OPCIONAL: Produtos podem ser criados sem localização
-    clientId: objectIdSchema.optional(), // OPCIONAL: Cliente associado ao produto
+    clientId: objectIdSchema.allow('').optional(), // OPCIONAL: Cliente associado ao produto
     entryDate: Joi.date().iso().default(() => new Date()),
     expirationDate: Joi.date().iso(),
     notes: Joi.string().trim().max(1000).allow(''),
