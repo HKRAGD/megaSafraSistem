@@ -1,28 +1,22 @@
-Compiled with problems:
-×
-ERROR in src/components/locations/LocationDetails.tsx:58:68
-TS2554: Expected 0 arguments, but got 1.
-    56 |
-    57 |   // Hook para buscar produtos nesta localização
-  > 58 |   const { data: products, loading: productsLoading } = useProducts({
-       |                                                                    ^
-  > 59 |     initialFilters: { locationId: location.id }
-       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  > 60 |   });
-       | ^^^^
-    61 |
-    62 |   const occupancyRate = location.maxCapacityKg > 0 
-    63 |     ? (location.currentWeightKg / location.maxCapacityKg) * 100 
-ERROR in src/components/locations/useLocationDetailsLogic.ts:25:68
-TS2554: Expected 0 arguments, but got 1.
-    23 |
-    24 |   // Hook para buscar produtos nesta localização
-  > 25 |   const { data: products, loading: productsLoading } = useProducts({
-       |                                                                    ^
-  > 26 |     initialFilters: { locationId: location.id }
-       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  > 27 |   });
-       | ^^^^
-    28 |
-    29 |   // Informações de ocupação computadas
-    30 |   const occupancyInfo = useMemo(() => getOccupancyInfo(location), [location]);
+🚀 Importando 258 produtos...
+🚀 Iniciando importação de 258 produtos...
+✅ Linha 18: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F4-A1 - Status: LOCADO
+✅ Linha 19: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F4-A2 - Status: LOCADO
+✅ Linha 20: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F3-A1 - Status: LOCADO
+✅ Linha 21: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F2-A1 - Status: LOCADO
+✅ Linha 22: Produto "SORGO- FLAVIO - Lote PR44324" importado com sucesso na localização Q3-LA-F1-A1 - Status: LOCADO
+✅ Linha 23: Produto "SORGO - AVACI - Lote C2115-20" importado com sucesso na localização Q3-LA-F1-A2 - Status: LOCADO
+✅ Linha 24: Produto "SORGO - MARIA DAS GRAÇAS - Lote BR24RR360005" importado com sucesso na localização Q3-LA-F1-A3 - Status: LOCADO
+⚠️ Linha 25: Localização já ocupada por produto "SORGO - MARIA DAS GRAÇAS - Lote BR24RR360005"
+
+================================================================================
+📊 RESUMO DA IMPORTAÇÃO
+================================================================================
+
+❌ ERRO NA IMPORTAÇÃO: Cannot read properties of undefined (reading 'successCount')
+
+💡 DICAS:
+   • Verifique se o MongoDB está rodando
+   • Verifique se o arquivo Excel existe e está acessível
+   • Verifique se a planilha tem as colunas corretas
+   • Execute o script de setup do sistema primeiro

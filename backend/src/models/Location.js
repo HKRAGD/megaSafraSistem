@@ -298,14 +298,15 @@ locationSchema.statics.generateForChamber = async function(chamberId, defaultCap
     for (let l = 1; l <= lados; l++) {
       for (let f = 1; f <= filas; f++) {
         for (let a = 1; a <= andares; a++) {
-          const code = `Q${q}-L${l}-F${f}-A${a}`;
+          const ladoLetter = String.fromCharCode(64 + l); // Converter número para letra (1->A, 2->B)
+          const code = `Q${q}-L${ladoLetter}-F${f}-A${a}`;
           
           // Verificar se já existe
           const existing = await this.findOne({ chamberId, code });
           if (!existing) {
             locations.push({
               chamberId,
-              coordinates: { quadra: q, lado: l, fila: f, andar: a },
+              coordinates: { quadra: q, lado: ladoLetter, fila: f, andar: a },
               code,
               maxCapacityKg: defaultCapacity,
               metadata: {

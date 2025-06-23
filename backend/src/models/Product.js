@@ -266,75 +266,89 @@ productSchema.pre('save', async function(next) {
   next();
 });
 
-// Middleware para registrar movimentação automática - REGRA CRÍTICA
+// Capturar estado do produto antes do save para uso no post-save
+productSchema.pre('save', function(next) {
+  this._wasNew = this.isNew;
+  this._wasLocationModified = this.isModified('locationId');
+  next();
+});
+
+// Middleware combinado para movimentação e atualização de localização - REGRA CRÍTICA
 productSchema.post('save', async function(doc, next) {
   try {
+    // 1. REGISTRAR MOVIMENTAÇÃO AUTOMÁTICA
     const Movement = mongoose.model('Movement');
     
     // Determinar tipo de movimentação
     let movementType = 'entry';
     let reason = 'Entrada de produto';
+    let shouldCreateMovement = false;
     
-    if (doc.isNew) {
+    if (doc._wasNew) {
       movementType = 'entry';
       reason = 'Cadastro inicial do produto';
+      shouldCreateMovement = true;
     } else {
       // Verificar se houve mudança de localização
-      if (doc.isModified('locationId')) {
+      if (doc._wasLocationModified) {
         movementType = 'transfer';
         reason = 'Transferência de localização';
+        shouldCreateMovement = true;
       } else if (doc.isModified('quantity') || doc.isModified('weightPerUnit')) {
         movementType = 'adjustment';
         reason = 'Ajuste de quantidade/peso';
+        shouldCreateMovement = true;
       } else if (doc.isModified('status') && doc.status === 'REMOVIDO') {
         movementType = 'exit';
         reason = 'Produto removido do sistema';
-      } else {
-        // Outras modificações não geram movimentação
-        return next();
+        shouldCreateMovement = true;
       }
     }
     
-    // Criar registro de movimentação automática
-    await Movement.create({
-      productId: doc._id,
-      type: movementType,
-      toLocationId: doc.locationId,
-      fromLocationId: movementType === 'exit' ? doc.locationId : null,
-      quantity: doc.quantity,
-      weight: doc.totalWeight,
-      userId: doc.metadata?.lastModifiedBy || doc.metadata?.createdBy,
-      reason,
-      notes: `Movimentação automática: ${reason}`,
-      metadata: {
-        isAutomatic: true,
-        verified: true
+    if (shouldCreateMovement) {
+      // Criar registro de movimentação automática
+      const movement = await Movement.create({
+        productId: doc._id,
+        type: movementType,
+        toLocationId: doc.locationId,
+        fromLocationId: movementType === 'exit' ? doc.locationId : null,
+        quantity: doc.quantity,
+        weight: doc.totalWeight,
+        userId: doc.metadata?.lastModifiedBy || doc.metadata?.createdBy,
+        reason,
+        notes: `Movimentação automática: ${reason}`,
+        metadata: {
+          isAutomatic: true,
+          verified: true
+        }
+      });
+      console.log(`📋 Movimentação registrada: ${movementType} para produto ${doc.name} (ID: ${movement._id})`);
+    }
+    
+    // 2. ATUALIZAR PESO DA LOCALIZAÇÃO
+    if (doc.locationId && doc.status === PRODUCT_STATUS.LOCADO) {
+      const Location = mongoose.model('Location');
+      const location = await Location.findById(doc.locationId);
+      
+      if (location) {
+        // Só adicionar peso se for produto novo ou mudança de localização
+        if (doc._wasNew || doc._wasLocationModified) {
+          await location.addWeight(doc.totalWeight);
+          console.log(`✅ Localização ${location.code} atualizada: +${doc.totalWeight}kg (produto: ${doc.name})`);
+        }
+        
+        // Verificar se a localização pode acomodar o peso
+        if (!location.canAccommodateWeight(doc.totalWeight)) {
+          console.warn(`Aviso: Produto ${doc.name} excede capacidade da localização ${location.code}`);
+        }
       }
-    });
+    }
     
   } catch (error) {
     // Usar um logger mais robusto em produção
-    console.error(`CRITICAL ERROR: Failed to register automatic movement for product ${doc._id}:`, error);
+    console.error(`CRITICAL ERROR: Failed to process product middleware for ${doc._id}:`, error);
+    console.error('Error details:', error.stack);
     // TODO: Implementar notificação para sistema de monitoramento
-  }
-  
-  next();
-});
-
-// Middleware para atualizar peso na localização
-productSchema.post('save', async function(doc, next) {
-  try {
-    const Location = mongoose.model('Location');
-    const location = await Location.findById(doc.locationId);
-    
-    if (location && doc.status === 'stored') {
-      // Verificar se a localização pode acomodar o peso
-      if (!location.canAccommodateWeight(doc.totalWeight)) {
-        console.warn(`Aviso: Produto ${doc.name} excede capacidade da localização ${location.code}`);
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao validar capacidade da localização:', error);
   }
   
   next();

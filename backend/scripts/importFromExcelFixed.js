@@ -1,6 +1,7 @@
 const XLSX = require('xlsx');
 const mongoose = require('mongoose');
 const path = require('path');
+require('dotenv').config();
 
 // Importar modelos
 require('../src/models/User');
@@ -9,16 +10,21 @@ require('../src/models/Chamber');
 require('../src/models/Location');
 require('../src/models/Product');
 require('../src/models/Movement');
+require('../src/models/Client');
+
+// Importar constantes
+const { PRODUCT_STATUS, USER_ROLES } = require('../src/utils/constants');
 
 const User = mongoose.model('User');
 const SeedType = mongoose.model('SeedType');
 const Chamber = mongoose.model('Chamber');
 const Location = mongoose.model('Location');
 const Product = mongoose.model('Product');
-const Movement = mongoose.model('Movement');
+// const Movement = mongoose.model('Movement'); // Não usado diretamente
+const Client = mongoose.model('Client');
 
-// Configuração do banco
-const MONGODB_URI = 'mongodb://localhost:27017/mega-safra-01';
+// Configuração do banco - usar as mesmas variáveis do projeto
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/mega-safra-01';
 
 async function connectToDatabase() {
   try {
@@ -34,7 +40,7 @@ async function initializeSystem() {
   console.log('🚀 Inicializando sistema...');
 
   // Buscar admin
-  const admin = await User.findOne({ role: 'admin' });
+  const admin = await User.findOne({ role: USER_ROLES.ADMIN });
   if (!admin) {
     console.error('❌ Usuário admin não encontrado! Execute o script de setup primeiro.');
     process.exit(1);
@@ -51,8 +57,16 @@ async function initializeSystem() {
   console.log(`   Dimensões: ${chamber.dimensions.quadras}x${chamber.dimensions.lados}x${chamber.dimensions.filas}x${chamber.dimensions.andares}`);
 
   // Buscar localizações
-  const locations = await Location.find({ chamberId: chamber._id });
+  let locations = await Location.find({ chamberId: chamber._id });
   console.log(`📍 ${locations.length} localizações encontradas na câmara`);
+
+  // Gerar localizações se não existirem
+  if (locations.length === 0) {
+    console.log('🔧 Gerando localizações para a câmara...');
+    const generatedLocations = await Location.generateForChamber(chamber._id);
+    console.log(`✅ ${generatedLocations.length} localizações geradas com sucesso`);
+    locations = generatedLocations;
+  }
 
   // Buscar/criar tipos de sementes
   const seedTypes = await createSeedTypesFromData();
@@ -137,14 +151,15 @@ function parseExcelData(data) {
     produto: headers.indexOf('produto'),
     lote: headers.indexOf('lote'),
     quantidade: headers.indexOf('quantidade'),
-    kg: headers.indexOf('kg')
+    kg: headers.indexOf('kg'),
+    cliente: headers.indexOf('cliente') // Nova coluna para cliente
   };
 
   console.log('🗺️ Mapeamento de colunas:', columnMap);
 
   // Verificar se todas as colunas essenciais foram encontradas
   const missingColumns = Object.entries(columnMap)
-    .filter(([key, index]) => index === -1 && key !== 'kg') // kg pode estar ausente
+    .filter(([key, index]) => index === -1 && !['kg', 'cliente'].includes(key)) // kg e cliente podem estar ausentes
     .map(([key]) => key);
 
   if (missingColumns.length > 0) {
@@ -175,16 +190,22 @@ function parseExcelData(data) {
       const lote = getValue(row, columnMap.lote);
       const quantidade = getValue(row, columnMap.quantidade);
       const kg = getValue(row, columnMap.kg);
+      const cliente = getValue(row, columnMap.cliente);
 
-      // Validações básicas
+      // Validações básicas - localização agora é opcional
       const errors = [];
-      if (!quadra || isNaN(quadra)) errors.push('quadra');
-      if (!lado) errors.push('lado');
-      if (!fila || isNaN(fila)) errors.push('fila');
-      if (!andar || isNaN(andar)) errors.push('andar');
       if (!produto) errors.push('produto');
       if (!lote) errors.push('lote');
       if (!quantidade || isNaN(quantidade)) errors.push('quantidade');
+      
+      // Validar coordenadas apenas se alguma foi fornecida
+      const hasLocationData = quadra || lado || fila || andar;
+      if (hasLocationData) {
+        if (!quadra || isNaN(quadra)) errors.push('quadra');
+        if (!lado) errors.push('lado');
+        if (!fila || isNaN(fila)) errors.push('fila');
+        if (!andar || isNaN(andar)) errors.push('andar');
+      }
 
       if (errors.length > 0) {
         console.log(`⚠️ Linha ${lineNumber}: Campos inválidos [${errors.join(', ')}] - pulando`);
@@ -194,14 +215,15 @@ function parseExcelData(data) {
 
       // Converter valores
       const productData = {
-        quadra: parseInt(quadra),
-        lado: lado.toString().toUpperCase().trim(),
-        fila: parseInt(fila),
-        andar: parseInt(andar),
+        quadra: quadra ? parseInt(quadra) : null,
+        lado: lado ? lado.toString().toUpperCase().trim() : null,
+        fila: fila ? parseInt(fila) : null,
+        andar: andar ? parseInt(andar) : null,
         produto: produto.toString().trim(),
         lote: lote.toString().trim(),
         quantidade: parseInt(quantidade),
-        kgUnitario: kg ? parseFloat(kg) : null // Renomeado para deixar claro que é peso unitário
+        kgUnitario: kg ? parseFloat(kg) : null,
+        cliente: cliente ? cliente.toString().trim() : null
       };
 
       // Definir peso unitário padrão se não informado
@@ -240,12 +262,15 @@ function getValue(row, columnIndex) {
   return value.toString().trim();
 }
 
-async function importProducts(productsData, { admin, chamber, locations, seedTypes }) {
+async function importProducts(productsData, { admin, locations, seedTypes }) {
   console.log(`🚀 Iniciando importação de ${productsData.length} produtos...`);
 
   let successCount = 0;
   let errorCount = 0;
   const errors = [];
+  
+  // Cache de clientes para evitar múltiplas consultas
+  const clientCache = new Map();
 
   // Criar mapa de localizações por coordenadas
   const locationMap = {};
@@ -256,99 +281,128 @@ async function importProducts(productsData, { admin, chamber, locations, seedTyp
 
   for (const productData of productsData) {
     try {
-      const { lineNumber, quadra, lado, fila, andar, produto, lote, quantidade, kgUnitario } = productData;
+        const { lineNumber, quadra, lado, fila, andar, produto, lote, quantidade, kgUnitario, cliente } = productData;
 
-      // Encontrar localização
-      const locationKey = `${quadra}-${lado}-${fila}-${andar}`;
-      const location = locationMap[locationKey];
+        let location = null;
+        let clientId = null;
 
-      if (!location) {
-        const error = `Linha ${lineNumber}: Localização Q${quadra}-L${lado}-F${fila}-A${andar} não encontrada`;
-        console.log(`❌ ${error}`);
-        errors.push(error);
-        errorCount++;
-        continue;
-      }
-
-      // Verificar se localização está ocupada
-      const existingProduct = await Product.findOne({ 
-        locationId: location._id, 
-        status: { $in: ['stored', 'reserved'] }
-      });
-
-      if (existingProduct) {
-        const error = `Linha ${lineNumber}: Localização já ocupada por produto "${existingProduct.name}"`;
-        console.log(`⚠️ ${error}`);
-        errors.push(error);
-        errorCount++;
-        continue;
-      }
-
-      // Determinar tipo de semente
-      const seedType = findSeedType(produto, seedTypes);
-      if (!seedType) {
-        const error = `Linha ${lineNumber}: Tipo de semente não encontrado para "${produto}"`;
-        console.log(`❌ ${error}`);
-        errors.push(error);
-        errorCount++;
-        continue;
-      }
-
-      // Calcular peso total para validação prévia
-      const totalWeight = quantidade * kgUnitario;
-
-      // Verificar capacidade
-      if (totalWeight > location.maxCapacityKg) {
-        const error = `Linha ${lineNumber}: Peso total (${totalWeight}kg) excede capacidade da localização (${location.maxCapacityKg}kg)`;
-        console.log(`⚠️ ${error}`);
-        errors.push(error);
-        errorCount++;
-        continue;
-      }
-
-      // Criar produto (totalWeight será calculado automaticamente pelo model)
-      const product = new Product({
-        name: `${produto} - Lote ${lote}`,
-        lot: lote,
-        seedTypeId: seedType._id,
-        quantity: quantidade,
-        storageType: 'saco',
-        weightPerUnit: kgUnitario,
-        locationId: location._id,
-        entryDate: new Date(),
-        status: 'stored',
-        notes: `Importado da planilha - Linha ${lineNumber}`,
-        metadata: {
-          createdBy: admin._id,
-          lastModifiedBy: admin._id
+        // Processar cliente se fornecido
+        if (cliente) {
+          if (clientCache.has(cliente)) {
+            clientId = clientCache.get(cliente);
+          } else {
+            let clientDoc = await Client.findOne({ 
+              name: { $regex: new RegExp(`^${cliente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+              isActive: true
+            });
+            
+            if (!clientDoc) {
+              // Criar cliente automaticamente se não existir
+              clientDoc = new Client({
+                name: cliente,
+                documentType: 'OUTROS',
+                contactPerson: cliente,
+                phone: '',
+                address: {},
+                notes: `Cliente criado automaticamente durante importação - Linha ${lineNumber}`,
+                isActive: true,
+                metadata: {
+                  createdBy: admin._id,
+                  lastModifiedBy: admin._id
+                }
+              });
+              await clientDoc.save();
+              console.log(`👤 Linha ${lineNumber}: Cliente "${cliente}" criado automaticamente`);
+            }
+            
+            clientId = clientDoc._id;
+            clientCache.set(cliente, clientId);
+          }
         }
-      });
 
-      await product.save();
+        // Processar localização se fornecida
+        if (quadra && lado && fila && andar) {
+          const locationKey = `${quadra}-${lado}-${fila}-${andar}`;
+          location = locationMap[locationKey];
 
-      // Atualizar localização (usar o peso calculado pelo model)
-      location.isOccupied = true;
-      location.currentWeightKg = product.totalWeight;
-      await location.save();
+          if (!location) {
+            const error = `Linha ${lineNumber}: Localização Q${quadra}-L${lado}-F${fila}-A${andar} não encontrada`;
+            console.log(`❌ ${error}`);
+            errors.push(error);
+            errorCount++;
+            continue;
+          }
 
-      // Registrar movimentação (usar o peso calculado pelo model)
-      const movement = new Movement({
-        productId: product._id,
-        type: 'entry',
-        toLocationId: location._id,
-        quantity: quantidade,
-        weight: product.totalWeight,
-        userId: admin._id,
-        reason: 'Importação via Excel',
-        notes: `Importado da planilha - Linha ${lineNumber}`,
-        timestamp: new Date()
-      });
+          // Verificar se localização está ocupada
+          const existingProduct = await Product.findOne({ 
+            locationId: location._id, 
+            status: PRODUCT_STATUS.LOCADO
+          });
 
-      await movement.save();
+          if (existingProduct) {
+            const error = `Linha ${lineNumber}: Localização já ocupada por produto "${existingProduct.name}"`;
+            console.log(`⚠️ ${error}`);
+            errors.push(error);
+            errorCount++;
+            continue;
+          }
+        }
 
-      console.log(`✅ Linha ${lineNumber}: Produto "${product.name}" importado com sucesso`);
-      successCount++;
+        // Determinar tipo de semente
+        const seedType = findSeedType(produto, seedTypes);
+        if (!seedType) {
+          const error = `Linha ${lineNumber}: Tipo de semente não encontrado para "${produto}"`;
+          console.log(`❌ ${error}`);
+          errors.push(error);
+          errorCount++;
+          continue;
+        }
 
+        // Verificar capacidade apenas se há localização
+        if (location && kgUnitario) {
+          const totalWeight = quantidade * kgUnitario;
+          if (totalWeight > location.maxCapacityKg) {
+            const error = `Linha ${lineNumber}: Peso total (${totalWeight}kg) excede capacidade da localização (${location.maxCapacityKg}kg)`;
+            console.log(`⚠️ ${error}`);
+            errors.push(error);
+            errorCount++;
+            continue;
+          }
+        }
+
+        // Criar produto - o modelo gerenciará automaticamente status, location updates e movements
+        const productDoc = {
+          name: `${produto} - Lote ${lote}`,
+          lot: lote,
+          seedTypeId: seedType._id,
+          quantity: quantidade,
+          storageType: 'saco',
+          weightPerUnit: kgUnitario || 1, // Peso padrão se não informado
+          entryDate: new Date(),
+          notes: `Importado da planilha - Linha ${lineNumber}`,
+          metadata: {
+            createdBy: admin._id,
+            lastModifiedBy: admin._id
+          }
+        };
+
+        // Adicionar localização e cliente se fornecidos
+        if (location) {
+          productDoc.locationId = location._id;
+        }
+        if (clientId) {
+          productDoc.clientId = clientId;
+        }
+
+        const product = new Product(productDoc);
+        await product.save();
+
+        const statusMsg = location ? 'LOCADO' : 'AGUARDANDO_LOCACAO';
+        const locationMsg = location ? `na localização Q${quadra}-L${lado}-F${fila}-A${andar}` : 'sem localização (aguardando locação)';
+        const clientMsg = cliente ? ` para cliente "${cliente}"` : '';
+        
+        console.log(`✅ Linha ${lineNumber}: Produto "${product.name}" importado com sucesso ${locationMsg}${clientMsg} - Status: ${statusMsg}`);
+        successCount++;
     } catch (error) {
       const errorMsg = `Linha ${productData.lineNumber}: Erro ao salvar - ${error.message}`;
       console.log(`❌ ${errorMsg}`);
@@ -356,6 +410,7 @@ async function importProducts(productsData, { admin, chamber, locations, seedTyp
       errorCount++;
     }
   }
+
 
   return { successCount, errorCount, errors };
 }
