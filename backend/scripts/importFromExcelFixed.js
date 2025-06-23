@@ -24,7 +24,7 @@ const Product = mongoose.model('Product');
 const Client = mongoose.model('Client');
 
 // Configuração do banco - usar as mesmas variáveis do projeto
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/mega-safra-01';
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGODB_TEST_URI || 'mongodb://mongo:LNRONlHSRBOrWmtnGRPYffZFzdgJMzHp@switchback.proxy.rlwy.net:25486';
 
 async function connectToDatabase() {
   try {

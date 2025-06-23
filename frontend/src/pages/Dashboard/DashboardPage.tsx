@@ -23,10 +23,10 @@ export const DashboardPage: React.FC = () => {
   const { loading, error, refreshDashboard } = useDashboard();
   const { isAdmin, isOperator, canCreateProduct, canLocateProduct, canManageUsers } = usePermissions();
 
-  // Carregar dados do dashboard ao acessar a página
+  // Carregar dados do dashboard apenas uma vez ao acessar a página
   useEffect(() => {
     refreshDashboard();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshDashboard]);
 
   // Loading state
   if (loading) {

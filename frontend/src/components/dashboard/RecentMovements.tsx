@@ -91,9 +91,11 @@ const formatTimestamp = (timestamp: string) => {
 export const RecentMovements: React.FC = () => {
   const { recentMovements, loading, refreshRecentMovements } = useDashboard();
 
-  useEffect(() => {
-    refreshRecentMovements();
-  }, [refreshRecentMovements]);
+  // Remover auto-fetch aqui - deixar para o DashboardPage controlar
+  // O dashboard já carrega todos os dados, incluindo movements
+  // useEffect(() => {
+  //   refreshRecentMovements();
+  // }, [refreshRecentMovements]);
 
   // Garantir que movements seja sempre um array
   const movements = Array.isArray(recentMovements) ? recentMovements : [];

@@ -159,12 +159,21 @@ export const useDashboard = (): UseDashboardReturn => {
     clearError();
 
     try {
-      await Promise.all([
+      // Usar Promise.allSettled para evitar falha geral se uma requisição falhar
+      const results = await Promise.allSettled([
         refreshSummary(),
         refreshChamberStatus(),
         refreshRecentMovements(),
         refreshCapacityData(),
       ]);
+      
+      // Log apenas falhas sem bloquear o carregamento
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const sections = ['summary', 'chambers', 'movements', 'capacity'];
+          console.warn(`⚠️ Falha ao carregar ${sections[index]}:`, result.reason);
+        }
+      });
     } finally {
       setLoading(false);
     }

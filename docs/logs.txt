@@ -1,22 +1,31 @@
-🚀 Importando 258 produtos...
-🚀 Iniciando importação de 258 produtos...
-✅ Linha 18: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F4-A1 - Status: LOCADO
-✅ Linha 19: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F4-A2 - Status: LOCADO
-✅ Linha 20: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F3-A1 - Status: LOCADO
-✅ Linha 21: Produto "MILHO - EDUARDO - Lote C128RALP94" importado com sucesso na localização Q3-LA-F2-A1 - Status: LOCADO
-✅ Linha 22: Produto "SORGO- FLAVIO - Lote PR44324" importado com sucesso na localização Q3-LA-F1-A1 - Status: LOCADO
-✅ Linha 23: Produto "SORGO - AVACI - Lote C2115-20" importado com sucesso na localização Q3-LA-F1-A2 - Status: LOCADO
-✅ Linha 24: Produto "SORGO - MARIA DAS GRAÇAS - Lote BR24RR360005" importado com sucesso na localização Q3-LA-F1-A3 - Status: LOCADO
-⚠️ Linha 25: Localização já ocupada por produto "SORGO - MARIA DAS GRAÇAS - Lote BR24RR360005"
-
-================================================================================
-📊 RESUMO DA IMPORTAÇÃO
-================================================================================
-
-❌ ERRO NA IMPORTAÇÃO: Cannot read properties of undefined (reading 'successCount')
-
-💡 DICAS:
-   • Verifique se o MongoDB está rodando
-   • Verifique se o arquivo Excel existe e está acessível
-   • Verifique se a planilha tem as colunas corretas
-   • Execute o script de setup do sistema primeiro
+Compiled with problems:
+×
+ERROR in src/hooks/useOptimizedFetch.ts:101:25
+TS2802: Type 'IterableIterator<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+     99 |     if (keyPattern) {
+    100 |       // Invalidar chaves que correspondem ao padrão
+  > 101 |       for (const key of cache.current.keys()) {
+        |                         ^^^^^^^^^^^^^^^^^^^^
+    102 |         if (key.includes(keyPattern)) {
+    103 |           cache.current.delete(key);
+    104 |         }
+ERROR in src/hooks/useRequestCache.ts:51:14
+TS2352: Conversion of type 'Promise<T>' to type 'Promise<R>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'T' is not comparable to type 'R'.
+    'R' could be instantiated with an arbitrary type which could be unrelated to 'T'.
+    49 |     if (existingRequest) {
+    50 |       console.log(`🔄 Deduplicando requisição: ${key}`);
+  > 51 |       return existingRequest as Promise<R>;
+       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    52 |     }
+    53 |
+    54 |     // Executar nova requisição
+ERROR in src/hooks/useRequestCache.ts:56:38
+TS2352: Conversion of type 'Promise<R>' to type 'Promise<T>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+    54 |     // Executar nova requisição
+    55 |     const promise = requestFn();
+  > 56 |     pendingRequests.current.set(key, promise as Promise<T>);
+       |                                      ^^^^^^^^^^^^^^^^^^^^^
+    57 |
+    58 |     try {
+    59 |       const result = await promise;

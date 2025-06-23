@@ -8,11 +8,11 @@ const { logHelpers } = require('../config/logger');
 
 /**
  * Rate limiting estrito para login endpoints
- * 5 tentativas por IP a cada 15 minutos
+ * 10 tentativas por IP a cada 15 minutos (ajustado para desenvolvimento)
  */
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // máximo 5 tentativas por IP por janela
+  max: process.env.NODE_ENV === 'development' ? 20 : 5, // mais tentativas em dev
   message: {
     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
     retryAfter: 15 * 60 // 15 minutos em segundos
@@ -75,20 +75,35 @@ const refreshLimiter = rateLimit({
 
 /**
  * Rate limiting geral para API
- * 1000 requests por IP a cada hora
+ * OTIMIZADO: Rate limiting baseado em usuário autenticado ao invés de IP
  */
 const generalApiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hora
-  max: 1000, // máximo 1000 requests por IP por hora
+  max: process.env.NODE_ENV === 'development' ? 10000 : 2000, // Aumentado substancialmente
   message: {
-    error: 'Limite de requisições da API excedido. Tente novamente em 1 hora.',
-    retryAfter: 60 * 60 // 1 hora em segundos
+    error: 'Limite de requisições da API excedido. Aguarde alguns minutos antes de tentar novamente.',
+    retryAfter: 300 // 5 minutos ao invés de 1 hora
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Rate limiting por usuário autenticado quando possível
+  keyGenerator: (req) => {
+    if (req.user && req.user.id) {
+      return `user:${req.user.id}`;
+    }
+    return `ip:${req.ip}`;
+  },
   handler: (req, res, next, options) => {
-    logHelpers.rateLimit(req.ip, `api-general:${req.path}`);
-    res.status(options.statusCode).json(options.message);
+    const identifier = req.user ? `user:${req.user.email}` : `ip:${req.ip}`;
+    logHelpers.rateLimit(identifier, `api-general:${req.path}`);
+    
+    // Resposta mais amigável
+    res.status(options.statusCode).json({
+      success: false,
+      message: 'Muitas requisições em pouco tempo. Aguarde alguns minutos e tente novamente.',
+      retryAfter: 300,
+      hint: 'Se o problema persistir, verifique se há loops de requisições no código.'
+    });
   }
 });
 
@@ -161,18 +176,37 @@ const createEmailLimiter = (maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
 
 /**
  * Middleware para log de rate limiting ativo
+ * OTIMIZADO: Apenas log requisições suspeitas
  */
 const rateLimitLogger = (req, res, next) => {
-  // Log estruturado para desenvolvimento e monitoramento
-  if (process.env.NODE_ENV === 'development') {
+  // Contador de requisições por usuário/IP
+  if (!rateLimitLogger.counters) {
+    rateLimitLogger.counters = new Map();
+  }
+  
+  const identifier = req.user ? `user:${req.user.id}` : `ip:${req.ip}`;
+  const currentCount = rateLimitLogger.counters.get(identifier) || 0;
+  rateLimitLogger.counters.set(identifier, currentCount + 1);
+  
+  // Log apenas se muitas requisições (possível loop)
+  if (currentCount > 50 && currentCount % 25 === 0) {
     const { logger } = require('../config/logger');
-    logger.debug('Rate limit check', {
-      category: 'rate-limit-check',
-      ip: req.ip,
+    logger.warn(`🚨 Muitas requisições detectadas`, {
+      category: 'excessive-requests',
+      identifier,
+      count: currentCount,
       endpoint: req.path,
-      method: req.method
+      method: req.method,
+      userAgent: req.get('User-Agent')
     });
   }
+  
+  // Reset contador a cada hora
+  if (!rateLimitLogger.lastReset || Date.now() - rateLimitLogger.lastReset > 60 * 60 * 1000) {
+    rateLimitLogger.counters.clear();
+    rateLimitLogger.lastReset = Date.now();
+  }
+  
   next();
 };
 

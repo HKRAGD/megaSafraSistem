@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -178,7 +178,7 @@ export const ProductsPage: React.FC = () => {
   const [showMoveModal, setShowMoveModal] = useState(false);
 
   // Debounce da busca para não fazer muitas requisições
-  const debouncedSearch = useDebounce(filters.search, 300);
+  const debouncedSearch = useDebounce(filters.search, 500); // Aumentar delay
 
   // Estado do Toast
   const [toastOpen, setToastOpen] = useState(false);
@@ -225,20 +225,21 @@ export const ProductsPage: React.FC = () => {
     navigate('/products/new');
   };
 
-  // Carregar produtos sempre que os filtros mudarem
-  useEffect(() => {
-    fetchProducts(filters);
-  }, [fetchProducts, filters.search, filters.page, filters.limit, filters.sort, filters.sortOrder, filters.status, filters.seedTypeId, filters.chamberId]);
+  // Memoizar filtros para evitar re-renders desnecessários
+  const memoizedFilters = useMemo(() => ({
+    ...filters,
+    search: debouncedSearch
+  }), [filters.page, filters.limit, filters.sort, filters.sortOrder, filters.status, filters.seedTypeId, filters.chamberId, debouncedSearch]);
 
-  // Atualizar quando a busca mudar (debounced)
+  // Carregar produtos apenas quando filtros memoizados mudarem
   useEffect(() => {
-    setFilters(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
+    fetchProducts(memoizedFilters);
+  }, [fetchProducts, memoizedFilters]);
 
-  // Carregar dados auxiliares
+  // Carregar dados auxiliares apenas uma vez
   useEffect(() => {
     fetchAvailableLocations();
-  }, [fetchAvailableLocations]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ============================================================================
   // HANDLERS

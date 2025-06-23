@@ -491,13 +491,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   /**
    * Timer de inatividade - logout automático após 30 minutos
+   * OTIMIZADO: Throttle nos eventos para reduzir overhead
    */
   useEffect(() => {
     if (!state.isAuthenticated) return;
 
     let inactivityTimer: NodeJS.Timeout;
+    let lastResetTime = 0;
+    const THROTTLE_MS = 5000; // Só reseta o timer a cada 5 segundos
 
     const resetInactivityTimer = () => {
+      const now = Date.now();
+      if (now - lastResetTime < THROTTLE_MS) {
+        return; // Throttle - muito cedo para resetar novamente
+      }
+      
+      lastResetTime = now;
       clearTimeout(inactivityTimer);
       inactivityTimer = setTimeout(() => {
         console.warn('⚠️ Logout automático por inatividade');
@@ -505,11 +514,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, 30 * 60 * 1000); // 30 minutos
     };
 
-    // Events que resetam o timer
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    // Events que resetam o timer (com throttle)
+    const events = ['mousedown', 'keypress'];
     
     events.forEach(event => {
-      document.addEventListener(event, resetInactivityTimer, true);
+      document.addEventListener(event, resetInactivityTimer, { passive: true });
     });
 
     // Iniciar timer
@@ -518,7 +527,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       clearTimeout(inactivityTimer);
       events.forEach(event => {
-        document.removeEventListener(event, resetInactivityTimer, true);
+        document.removeEventListener(event, resetInactivityTimer);
       });
     };
   }, [state.isAuthenticated, logout]);
