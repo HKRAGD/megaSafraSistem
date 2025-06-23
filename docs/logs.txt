@@ -1,225 +1,28 @@
-POST /products {headers: AxiosHeaders, data: {…}}data: clientId: ""expirationDate: Wed Jun 25 2025 00:00:00 GMT-0300 (Horário Padrão de Brasília) {}locationId: ""lot: "Teste"name: "Teste"notes: "Teste"quantity: 1seedTypeId: "68587a956330ad3929d3fcdc"storageType: "saco"weightPerUnit: 50[[Prototype]]: Objectheaders: AxiosHeaders {Accept: 'application/json', Content-Type: 'application/json', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZC…Y1NX0.CEy__jt_McKBdnYr8yMOKgCYL6m4fOg-3pFzEZyhXH4'}[[Prototype]]: Object
-api.ts:340 
-            
-            
-           POST http://192.168.1.89:3001/api/products 400 (Bad Request)
-dispatchXhrRequest @ xhr.js:175
-xhr @ xhr.js:13
-dispatchRequest @ dispatchRequest.js:43
-Promise.then
-_request @ Axios.js:143
-request @ Axios.js:39
-httpMethod @ Axios.js:195
-wrap @ bind.js:5
-apiPost @ api.ts:340
-create @ productService.ts:63
-(anonymous) @ useProducts.ts:227
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1819
-await in (anonymous)
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ POST /products {status: 400, data: {…}}
-console.error @ chipUtils.ts:213
-(anonymous) @ api.ts:197
-Promise.then
-_request @ Axios.js:143
-request @ Axios.js:39
-httpMethod @ Axios.js:195
-wrap @ bind.js:5
-apiPost @ api.ts:340
-create @ productService.ts:63
-(anonymous) @ useProducts.ts:227
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1819
-await in (anonymous)
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ Erro ao criar produto: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
-console.error @ chipUtils.ts:213
-create @ productService.ts:69
-await in create
-(anonymous) @ useProducts.ts:227
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1819
-await in (anonymous)
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 ❌ criar produto: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
-console.error @ chipUtils.ts:213
-(anonymous) @ useProducts.ts:171
-(anonymous) @ useProducts.ts:242
-await in (anonymous)
-(anonymous) @ useNewProductPage.ts:83
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1819
-await in (anonymous)
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 Erro ao criar produto: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
-console.error @ chipUtils.ts:213
-(anonymous) @ useNewProductPage.ts:96
-await in (anonymous)
-withLoading @ LoadingState.tsx:209
-handleSubmit @ useNewProductPage.ts:67
-onSubmit @ NewProductForm.tsx:211
-(anonymous) @ index.esm.mjs:1819
-await in (anonymous)
-executeDispatch @ react-dom-client.development.js:8372
-runWithFiberInDEV @ react-dom-client.development.js:1115
-processDispatchQueue @ react-dom-client.development.js:8400
-(anonymous) @ react-dom-client.development.js:8693
-batchedUpdates$1 @ react-dom-client.development.js:1963
-dispatchEventForPluginEventSystem @ react-dom-client.development.js:8476
-dispatchEvent @ react-dom-client.development.js:10575
-dispatchDiscreteEvent @ react-dom-client.development.js:10557Understand this error
-chipUtils.ts:213 Using kebab-case for css properties in objects is not supported. Did you mean WebkitLineClamp?
-console.error @ chipUtils.ts:213
-processStyleValue @ emotion-serialize.development.esm.js:56
-createStringFromObject @ emotion-serialize.development.esm.js:159
-handleInterpolation @ emotion-serialize.development.esm.js:109
-createStringFromObject @ emotion-serialize.development.esm.js:172
-handleInterpolation @ emotion-serialize.development.esm.js:109
-handleInterpolation @ emotion-serialize.development.esm.js:117
-serializeStyles @ emotion-serialize.development.esm.js:218
-(anonymous) @ emotion-styled-base.browser.development.esm.js:103
-MuiAlert-root @ emotion-element-489459f2.browser.development.esm.js:31
-react-stack-bottom-frame @ react-dom-client.development.js:13133
-renderWithHooks @ react-dom-client.development.js:3343
-updateForwardRef @ react-dom-client.development.js:4944
-beginWork @ react-dom-client.development.js:5696
-runWithFiberInDEV @ react-dom-client.development.js:1115
-performUnitOfWork @ react-dom-client.development.js:7695
-workLoopSync @ react-dom-client.development.js:7588
-renderRootSync @ react-dom-client.development.js:7572
-performWorkOnRoot @ react-dom-client.development.js:7312
-performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:8292
-performWorkUntilDeadline @ scheduler.development.js:34
-<MuiAlertRoot>
-exports.jsxs @ react-jsx-runtime.development.js:225
-Alert @ Alert.js:230
-react-stack-bottom-frame @ react-dom-client.development.js:13133
-renderWithHooksAgain @ react-dom-client.development.js:3398
-renderWithHooks @ react-dom-client.development.js:3349
-updateForwardRef @ react-dom-client.development.js:4944
-beginWork @ react-dom-client.development.js:5696
-runWithFiberInDEV @ react-dom-client.development.js:1115
-performUnitOfWork @ react-dom-client.development.js:7695
-workLoopSync @ react-dom-client.development.js:7588
-renderRootSync @ react-dom-client.development.js:7572
-performWorkOnRoot @ react-dom-client.development.js:7312
-performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:8292
-performWorkUntilDeadline @ scheduler.development.js:34
-<ForwardRef(Alert)>
-exports.jsxDEV @ react-jsx-dev-runtime.development.js:221
-(anonymous) @ ToastContainer.tsx:31
-ToastContainer @ ToastContainer.tsx:15
-react-stack-bottom-frame @ react-dom-client.development.js:13133
-renderWithHooksAgain @ react-dom-client.development.js:3398
-renderWithHooks @ react-dom-client.development.js:3349
-updateFunctionComponent @ react-dom-client.development.js:5036
-beginWork @ react-dom-client.development.js:5622
-runWithFiberInDEV @ react-dom-client.development.js:1115
-performUnitOfWork @ react-dom-client.development.js:7695
-workLoopSync @ react-dom-client.development.js:7588
-renderRootSync @ react-dom-client.development.js:7572
-performWorkOnRoot @ react-dom-client.development.js:7312
-performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:8292
-performWorkUntilDeadline @ scheduler.development.js:34Understand this error
-chipUtils.ts:213 Using kebab-case for css properties in objects is not supported. Did you mean WebkitBoxOrient?
-
-
-LOGS CONSOLE BACKEND
-
-19:00:56 [debug]: Rate limit check
-{
-  "metadata": {
-    "service": "sistema-sementes-api",
-    "environment": "development",
-    "version": "1.0.0",
-    "category": "rate-limit-check",
-    "ip": "146.75.191.50",
-    "endpoint": "/security-info",
-    "method": "GET"
-  }
-}
-❌ Erro capturado: AppError: O usuário do token não existe mais
-    at C:\Users\fande\OneDrive\Documentos\IA\sistemaSementes\backend\src\middleware\auth.js:31:19
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  statusCode: 401,
-  status: 'fail',
-  isOperational: true
-}
-19:00:56 [http]: HTTP Request
-{
-  "metadata": {
-    "service": "sistema-sementes-api",
-    "environment": "development",
-    "version": "1.0.0",
-    "category": "http",
-    "method": "GET",
-    "url": "/api/auth/security-info",
-    "ip": "146.75.191.50",
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/137.0.7151.107 Mobile/15E148 Safari/604.1",
-    "statusCode": 401,
-    "duration": 4
-  }
-}
-❌ Erro capturado: AppError: Erro ao criar produto: Product validation failed: clientId: Cast to ObjectId failed for value "" (type string) at path "clientId" because of "BSONError"
-    at C:\Users\fande\OneDrive\Documentos\IA\sistemaSementes\backend\src\controllers\productController.js:374:17
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  statusCode: 400,
-  status: 'fail',
-  isOperational: true
-}
-19:01:25 [http]: HTTP Request
-{
-  "metadata": {
-    "service": "sistema-sementes-api",
-    "environment": "development",
-    "version": "1.0.0",
-    "category": "http",
-    "method": "POST",
-    "url": "/api/products",
-    "ip": "192.168.1.89",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "userId": "6856f3ef155cb112104ed70a",
-    "statusCode": 400,
-    "duration": 12
-  }
-}
+Compiled with problems:
+×
+ERROR in src/components/locations/LocationDetails.tsx:58:68
+TS2554: Expected 0 arguments, but got 1.
+    56 |
+    57 |   // Hook para buscar produtos nesta localização
+  > 58 |   const { data: products, loading: productsLoading } = useProducts({
+       |                                                                    ^
+  > 59 |     initialFilters: { locationId: location.id }
+       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 60 |   });
+       | ^^^^
+    61 |
+    62 |   const occupancyRate = location.maxCapacityKg > 0 
+    63 |     ? (location.currentWeightKg / location.maxCapacityKg) * 100 
+ERROR in src/components/locations/useLocationDetailsLogic.ts:25:68
+TS2554: Expected 0 arguments, but got 1.
+    23 |
+    24 |   // Hook para buscar produtos nesta localização
+  > 25 |   const { data: products, loading: productsLoading } = useProducts({
+       |                                                                    ^
+  > 26 |     initialFilters: { locationId: location.id }
+       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 27 |   });
+       | ^^^^
+    28 |
+    29 |   // Informações de ocupação computadas
+    30 |   const occupancyInfo = useMemo(() => getOccupancyInfo(location), [location]);

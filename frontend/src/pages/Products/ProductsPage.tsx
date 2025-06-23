@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -166,6 +166,10 @@ export const ProductsPage: React.FC = () => {
     sort: 'createdAt',
     sortOrder: 'desc',
   });
+  
+  // Ref para manter os filtros atuais sempre acessíveis
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -197,11 +201,12 @@ export const ProductsPage: React.FC = () => {
   // Função para recarregar produtos após operações CRUD
   const handleRefetchProducts = useCallback(async () => {
     try {
-      await fetchProducts(filters);
+      // Usar os filtros atuais via ref para evitar dependência circular
+      await fetchProducts(filtersRef.current);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
     }
-  }, [fetchProducts, filters]);
+  }, [fetchProducts]);
 
   // Carregar localizações quando necessário (para formulário)
   const loadLocationsForForm = useCallback(async () => {
@@ -223,7 +228,7 @@ export const ProductsPage: React.FC = () => {
   // Carregar produtos sempre que os filtros mudarem
   useEffect(() => {
     fetchProducts(filters);
-  }, [filters, fetchProducts]);
+  }, [fetchProducts, filters.search, filters.page, filters.limit, filters.sort, filters.sortOrder, filters.status, filters.seedTypeId, filters.chamberId]);
 
   // Atualizar quando a busca mudar (debounced)
   useEffect(() => {

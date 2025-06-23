@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -55,9 +55,12 @@ export const LocationDetails: React.FC<LocationDetailsProps> = ({
   const [showProductsDialog, setShowProductsDialog] = useState(false);
 
   // Hook para buscar produtos nesta localização
-  const { data: products, loading: productsLoading } = useProducts({
-    initialFilters: { locationId: location.id }
-  });
+  const { data: products, loading: productsLoading, fetchProducts } = useProducts();
+  
+  // Buscar produtos desta localização quando o componente montar
+  useEffect(() => {
+    fetchProducts({ locationId: location.id });
+  }, [location.id, fetchProducts]);
 
   const occupancyRate = location.maxCapacityKg > 0 
     ? (location.currentWeightKg / location.maxCapacityKg) * 100 

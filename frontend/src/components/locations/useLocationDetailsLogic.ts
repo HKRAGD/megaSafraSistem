@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Location, Chamber } from '../../types';
 import { useProducts } from '../../hooks/useProducts';
 import { getOccupancyInfo, validateCapacity, formatDateBR } from './locationDetailsUtils';
@@ -22,9 +22,12 @@ export const useLocationDetailsLogic = ({
   const [showProductsDialog, setShowProductsDialog] = useState(false);
 
   // Hook para buscar produtos nesta localização
-  const { data: products, loading: productsLoading } = useProducts({
-    initialFilters: { locationId: location.id }
-  });
+  const { data: products, loading: productsLoading, fetchProducts } = useProducts();
+  
+  // Buscar produtos desta localização quando o componente montar
+  useEffect(() => {
+    fetchProducts({ locationId: location.id });
+  }, [location.id, fetchProducts]);
 
   // Informações de ocupação computadas
   const occupancyInfo = useMemo(() => getOccupancyInfo(location), [location]);
