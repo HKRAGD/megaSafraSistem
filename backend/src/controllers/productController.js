@@ -11,7 +11,12 @@ const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const Product = require('../models/Product');
 const Location = require('../models/Location');
 const SeedType = require('../models/SeedType');
+const Movement = require('../models/Movement');
 const productService = require('../services/productService');
+const { v4: uuidv4 } = require('uuid');
+
+// Constantes de configuração
+const MAX_PRODUCTS_PER_BATCH = 50;
 
 /**
  * @desc    Listar produtos (paginado, com filtros)
@@ -273,7 +278,6 @@ const getProduct = asyncHandler(async (req, res, next) => {
   }
 
   // 2. Buscar histórico de movimentações
-  const Movement = require('../models/Movement');
   const movementHistory = await Movement.find({ productId: id })
     .populate('userId', 'name')
     .populate('fromLocationId', 'code coordinates')
@@ -372,6 +376,49 @@ const createProduct = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     return next(new AppError(error.message, 400));
+  }
+});
+
+/**
+ * @desc    Cadastrar múltiplos produtos em lote
+ * @route   POST /api/products/batch
+ * @access  Private (Admin)
+ */
+const createProductsBatch = asyncHandler(async (req, res, next) => {
+  const { clientId, products } = req.body;
+  const userId = req.user._id; // Assuming req.user is populated by auth middleware
+
+  if (!clientId) {
+    return next(new AppError('O ID do cliente (clientId) é obrigatório para o cadastro em lote.', 400));
+  }
+
+  if (!Array.isArray(products) || products.length === 0) {
+    return next(new AppError('O array de produtos é obrigatório e não pode estar vazio.', 400));
+  }
+
+  if (products.length > MAX_PRODUCTS_PER_BATCH) {
+    return next(new AppError(`O número máximo de produtos por lote é ${MAX_PRODUCTS_PER_BATCH}.`, 400));
+  }
+
+  try {
+    const batchId = uuidv4(); // Generate a unique batch ID
+
+    // Delegate to productService for batch creation logic, including transaction and individual product creation
+    const result = await productService.createProductsBatch(clientId, products, userId, batchId);
+
+    res.status(201).json({
+      success: true,
+      message: `Lote de produtos (ID: ${batchId}) cadastrado com sucesso.`,
+      data: {
+        batchId: result.batchId,
+        clientId: result.clientId,
+        productsCreated: result.productsCreated,
+        count: result.productsCreated.length
+      }
+    });
+  } catch (error) {
+    // AppError from productService will be caught here and passed to errorHandler middleware
+    return next(new AppError(error.message, error.statusCode || 400));
   }
 });
 
@@ -831,10 +878,25 @@ const getProductsPendingWithdrawal = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Buscar produtos aguardando locação, agrupados por lote
+ * @route   GET /api/products/pending-allocation-grouped
+ * @access  Private (OPERATOR only)
+ */
+const getProductsPendingAllocationGrouped = asyncHandler(async (req, res, next) => {
+  const result = await productService.getProductsPendingAllocationGrouped();
+
+  res.status(200).json({
+    success: true,
+    data: result.data
+  });
+});
+
 module.exports = {
   getProducts,
   getProduct,
   createProduct,
+  createProductsBatch,
   updateProduct,
   deleteProduct,
   moveProduct,
@@ -851,5 +913,6 @@ module.exports = {
   locateProduct,
   requestWithdrawal,
   getProductsPendingLocation,
-  getProductsPendingWithdrawal
+  getProductsPendingWithdrawal,
+  getProductsPendingAllocationGrouped
 }; 

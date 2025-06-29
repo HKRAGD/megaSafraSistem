@@ -7,6 +7,11 @@ import {
 import { chamberService } from '../services/chamberService';
 
 // ============================================================================
+// CONSTANTES ESTÁVEIS PARA PREVENIR LOOPS INFINITOS
+// ============================================================================
+const DEFAULT_CHAMBERS_OPTIONS = {};
+
+// ============================================================================
 // FUNÇÕES DE MAPEAMENTO DE DADOS
 // ============================================================================
 
@@ -61,7 +66,7 @@ interface UseChambersReturn extends UseDataState<Chamber> {
  * 
  * REGRA CRÍTICA: Este é o ÚNICO lugar onde requisições de câmaras devem ser feitas!
  */
-export const useChambers = (options: UsChambersOptions = {}): UseChambersReturn => {
+export const useChambers = (options: UsChambersOptions = DEFAULT_CHAMBERS_OPTIONS): UseChambersReturn => {
   const { autoFetch = true } = options;
 
   // ============================================================================

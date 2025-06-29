@@ -67,7 +67,14 @@ const productSchema = new mongoose.Schema({
   clientId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Client',
-    required: false // Campo opcional para vincular produto a cliente
+    required: [
+      function() { return this.batchId !== undefined && this.batchId !== null; },
+      'O ID do cliente é obrigatório para produtos em lote.'
+    ]
+  },
+  batchId: {
+    type: String,
+    required: false
   },
   entryDate: {
     type: Date,
@@ -158,6 +165,7 @@ productSchema.index({ 'tracking.qualityGrade': 1 });
 productSchema.index({ createdAt: -1 });
 productSchema.index({ entryDate: -1 });
 productSchema.index({ clientId: 1 }); // Índice para consultas por cliente
+productSchema.index({ batchId: 1, status: 1 }); // Novo índice composto para queries de agrupamento
 
 // Índice composto para unicidade de produto ativo por localização
 productSchema.index(
@@ -273,86 +281,12 @@ productSchema.pre('save', function(next) {
   next();
 });
 
-// Middleware combinado para movimentação e atualização de localização - REGRA CRÍTICA
-productSchema.post('save', async function(doc, next) {
-  try {
-    // 1. REGISTRAR MOVIMENTAÇÃO AUTOMÁTICA
-    const Movement = mongoose.model('Movement');
-    
-    // Determinar tipo de movimentação
-    let movementType = 'entry';
-    let reason = 'Entrada de produto';
-    let shouldCreateMovement = false;
-    
-    if (doc._wasNew) {
-      movementType = 'entry';
-      reason = 'Cadastro inicial do produto';
-      shouldCreateMovement = true;
-    } else {
-      // Verificar se houve mudança de localização
-      if (doc._wasLocationModified) {
-        movementType = 'transfer';
-        reason = 'Transferência de localização';
-        shouldCreateMovement = true;
-      } else if (doc.isModified('quantity') || doc.isModified('weightPerUnit')) {
-        movementType = 'adjustment';
-        reason = 'Ajuste de quantidade/peso';
-        shouldCreateMovement = true;
-      } else if (doc.isModified('status') && doc.status === 'REMOVIDO') {
-        movementType = 'exit';
-        reason = 'Produto removido do sistema';
-        shouldCreateMovement = true;
-      }
-    }
-    
-    if (shouldCreateMovement) {
-      // Criar registro de movimentação automática
-      const movement = await Movement.create({
-        productId: doc._id,
-        type: movementType,
-        toLocationId: doc.locationId,
-        fromLocationId: movementType === 'exit' ? doc.locationId : null,
-        quantity: doc.quantity,
-        weight: doc.totalWeight,
-        userId: doc.metadata?.lastModifiedBy || doc.metadata?.createdBy,
-        reason,
-        notes: `Movimentação automática: ${reason}`,
-        metadata: {
-          isAutomatic: true,
-          verified: true
-        }
-      });
-      console.log(`📋 Movimentação registrada: ${movementType} para produto ${doc.name} (ID: ${movement._id})`);
-    }
-    
-    // 2. ATUALIZAR PESO DA LOCALIZAÇÃO
-    if (doc.locationId && doc.status === PRODUCT_STATUS.LOCADO) {
-      const Location = mongoose.model('Location');
-      const location = await Location.findById(doc.locationId);
-      
-      if (location) {
-        // Só adicionar peso se for produto novo ou mudança de localização
-        if (doc._wasNew || doc._wasLocationModified) {
-          await location.addWeight(doc.totalWeight);
-          console.log(`✅ Localização ${location.code} atualizada: +${doc.totalWeight}kg (produto: ${doc.name})`);
-        }
-        
-        // Verificar se a localização pode acomodar o peso
-        if (!location.canAccommodateWeight(doc.totalWeight)) {
-          console.warn(`Aviso: Produto ${doc.name} excede capacidade da localização ${location.code}`);
-        }
-      }
-    }
-    
-  } catch (error) {
-    // Usar um logger mais robusto em produção
-    console.error(`CRITICAL ERROR: Failed to process product middleware for ${doc._id}:`, error);
-    console.error('Error details:', error.stack);
-    // TODO: Implementar notificação para sistema de monitoramento
-  }
-  
-  next();
-});
+// MIDDLEWARE REMOVIDO: A lógica de movimentação e atualização de localização
+// foi movida para o productService para garantir consistência transacional.
+// Ver productService.createProduct(), locateProduct(), moveProduct(), etc.
+// que agora usam transações explícitas para operações multi-documento.
+
+// TODO: Implementar logger robusto para substituir console.log/console.error em produção
 
 // Método de instância para mover produto para nova localização
 productSchema.methods.moveTo = async function(newLocationId, userId, reason = 'Movimentação manual') {

@@ -1,1 +1,0 @@
-I fixed the capacityValidation ReferenceError by initializing it properly. Now I need to check if there are any other similar variable scoping issues in the productService.js file or other potential errors that could occur during product creation. Look for patterns where variables are declared conditionally but used outside their declaration scope.

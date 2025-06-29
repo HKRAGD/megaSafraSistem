@@ -279,6 +279,62 @@ const productSchemas = {
   move: Joi.object({
     newLocationId: objectIdSchema.required(),
     reason: Joi.string().trim().min(3).max(200).default('Movimentação manual')
+  }),
+
+  // NOVO: Schema para cadastro em lote de produtos
+  createBatch: Joi.object({
+    clientId: objectIdSchema.required().messages({
+      'any.required': 'O ID do cliente é obrigatório para o cadastro em lote.',
+      'string.empty': 'O ID do cliente não pode ser vazio.'
+    }),
+    products: Joi.array().items(Joi.object({
+      name: Joi.string().trim().min(2).max(200).required().messages({
+        'any.required': 'Nome do produto é obrigatório.',
+        'string.min': 'Nome deve ter pelo menos 2 caracteres.',
+        'string.max': 'Nome não pode exceder 200 caracteres.'
+      }),
+      lot: Joi.string().trim().min(1).max(50).required().messages({
+        'any.required': 'Lote do produto é obrigatório.',
+        'string.min': 'Lote deve ter pelo menos 1 caractere.',
+        'string.max': 'Lote não pode exceder 50 caracteres.'
+      }),
+      seedTypeId: objectIdSchema.required().messages({
+        'any.required': 'Tipo de semente é obrigatório.'
+      }),
+      quantity: Joi.number().integer().min(1).required().messages({
+        'any.required': 'Quantidade é obrigatória.',
+        'number.min': 'Quantidade deve ser pelo menos 1.',
+        'number.integer': 'Quantidade deve ser um número inteiro.'
+      }),
+      storageType: Joi.string().valid('saco', 'bag').required().messages({
+        'any.required': 'Tipo de armazenamento é obrigatório.',
+        'any.only': 'Tipo de armazenamento deve ser "saco" ou "bag".'
+      }),
+      weightPerUnit: Joi.number().min(0.001).max(1500).required().messages({
+        'any.required': 'Peso por unidade é obrigatório.',
+        'number.min': 'Peso por unidade deve ser pelo menos 0.001 kg.',
+        'number.max': 'Peso por unidade não pode exceder 1500 kg.'
+      }),
+      expirationDate: Joi.date().iso().optional().allow(null).messages({
+        'date.format': 'Data de validade deve estar no formato ISO.'
+      }),
+      notes: Joi.string().trim().max(1000).optional().allow('').messages({
+        'string.max': 'Observações não podem exceder 1000 caracteres.'
+      }),
+      tracking: Joi.object({
+        batchNumber: Joi.string().trim().max(50).optional().allow(''),
+        origin: Joi.string().trim().max(200).optional().allow(''),
+        supplier: Joi.string().trim().max(200).optional().allow(''),
+        qualityGrade: Joi.string().valid('A', 'B', 'C', 'D').optional().allow(null)
+      }).optional().allow(null),
+      // batchId e clientId são definidos pelo service, não pelo cliente
+      locationId: Joi.string().optional().allow(null, ''), // Cliente pode sugerir localização
+      clientId: Joi.string().optional().allow(null, '') // ClientId é definido no nível do lote
+    })).min(1).max(50).required().messages({
+      'array.min': 'Deve haver pelo menos 1 produto no lote.',
+      'array.max': 'O número máximo de produtos por lote é 50.',
+      'any.required': 'Lista de produtos é obrigatória.'
+    })
   })
 };
 

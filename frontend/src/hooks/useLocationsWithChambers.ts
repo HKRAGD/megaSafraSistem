@@ -7,6 +7,12 @@ import { locationService } from '../services/locationService';
 import { chamberService } from '../services/chamberService';
 
 // ============================================================================
+// CONSTANTES ESTÁVEIS PARA PREVENIR LOOPS INFINITOS
+// ============================================================================
+const DEFAULT_OPTIONS = {};
+const DEFAULT_INITIAL_FILTERS = {};
+
+// ============================================================================
 // INTERFACE DO HOOK
 // ============================================================================
 
@@ -88,9 +94,16 @@ const processApiLocations = (apiLocations: any[]): LocationWithChamber[] => {
 // ============================================================================
 
 export const useLocationsWithChambers = (
-  options: UseLocationsWithChambersOptions = {}
+  options: UseLocationsWithChambersOptions = DEFAULT_OPTIONS
 ): UseLocationsWithChambersReturn => {
-  const { autoFetch = true, initialFilters = {} } = options;
+  const { autoFetch = true, initialFilters: propInitialFilters } = options;
+
+  // ============================================================================
+  // REFERÊNCIA ESTÁVEL PARA INITIAL_FILTERS
+  // ============================================================================
+  const stableInitialFilters = useMemo(() => {
+    return propInitialFilters || DEFAULT_INITIAL_FILTERS;
+  }, [propInitialFilters]);
 
   // ============================================================================
   // ESTADO LOCAL
@@ -124,6 +137,7 @@ export const useLocationsWithChambers = (
    * REGRA CRÍTICA: Uma localização = Um produto, Validação de capacidade
    */
   const fetchAvailableLocations = useCallback(async (newFilters?: LocationFilters): Promise<void> => {
+    setLoading(true);
     clearError();
 
     try {
@@ -152,13 +166,13 @@ export const useLocationsWithChambers = (
       });
       
       setAvailableLocationsWithChambers(validAvailableLocations);
-      setLoading(false);
       
       console.log(`✅ ${validAvailableLocations.length} localizações disponíveis carregadas e normalizadas`);
       console.log(`📊 Capacidade total disponível: ${validAvailableLocations.reduce((sum: number, loc: LocationWithChamber) => sum + (loc.maxCapacityKg - loc.currentWeightKg), 0)}kg`);
     } catch (error: any) {
       handleError(error, 'carregar localizações disponíveis');
       setAvailableLocationsWithChambers([]);
+    } finally {
       setLoading(false);
     }
   }, [handleError, clearError]);
@@ -192,9 +206,9 @@ export const useLocationsWithChambers = (
 
   useEffect(() => {
     if (autoFetch) {
-      fetchAvailableLocations(initialFilters);
+      fetchAvailableLocations(stableInitialFilters);
     }
-  }, [autoFetch, fetchAvailableLocations, initialFilters]);
+  }, [autoFetch, fetchAvailableLocations, stableInitialFilters]);
 
   // ============================================================================
   // COMPUTED VALUES

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
 import { AlertColor } from '@mui/material';
 
 // Types
@@ -55,7 +55,11 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
   const generateId = () => `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const showToast = (
+  const removeToast = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_TOAST', payload: id });
+  }, []);
+
+  const showToast = useCallback((
     message: string, 
     severity: AlertColor = 'success', 
     options: Partial<Toast> = {}
@@ -76,31 +80,27 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         removeToast(toast.id);
       }, toast.duration || 6000);
     }
-  };
+  }, [removeToast]);
 
-  const showSuccess = (message: string, options?: Partial<Toast>) => {
+  const showSuccess = useCallback((message: string, options?: Partial<Toast>) => {
     showToast(message, 'success', options);
-  };
+  }, [showToast]);
 
-  const showError = (message: string, options?: Partial<Toast>) => {
+  const showError = useCallback((message: string, options?: Partial<Toast>) => {
     showToast(message, 'error', { duration: 8000, ...options });
-  };
+  }, [showToast]);
 
-  const showWarning = (message: string, options?: Partial<Toast>) => {
+  const showWarning = useCallback((message: string, options?: Partial<Toast>) => {
     showToast(message, 'warning', { duration: 7000, ...options });
-  };
+  }, [showToast]);
 
-  const showInfo = (message: string, options?: Partial<Toast>) => {
+  const showInfo = useCallback((message: string, options?: Partial<Toast>) => {
     showToast(message, 'info', options);
-  };
+  }, [showToast]);
 
-  const removeToast = (id: string) => {
-    dispatch({ type: 'REMOVE_TOAST', payload: id });
-  };
-
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     dispatch({ type: 'CLEAR_ALL' });
-  };
+  }, []);
 
   return (
     <ToastContext.Provider

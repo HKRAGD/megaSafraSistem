@@ -5,9 +5,11 @@
  * Regras: Uma localização = Um produto, movimentações automáticas, validação de capacidade
  */
 
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Location = require('../models/Location');
 const SeedType = require('../models/SeedType');
+const Client = require('../models/Client');
 const Movement = require('../models/Movement');
 const locationService = require('./locationService');
 
@@ -24,7 +26,8 @@ const createProduct = async (productData, userId, options = {}) => {
       autoFindLocation = true,
       validateSeedType = true,
       generateTrackingCode = true,
-      calculateOptimalExpiration = true
+      calculateOptimalExpiration = true,
+      session = null // Adicionado para suporte a transações
     } = options;
 
     // 1. Validar dados básicos
@@ -36,7 +39,9 @@ const createProduct = async (productData, userId, options = {}) => {
     // 2. Validar tipo de semente se solicitado
     let seedType = null;
     if (validateSeedType) {
-      seedType = await SeedType.findById(productData.seedTypeId);
+      seedType = session 
+        ? await SeedType.findById(productData.seedTypeId).session(session)
+        : await SeedType.findById(productData.seedTypeId);
       if (!seedType || !seedType.isActive) {
         throw new Error('Tipo de semente não encontrado ou inativo');
       }
@@ -75,7 +80,9 @@ const createProduct = async (productData, userId, options = {}) => {
 
     // 5. Validar localização APENAS se fornecida
     if (locationId) {
-      location = await Location.findById(locationId);
+      location = session 
+        ? await Location.findById(locationId).session(session)
+        : await Location.findById(locationId);
       if (!location) {
         throw new Error('Localização não encontrada');
       }
@@ -118,14 +125,15 @@ const createProduct = async (productData, userId, options = {}) => {
 
     // 8. Criar produto
     const product = new Product(completeProductData);
-    await product.save();
+    await product.save(session ? { session } : {});
 
     // 9. REGRA CRÍTICA: Ocupar localização apenas se fornecida
     if (locationId) {
+      const updateOptions = session ? { session } : {};
       await Location.findByIdAndUpdate(locationId, {
         isOccupied: true,
         currentWeightKg: totalWeight
-      });
+      }, updateOptions);
 
       // 10. REGRA CRÍTICA: Gerar movimento automático de entrada apenas se localizado
       const movementData = {
@@ -144,14 +152,20 @@ const createProduct = async (productData, userId, options = {}) => {
       };
 
       const movement = new Movement(movementData);
-      await movement.save();
+      await movement.save(session ? { session } : {});
     }
 
     // 11. Buscar produto completo com populações
-    const fullProduct = await Product.findById(product._id)
+    let fullProductQuery = Product.findById(product._id)
       .populate('seedTypeId', 'name optimalTemperature optimalHumidity maxStorageTimeDays')
       .populate('locationId', 'code coordinates chamberId maxCapacityKg currentWeightKg')
       .populate('metadata.createdBy', 'name email');
+    
+    if (session) {
+      fullProductQuery = fullProductQuery.session(session);
+    }
+    
+    const fullProduct = await fullProductQuery;
 
     // 12. Análise de resultado
     const analysis = {
@@ -1431,6 +1445,150 @@ const getProductsPendingWithdrawal = async (filters = {}) => {
   }
 };
 
+/**
+ * Busca e agrupa produtos com status 'AGUARDANDO_LOCACAO' por batchId ou individualmente.
+ * @returns {Object} Objeto contendo os lotes de produtos agrupados.
+ */
+const getProductsPendingAllocationGrouped = async () => {
+  try {
+    const batches = await Product.aggregate([
+      { $match: { status: 'AGUARDANDO_LOCACAO' } },
+      {
+        $lookup: {
+          from: 'seedtypes',
+          localField: 'seedTypeId',
+          foreignField: '_id',
+          as: 'seedTypeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$seedTypeDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'clients',
+          localField: 'clientId',
+          foreignField: '_id',
+          as: 'clientDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$clientDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          _groupKey: {
+            $cond: {
+              if: { $ne: ["$batchId", null] },
+              then: "$batchId",
+              else: "$_id"
+            }
+          },
+          productForGroup: {
+            id: "$_id",
+            name: "$name",
+            lot: "$lot",
+            status: "$status",
+            quantity: "$quantity",
+            totalWeight: "$totalWeight",
+            seedTypeId: "$seedTypeDetails",
+            expirationDate: "$expirationDate",
+            createdAt: "$createdAt",
+            tracking: "$tracking",
+            notes: "$notes",
+            storageType: "$storageType",
+            weightPerUnit: "$weightPerUnit",
+            locationId: "$locationId",
+            clientId: "$clientId",
+            batchId: "$batchId"
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$_groupKey",
+          batchId: { $first: "$batchId" },
+          clientId: { $first: "$clientDetails._id" },
+          clientName: { $first: "$clientDetails.name" },
+          productCount: { $sum: 1 },
+          createdAt: { $min: "$createdAt" },
+          products: { $push: "$productForGroup" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          batchId: 1,
+          clientId: 1,
+          clientName: 1,
+          productCount: 1,
+          createdAt: 1,
+          products: 1
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
+
+    return {
+      success: true,
+      data: {
+        batches: batches
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao buscar produtos aguardando alocação agrupados: ${error.message}`);
+  }
+};
+
+/**
+ * Criação em lote de produtos com validações e transação atômica.
+ * @param {String} clientId - ID do cliente comum para todos os produtos.
+ * @param {Array<Object>} productsArray - Array de dados de produtos.
+ * @param {String} userId - ID do usuário criador.
+ * @param {String} batchId - ID do lote comum para todos os produtos.
+ * @returns {Object} Resultado da operação em lote.
+ */
+const createProductsBatch = async (clientId, productsArray, userId, batchId) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const productsCreated = [];
+    for (const productData of productsArray) {
+      // Aplicar clientId e batchId comuns a cada produto
+      const productDataWithBatch = {
+        ...productData,
+        clientId: clientId,
+        batchId: batchId
+      };
+
+      // Reutilizar a lógica de createProduct, passando a sessão
+      const result = await createProduct(productDataWithBatch, userId, { session });
+      productsCreated.push(result.data.product);
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return {
+      batchId,
+      clientId,
+      productsCreated
+    };
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error(`Erro ao criar produtos em lote: ${error.message}`);
+  }
+};
+
 module.exports = {
   createProduct,
   moveProduct,
@@ -1449,5 +1607,7 @@ module.exports = {
   requestProductWithdrawal,
   confirmProductWithdrawal,
   getProductsPendingLocation,
-  getProductsPendingWithdrawal
+  getProductsPendingWithdrawal,
+  getProductsPendingAllocationGrouped,
+  createProductsBatch
 }; 

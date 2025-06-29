@@ -232,10 +232,11 @@ export const useProductActions = (): UseProductActionsReturn => {
 
   const findOptimalLocation = useCallback(async (
     quantity: number,
-    weightPerUnit: number
+    weightPerUnit: number,
+    seedTypeId?: string
   ): Promise<any> => {
     return handleAsync(
-      () => productService.findOptimalLocationForHook(quantity, weightPerUnit)
+      () => productService.findOptimalLocationForHook(seedTypeId || '', quantity, weightPerUnit)
     );
   }, [handleAsync]);
 

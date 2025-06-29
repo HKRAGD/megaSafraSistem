@@ -22,6 +22,8 @@ import {
   IconButton,
   Tooltip,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   LocationOn as LocationIcon,
@@ -30,6 +32,8 @@ import {
   Info as InfoIcon,
   Refresh as RefreshIcon,
   Warning as WarningIcon,
+  ViewList as ViewListIcon,
+  ViewModule as ViewModuleIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,10 +42,12 @@ import { useProductActions } from '../../hooks/useProductActions';
 import { useLocationsWithChambers } from '../../hooks/useLocationsWithChambers';
 import { useChambers } from '../../hooks/useChambers';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useProductBatches } from '../../hooks/useProductBatches';
 import { ProductWithRelations, LocationWithChamber } from '../../types';
 import { Loading } from '../../components/common/Loading';
 import Toast from '../../components/common/Toast';
 import { LocationTreeNavigation } from '../../components/ui/LocationTreeNavigation';
+import { ProductBatchCard } from '../../components/products/ProductBatchCard';
 
 export const ProductAllocationPage: React.FC = () => {
   const { canLocateProduct } = usePermissions();
@@ -51,6 +57,16 @@ export const ProductAllocationPage: React.FC = () => {
     fetchProducts,
     error: productsError 
   } = useProducts();
+  const {
+    batches,
+    loading: batchesLoading,
+    error: batchesError,
+    totalProducts: totalBatchProducts,
+    totalBatches,
+    urgentBatches,
+    refreshBatches,
+    clearError: clearBatchesError
+  } = useProductBatches();
   const { 
     locateProduct, 
     loading: allocationLoading,
@@ -71,6 +87,8 @@ export const ProductAllocationPage: React.FC = () => {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [showAllocationDialog, setShowAllocationDialog] = useState(false);
+  const [viewMode, setViewMode] = useState<'individual' | 'grouped'>('grouped');
+  
   // Estado combinado de loading
   const isAllocating = allocationLoading;
   
@@ -84,14 +102,16 @@ export const ProductAllocationPage: React.FC = () => {
 
   // As localizações serão filtradas pelo LocationMap3DAdvanced internamente
 
-  // Memoize the filter object to ensure a stable reference
-  const pendingProductsFilters = useMemo(() => ({ status: 'AGUARDANDO_LOCACAO' as const, limit: 50 }), []);
+  // Filtros para produtos aguardando locação
+  const pendingProductsFilters = { status: 'AGUARDANDO_LOCACAO' as const, limit: 50 };
 
   useEffect(() => {
-    // Carregar produtos com filtro específico para AGUARDANDO_LOCACAO
-    fetchProducts(pendingProductsFilters);
+    // Carregar produtos individuais e grupos
+    if (viewMode === 'individual') {
+      fetchProducts(pendingProductsFilters);
+    }
     fetchAvailableLocations();
-  }, [fetchProducts, fetchAvailableLocations, pendingProductsFilters]);
+  }, [fetchProducts, fetchAvailableLocations, pendingProductsFilters, viewMode]);
 
   // Limpar erros de alocação quando o componente monta
   useEffect(() => {
@@ -129,8 +149,12 @@ export const ProductAllocationPage: React.FC = () => {
         showToast(`Produto "${selectedProduct.name}" alocado com sucesso!`, 'success');
         setShowAllocationDialog(false);
         
-        // Recarregar a lista de produtos
-        await fetchProducts(pendingProductsFilters);
+        // Recarregar os dados conforme o modo de visualização
+        if (viewMode === 'grouped') {
+          await refreshBatches();
+        } else {
+          await fetchProducts(pendingProductsFilters);
+        }
         await fetchAvailableLocations(); // Atualizar localizações disponíveis
       }
     } catch (error: any) {
@@ -147,8 +171,27 @@ export const ProductAllocationPage: React.FC = () => {
     return `${location.code} - ${location.chamber?.name || 'Câmara N/A'}`;
   };
 
-  if (productsLoading && pendingProducts.length === 0) {
-    return <Loading variant="page" text="Carregando produtos aguardando locação..." />;
+  const handleViewModeChange = (event: React.MouseEvent<HTMLElement>, newMode: string | null) => {
+    if (newMode !== null) {
+      setViewMode(newMode as 'individual' | 'grouped');
+    }
+  };
+
+  const handleRefresh = () => {
+    if (viewMode === 'grouped') {
+      refreshBatches();
+    } else {
+      fetchProducts(pendingProductsFilters);
+    }
+    fetchAvailableLocations();
+  };
+
+  // Loading states
+  const isLoading = viewMode === 'grouped' ? batchesLoading : (productsLoading && pendingProducts.length === 0);
+  const currentProducts = viewMode === 'grouped' ? totalBatchProducts : pendingProducts.length;
+
+  if (isLoading) {
+    return <Loading variant="page" text={`Carregando ${viewMode === 'grouped' ? 'grupos de produtos' : 'produtos'} aguardando locação...`} />;
   }
 
   if (!canLocateProduct) {
@@ -172,27 +215,57 @@ export const ProductAllocationPage: React.FC = () => {
           Aloque produtos que estão aguardando locação nas câmaras refrigeradas
         </Typography>
       </Box>
-      {/* Actions */}
-      <Box sx={{ mb: 3, display: 'flex', justify: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">
-          {pendingProducts.length} produto(s) aguardando locação
-        </Typography>
+      
+      {/* View Mode Toggle and Actions */}
+      <Box sx={{ mb: 3, display: 'flex', justify: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={handleViewModeChange}
+            size="small"
+          >
+            <ToggleButton value="grouped" aria-label="visualização agrupada">
+              <ViewModuleIcon sx={{ mr: 1 }} />
+              Agrupado
+            </ToggleButton>
+            <ToggleButton value="individual" aria-label="visualização individual">
+              <ViewListIcon sx={{ mr: 1 }} />
+              Individual
+            </ToggleButton>
+          </ToggleButtonGroup>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6">
+              {viewMode === 'grouped' 
+                ? `${totalBatchProducts} produto(s) em ${totalBatches} grupo(s)`
+                : `${pendingProducts.length} produto(s) aguardando locação`
+              }
+            </Typography>
+            {urgentBatches > 0 && viewMode === 'grouped' && (
+              <Chip
+                icon={<WarningIcon />}
+                label={`${urgentBatches} urgente${urgentBatches !== 1 ? 's' : ''}`}
+                color="warning"
+                size="small"
+              />
+            )}
+          </Box>
+        </Box>
+        
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
-          onClick={() => {
-            fetchProducts(pendingProductsFilters);
-            fetchAvailableLocations();
-          }}
-          disabled={productsLoading}
+          onClick={handleRefresh}
+          disabled={isLoading}
         >
           Atualizar
         </Button>
       </Box>
       {/* Error Alerts */}
-      {productsError && (
+      {(productsError || batchesError) && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {productsError}
+          {productsError || batchesError}
         </Alert>
       )}
       {allocationError && (
@@ -200,8 +273,9 @@ export const ProductAllocationPage: React.FC = () => {
           {allocationError}
         </Alert>
       )}
+      
       {/* Empty State */}
-      {pendingProducts.length === 0 && !productsLoading && (
+      {currentProducts === 0 && !isLoading && (
         <Card>
           <CardContent sx={{ textAlign: 'center', py: 6 }}>
             <CheckIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
@@ -217,138 +291,156 @@ export const ProductAllocationPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
-      {/* Product Grid */}
-      {pendingProducts.length > 0 && (
-        <Grid container spacing={3}>
-          {pendingProducts.map((product) => (
-            <Grid
-              key={product.id}
-              size={{
-                xs: 12,
-                md: 6,
-                lg: 4
-              }}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  {/* Product Header */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <Avatar sx={{ bgcolor: 'warning.main' }}>
-                      <AssignmentIcon />
-                    </Avatar>
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" component="h3" noWrap>
-                        {product.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Lote: {product.lot}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label="Aguardando Locação"
-                      color="warning"
-                      size="small"
-                    />
-                  </Box>
-
-                  {/* Product Details */}
-                  <Stack spacing={1} sx={{ mb: 3 }}>
-                    <Box sx={{ display: 'flex', justify: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Tipo de Semente:
-                      </Typography>
-                      <Typography variant="body2">
-                        {product.seedTypeId?.name || 'N/A'}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', justify: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Quantidade:
-                      </Typography>
-                      <Typography variant="body2">
-                        {product.quantity} {product.storageType}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', justify: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Peso Total:
-                      </Typography>
-                      <Typography variant="body2">
-                        {product.totalWeight} kg
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', justify: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Cadastrado em:
-                      </Typography>
-                      <Typography variant="body2">
-                        {formatDate(product.createdAt)}
-                      </Typography>
+      {/* Content based on view mode */}
+      {viewMode === 'grouped' ? (
+        // Grouped View - Product Batches
+        currentProducts > 0 && (
+          <Box>
+            {batches.map((batch, index) => (
+              <ProductBatchCard
+                key={batch.batchId || `individual-${index}`}
+                batch={batch}
+                onAllocateProduct={handleAllocateClick}
+                isAllocating={isAllocating}
+                disabled={locationsLoading || availableLocations.length === 0}
+              />
+            ))}
+          </Box>
+        )
+      ) : (
+        // Individual View - Traditional Product Grid
+        pendingProducts.length > 0 && (
+          <Grid container spacing={3}>
+            {pendingProducts.map((product) => (
+              <Grid
+                key={product.id}
+                size={{
+                  xs: 12,
+                  md: 6,
+                  lg: 4
+                }}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    {/* Product Header */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <Avatar sx={{ bgcolor: 'warning.main' }}>
+                        <AssignmentIcon />
+                      </Avatar>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" component="h3" noWrap>
+                          {product.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Lote: {product.lot}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label="Aguardando Locação"
+                        color="warning"
+                        size="small"
+                      />
                     </Box>
 
-                    {product.expirationDate && (
+                    {/* Product Details */}
+                    <Stack spacing={1} sx={{ mb: 3 }}>
                       <Box sx={{ display: 'flex', justify: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">
-                          Validade:
+                          Tipo de Semente:
                         </Typography>
-                        <Typography variant="body2" color={
-                          new Date(product.expirationDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
-                            ? 'error.main' 
-                            : 'text.primary'
-                        }>
-                          {formatDate(product.expirationDate)}
+                        <Typography variant="body2">
+                          {product.seedTypeId?.name || 'N/A'}
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', justify: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Quantidade:
+                        </Typography>
+                        <Typography variant="body2">
+                          {product.quantity} {product.storageType}
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', justify: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Peso Total:
+                        </Typography>
+                        <Typography variant="body2">
+                          {product.totalWeight} kg
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', justify: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Cadastrado em:
+                        </Typography>
+                        <Typography variant="body2">
+                          {formatDate(product.createdAt)}
+                        </Typography>
+                      </Box>
+
+                      {product.expirationDate && (
+                        <Box sx={{ display: 'flex', justify: 'space-between' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Validade:
+                          </Typography>
+                          <Typography variant="body2" color={
+                            new Date(product.expirationDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+                              ? 'error.main' 
+                              : 'text.primary'
+                          }>
+                            {formatDate(product.expirationDate)}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+
+                    {/* Warning for urgent products */}
+                    {product.expirationDate && new Date(product.expirationDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
+                      <Alert severity="warning" sx={{ mb: 2 }}>
+                        <Typography variant="caption">
+                          Produto com validade próxima! Priorize a locação.
+                        </Typography>
+                      </Alert>
+                    )}
+
+                    {/* Notes if any */}
+                    {product.notes && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="caption" color="text.secondary" gutterBottom display="block">
+                          Observações:
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                          {product.notes}
                         </Typography>
                       </Box>
                     )}
-                  </Stack>
+                  </CardContent>
 
-                  {/* Warning for urgent products */}
-                  {product.expirationDate && new Date(product.expirationDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-                    <Alert severity="warning" sx={{ mb: 2 }}>
-                      <Typography variant="caption">
-                        Produto com validade próxima! Priorize a locação.
+                  {/* Action Button */}
+                  <Box sx={{ p: 2, pt: 0 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      startIcon={<LocationIcon />}
+                      onClick={() => handleAllocateClick(product)}
+                      disabled={locationsLoading || availableLocations.length === 0 || isAllocating}
+                    >
+                      Alocar Produto
+                    </Button>
+                    
+                    {availableLocations.length === 0 && !locationsLoading && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+                        Nenhuma localização disponível
                       </Typography>
-                    </Alert>
-                  )}
-
-                  {/* Notes if any */}
-                  {product.notes && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                        Observações:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                        {product.notes}
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-
-                {/* Action Button */}
-                <Box sx={{ p: 2, pt: 0 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    startIcon={<LocationIcon />}
-                    onClick={() => handleAllocateClick(product)}
-                    disabled={locationsLoading || availableLocations.length === 0 || isAllocating}
-                  >
-                    Alocar Produto
-                  </Button>
-                  
-                  {availableLocations.length === 0 && !locationsLoading && (
-                    <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
-                      Nenhuma localização disponível
-                    </Typography>
-                  )}
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                    )}
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )
       )}
       {/* Allocation Dialog */}
       <Dialog
@@ -373,7 +465,7 @@ export const ProductAllocationPage: React.FC = () => {
 
           <Grid container spacing={3}>
             {/* Navegação em árvore ocupa toda a largura */}
-            <Grid size={12}>
+            <Grid size={{ xs: 12 }}>
               <Box sx={{ 
                 border: '1px solid', 
                 borderColor: 'divider',
@@ -395,7 +487,7 @@ export const ProductAllocationPage: React.FC = () => {
             </Grid>
 
             {/* Feedback da localização selecionada */}
-            <Grid size={12}>
+            <Grid size={{ xs: 12 }}>
               {selectedLocationId ? (
                 <Alert severity="success">
                   <Typography variant="body2">
@@ -412,7 +504,7 @@ export const ProductAllocationPage: React.FC = () => {
             </Grid>
 
             {/* Campo de observações */}
-            <Grid size={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Observações da Alocação (opcional)"

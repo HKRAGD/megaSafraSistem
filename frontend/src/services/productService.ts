@@ -8,6 +8,7 @@ import {
   ProductsResponse 
 } from '../types';
 import api, { apiGet, apiPost, apiPut, apiDelete } from './api';
+import { CreateBatchProductsPayload } from '../hooks/useBatchProducts';
 
 // ============================================================================
 // PRODUCT SERVICE - CRUD de Produtos
@@ -67,6 +68,21 @@ export const productService = {
       return response;
     } catch (error: any) {
       console.error('❌ Erro ao criar produto:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cadastrar múltiplos produtos em lote
+   * POST /api/products/batch
+   */
+  createBatchProducts: async (payload: CreateBatchProductsPayload): Promise<ApiResponse<{ products: Product[] }>> => {
+    try {
+      const response = await apiPost<ApiResponse<{ products: Product[] }>>('/products/batch', payload);
+      console.log(`✅ ${response.data.products.length} produtos cadastrados em lote.`);
+      return response;
+    } catch (error: any) {
+      console.error('❌ Erro ao cadastrar produtos em lote:', error);
       throw error;
     }
   },
@@ -495,9 +511,9 @@ export const productService = {
   /**
    * Encontrar localização ótima (versão simplificada para hook)
    */
-  findOptimalLocationForHook: async (quantity: number, weightPerUnit: number): Promise<any> => {
+  findOptimalLocationForHook: async (seedTypeId: string, quantity: number, weightPerUnit: number): Promise<any> => {
     const response = await productService.findOptimalLocation({
-      seedTypeId: '', // Será preenchido conforme necessário
+      seedTypeId: seedTypeId,
       totalWeight: quantity * weightPerUnit
     });
     return response.data;

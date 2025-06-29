@@ -7,6 +7,8 @@ import { useSeedTypes } from '../../../../hooks/useSeedTypes';
 import { useChambers } from '../../../../hooks/useChambers';
 import { useToast } from '../../../../contexts/ToastContext';
 import { useLoading } from '../../../../components/common/LoadingState';
+import { BatchFormData } from '../../../../components/products/BatchProductForm/utils/batchFormValidation';
+import api from '../../../../services/api';
 
 export const useNewProductPage = () => {
   const navigate = useNavigate();
@@ -35,23 +37,9 @@ export const useNewProductPage = () => {
   const [selectedLocation, setSelectedLocation] = useState<LocationWithChamber | null>(null);
   const [allLocations, setAllLocations] = useState<LocationWithChamber[]>([]);
 
-  // Carregar dados iniciais
-  useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        await Promise.all([
-          fetchLocations(),
-          fetchSeedTypes(),
-          fetchChambers()
-        ]);
-      } catch (error) {
-        showError('Erro ao carregar dados iniciais. Tente novamente.');
-        console.error('Erro ao carregar dados:', error);
-      }
-    };
-
-    loadInitialData();
-  }, [fetchLocations, fetchSeedTypes, fetchChambers, showError]);
+  // ✅ CORREÇÃO: Removido useEffect duplicado que causava double-fetch
+  // Os hooks individuais (useLocationsWithChambers, useSeedTypes, useChambers) 
+  // já têm seus próprios useEffect para carregar dados automaticamente
 
   // Handler para seleção de localização
   const handleLocationSelect = (location: LocationWithChamber | null) => {
@@ -62,7 +50,7 @@ export const useNewProductPage = () => {
     }
   };
 
-  // Handler para submissão do formulário
+  // Handler para submissão do formulário individual
   const handleSubmit = async (data: CreateProductFormData) => {
     return withLoading(async () => {
       try {
@@ -99,6 +87,26 @@ export const useNewProductPage = () => {
     });
   };
 
+  // Handler para submissão do formulário em lote
+  const handleBatchSubmit = async (data: BatchFormData) => {
+    return withLoading(async () => {
+      try {
+        const response = await api.post('/products/batch', data);
+        
+        const { batchId, count } = response.data.data;
+        showSuccess(`Lote de ${count} produtos cadastrado com sucesso! ID do lote: ${batchId}`);
+        
+        // Navegar de volta para lista de produtos
+        navigate('/products');
+        
+      } catch (error: any) {
+        console.error('Erro ao criar lote de produtos:', error);
+        const errorMessage = error.response?.data?.message || 'Erro ao cadastrar lote de produtos. Verifique os dados e tente novamente.';
+        showError(errorMessage);
+      }
+    });
+  };
+
   // Handler para cancelar
   const handleCancel = () => {
     if (window.confirm('Deseja cancelar o cadastro? Todos os dados serão perdidos.')) {
@@ -110,6 +118,9 @@ export const useNewProductPage = () => {
   const isLoading = locationsLoading || seedTypesLoading || chambersLoading;
   const hasRequiredData = seedTypes.length > 0 && chambers.length > 0;
   const hasError = !hasRequiredData && !isLoading;
+
+  // ✅ CORREÇÃO: Verificação adicional para prevenir warnings MUI
+  const isDataReady = !isLoading && hasRequiredData;
 
   return {
     // Dados
@@ -124,12 +135,14 @@ export const useNewProductPage = () => {
     formLoading,
     hasRequiredData,
     hasError,
+    isDataReady,
     
 
     
     // Handlers
     handleLocationSelect,
     handleSubmit,
+    handleBatchSubmit,
     handleCancel,
   };
 }; 

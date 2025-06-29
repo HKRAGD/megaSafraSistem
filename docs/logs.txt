@@ -1,31 +1,82 @@
-Compiled with problems:
-×
-ERROR in src/hooks/useOptimizedFetch.ts:101:25
-TS2802: Type 'IterableIterator<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
-     99 |     if (keyPattern) {
-    100 |       // Invalidar chaves que correspondem ao padrão
-  > 101 |       for (const key of cache.current.keys()) {
-        |                         ^^^^^^^^^^^^^^^^^^^^
-    102 |         if (key.includes(keyPattern)) {
-    103 |           cache.current.delete(key);
-    104 |         }
-ERROR in src/hooks/useRequestCache.ts:51:14
-TS2352: Conversion of type 'Promise<T>' to type 'Promise<R>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Type 'T' is not comparable to type 'R'.
-    'R' could be instantiated with an arbitrary type which could be unrelated to 'T'.
-    49 |     if (existingRequest) {
-    50 |       console.log(`🔄 Deduplicando requisição: ${key}`);
-  > 51 |       return existingRequest as Promise<R>;
-       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    52 |     }
-    53 |
-    54 |     // Executar nova requisição
-ERROR in src/hooks/useRequestCache.ts:56:38
-TS2352: Conversion of type 'Promise<R>' to type 'Promise<T>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-    54 |     // Executar nova requisição
-    55 |     const promise = requestFn();
-  > 56 |     pendingRequests.current.set(key, promise as Promise<T>);
-       |                                      ^^^^^^^^^^^^^^^^^^^^^
-    57 |
-    58 |     try {
-    59 |       const result = await promise;
+🚀 GET /locations/available {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /seed-types {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /locations/available {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /seed-types {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /locations/available {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /seed-types {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /locations/available {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /seed-types {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:184 ✅ GET /seed-types {status: 200, data: {…}}
+useSeedTypes.ts:53 ✅ 10 tipos de sementes carregados
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+useChambers.ts:125 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /seed-types {status: 200, data: {…}}
+useSeedTypes.ts:53 ✅ 10 tipos de sementes carregados
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+useChambers.ts:125 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /locations/available {status: 200, data: {…}}
+useLocationsWithChambers.ts:154 📦 1000 localizações disponíveis retornadas da API
+useLocationsWithChambers.ts:170 ✅ 1000 localizações disponíveis carregadas e normalizadas
+useLocationsWithChambers.ts:171 📊 Capacidade total disponível: 1637460kg
+useAllLocationsWithChambers.ts:132 🔄 Carregando TODAS as localizações (sem limitação de paginação)...
+locationService.ts:24 🔍 locationService.getAllUnpaginated: Iniciando busca de todas as localizações...
+useAllLocationsWithChambers.ts:132 🔄 Carregando TODAS as localizações (sem limitação de paginação)...
+locationService.ts:24 🔍 locationService.getAllUnpaginated: Iniciando busca de todas as localizações...
+api.ts:133 🚀 GET /locations {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /locations {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:133 🚀 GET /chambers?limit=100&page=1 {headers: AxiosHeaders, data: undefined}
+api.ts:184 ✅ GET /seed-types {status: 200, data: {…}}
+useSeedTypes.ts:53 ✅ 10 tipos de sementes carregados
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+useChambers.ts:125 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /seed-types {status: 200, data: {…}}
+useSeedTypes.ts:53 ✅ 10 tipos de sementes carregados
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+useChambers.ts:125 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /locations/available {status: 200, data: {…}}
+useLocationsWithChambers.ts:194 ✅ RefreshData: 1000 localizações carregadas
+api.ts:184 ✅ GET /locations/available {status: 200, data: {…}}
+useLocationsWithChambers.ts:194 ✅ RefreshData: 1000 localizações carregadas
+api.ts:184 ✅ GET /locations/available {status: 200, data: {…}}
+useLocationsWithChambers.ts:154 📦 1000 localizações disponíveis retornadas da API
+useLocationsWithChambers.ts:170 ✅ 1000 localizações disponíveis carregadas e normalizadas
+useLocationsWithChambers.ts:171 📊 Capacidade total disponível: 1637460kg
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+useChambers.ts:125 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /chambers?limit=100&page=1 {status: 200, data: {…}}
+chamberService.ts:27 ✅ 1 câmaras carregadas
+useChambers.ts:125 ✅ 1 câmaras carregadas
+api.ts:184 ✅ GET /locations {status: 200, data: {…}}
+locationService.ts:28 📦 Primeira página: 1792 localizações
+locationService.ts:29 📊 Paginação: {currentPage: 1, totalPages: 1, totalItems: 1792, itemsPerPage: 10000, hasNextPage: false, …}
+locationService.ts:71 ✅ Página única: 1792 localizações carregadas
+useAllLocationsWithChambers.ts:139 📦 1792 localizações retornadas da API (todas as páginas)
+useAllLocationsWithChambers.ts:155 ✅ Todas as localizações já têm dados de câmara populados
+useAllLocationsWithChambers.ts:158 ✅ 1792 localizações processadas
+useAllLocationsWithChambers.ts:163 🔴 253 localizações ocupadas | 🟢 1539 localizações disponíveis
+useAllLocationsWithChambers.ts:167 📝 Exemplos de localizações ocupadas: (3) [{…}, {…}, {…}]
+api.ts:184 ✅ GET /locations {status: 200, data: {…}}
+locationService.ts:28 📦 Primeira página: 1792 localizações
+locationService.ts:29 📊 Paginação: {currentPage: 1, totalPages: 1, totalItems: 1792, itemsPerPage: 10000, hasNextPage: false, …}
+locationService.ts:71 ✅ Página única: 1792 localizações carregadas
+useAllLocationsWithChambers.ts:139 📦 1792 localizações retornadas da API (todas as páginas)
+useAllLocationsWithChambers.ts:155 ✅ Todas as localizações já têm dados de câmara populados
+useAllLocationsWithChambers.ts:158 ✅ 1792 localizações processadas
+useAllLocationsWithChambers.ts:163 🔴 253 localizações ocupadas | 🟢 1539 localizações disponíveis
+useAllLocationsWithChambers.ts:167 📝 Exemplos de localizações ocupadas: (3) [{…}, {…}, {…}]

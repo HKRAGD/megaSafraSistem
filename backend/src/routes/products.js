@@ -64,6 +64,13 @@ router.post('/',
   productController.createProduct
 );
 
+// Nova rota para cadastro em lote
+router.post('/batch', 
+  canCreateProduct, // Apenas ADMIN pode criar produtos em lote
+  validateBody(productSchemas.createBatch), // Validação robusta dos dados de entrada
+  productController.createProductsBatch
+);
+
 router.put('/:id', 
   authorizeRole(['ADMIN', 'OPERATOR']), // Ambos podem atualizar dados básicos
   validateBody(productSchemas.update),
@@ -102,6 +109,12 @@ router.post('/:id/request-withdrawal',
 router.get('/pending-location', 
   canLocateProduct, // Apenas OPERATOR precisa ver isso
   productController.getProductsPendingLocation
+);
+
+// Buscar produtos aguardando locação, agrupados por lote
+router.get('/pending-allocation-grouped', 
+  canLocateProduct, // Apenas OPERATOR precisa ver isso
+  productController.getProductsPendingAllocationGrouped
 );
 
 // Buscar produtos aguardando retirada
