@@ -3,43 +3,14 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { productService } from '../services/productService';
-import { CreateProductFormData, ApiResponse, Product } from '../types';
+import { CreateProductFormData, ApiResponse, Product, CreateBatchProductsPayload } from '../types';
+import { batchIndividualProductSchema, batchFormSchema } from '../schemas/productSchemas';
 
-// This schema will be for each individual product within the batch
-const batchIndividualProductSchema = yup.object({
-  name: yup.string().min(2, 'Nome deve ter pelo menos 2 caracteres').required('Nome é obrigatório'),
-  lot: yup.string().min(1, 'Lote é obrigatório').required('Lote é obrigatório'),
-  seedTypeId: yup.string().required('Tipo de semente é obrigatório'),
-  quantity: yup.number().integer('Quantidade deve ser um número inteiro').min(1, 'Quantidade deve ser pelo menos 1').required('Quantidade é obrigatória'),
-  storageType: yup.string().oneOf(['saco', 'bag'], 'Tipo de armazenamento inválido').required('Tipo de armazenamento é obrigatório'),
-  weightPerUnit: yup.number().min(0.001, 'Peso deve ser pelo menos 0.001kg').max(1500, 'Peso não pode exceder 1500kg').required('Peso por unidade é obrigatório'),
-  expirationDate: yup.date().nullable().min(new Date(), 'Data de expiração deve ser futura').optional(),
-  notes: yup.string().max(1000, 'Observações devem ter no máximo 1000 caracteres').optional(),
-  tracking: yup.object({
-    batchNumber: yup.string().max(50, 'Número do lote deve ter no máximo 50 caracteres').optional(),
-    origin: yup.string().max(200, 'Origem deve ter no máximo 200 caracteres').optional(),
-    supplier: yup.string().max(200, 'Fornecedor deve ter no máximo 200 caracteres').optional(),
-    qualityGrade: yup.string().oneOf(['A', 'B', 'C', 'D'], 'Grau de qualidade inválido').optional()
-  }).optional()
-});
-
-// This is the main schema for the batch form
-const batchFormSchema = yup.object({
-  clientId: yup.string().required('Cliente é obrigatório para cadastro em lote'),
-  products: yup.array()
-    .of(batchIndividualProductSchema)
-    .min(1, 'É necessário adicionar pelo menos 1 produto ao lote')
-    .max(50, 'O número máximo de produtos por lote é 50')
-    .required('A lista de produtos não pode ser vazia')
-});
+// Constants
+export const MAX_BATCH_PRODUCTS = 50;
 
 // Type for the form data
 export type BatchProductFormInput = yup.InferType<typeof batchFormSchema>;
-// Type for the API payload
-export type CreateBatchProductsPayload = {
-  clientId: string;
-  products: Array<Omit<CreateProductFormData, 'locationId' | 'clientId'>>;
-};
 
 interface UseBatchProductsProps {
   onSuccess?: (products: Product[]) => void;
@@ -67,14 +38,8 @@ export const useBatchProducts = ({
           quantity: 1,
           storageType: 'saco',
           weightPerUnit: 50,
-          expirationDate: null,
-          notes: '',
-          tracking: {
-            batchNumber: '',
-            origin: '',
-            supplier: '',
-            qualityGrade: 'A'
-          }
+          expirationDate: undefined,
+          notes: ''
         }
       ]
     }
@@ -99,13 +64,7 @@ export const useBatchProducts = ({
       storageType: 'saco',
       weightPerUnit: 50,
       expirationDate: null,
-      notes: '',
-      tracking: {
-        batchNumber: '',
-        origin: '',
-        supplier: '',
-        qualityGrade: 'A'
-      }
+      notes: ''
     });
   }, [append]);
 
@@ -141,9 +100,7 @@ export const useBatchProducts = ({
         clientId: data.clientId,
         products: data.products.map(product => ({
           ...product,
-          expirationDate: product.expirationDate ? product.expirationDate.toISOString() : undefined,
-          locationId: undefined,
-          clientId: undefined
+          expirationDate: product.expirationDate ? product.expirationDate.toISOString() : undefined
         }))
       };
 
@@ -165,7 +122,7 @@ export const useBatchProducts = ({
     }
   }, [onSuccess, onError, form, defaultValues]);
 
-  // Expose total weight for each product in the batch (if needed for display)
+  // Calculate individual product weight (internal utility)
   const calculateProductTotalWeight = useCallback((index: number) => {
     const product = form.getValues(`products.${index}`);
     if (!product) return 0;
@@ -174,6 +131,16 @@ export const useBatchProducts = ({
 
   // Expose total products in the batch
   const totalProductsInBatch = useMemo(() => fields.length, [fields.length]);
+
+  // Calculate total batch weight
+  const totalBatchWeight = useMemo(() => {
+    const products = form.watch('products') || [];
+    return products.reduce((total, product) => {
+      const quantity = product?.quantity || 0;
+      const weightPerUnit = product?.weightPerUnit || 0;
+      return total + (quantity * weightPerUnit);
+    }, 0);
+  }, [form]);
 
   return {
     form,
@@ -187,7 +154,7 @@ export const useBatchProducts = ({
     error,
     clearError,
     totalProductsInBatch,
-    calculateProductTotalWeight,
+    totalBatchWeight,
     formState: form.formState
   };
 };

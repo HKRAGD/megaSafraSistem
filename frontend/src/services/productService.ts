@@ -5,10 +5,10 @@ import {
   ProductFilters,
   ApiResponse,
   PaginatedResponse,
-  ProductsResponse 
+  ProductsResponse,
+  CreateBatchProductsPayload
 } from '../types';
 import api, { apiGet, apiPost, apiPut, apiDelete } from './api';
-import { CreateBatchProductsPayload } from '../hooks/useBatchProducts';
 
 // ============================================================================
 // PRODUCT SERVICE - CRUD de Produtos
@@ -78,9 +78,20 @@ export const productService = {
    */
   createBatchProducts: async (payload: CreateBatchProductsPayload): Promise<ApiResponse<{ products: Product[] }>> => {
     try {
-      const response = await apiPost<ApiResponse<{ products: Product[] }>>('/products/batch', payload);
-      console.log(`✅ ${response.data.products.length} produtos cadastrados em lote.`);
-      return response;
+      const response = await apiPost<any>('/products/batch', payload);
+      
+      // O backend retorna { batchId, clientId, productsCreated, totalProducts }
+      // Mas o frontend espera { products }. Vamos adaptar a resposta:
+      const adaptedResponse = {
+        success: response.success,
+        message: response.message,
+        data: {
+          products: response.data.productsCreated || []
+        }
+      };
+      
+      console.log(`✅ ${response.data.totalProducts || response.data.productsCreated?.length || 0} produtos cadastrados em lote.`);
+      return adaptedResponse as ApiResponse<{ products: Product[] }>;
     } catch (error: any) {
       console.error('❌ Erro ao cadastrar produtos em lote:', error);
       throw error;

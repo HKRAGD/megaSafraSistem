@@ -24,7 +24,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { useNewProductPage } from './hooks/useNewProductPage';
 import { NewProductForm } from './components/NewProductForm';
-import { BatchProductForm } from '../../../components/products/BatchProductForm';
+import { SimpleBatchProductForm } from '../../../components/products/BatchProductForm/SimpleBatchProductForm';
 
 const NewProductPageSkeleton: React.FC = () => (
   <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -167,13 +167,13 @@ export const NewProductPage: React.FC = () => {
               />
             </>
           ) : (
-            <BatchProductForm
+            <SimpleBatchProductForm
               seedTypes={pageLogic.seedTypes}
               chambers={pageLogic.chambers}
               availableLocations={pageLogic.availableLocations}
               allLocations={pageLogic.allLocations}
-              onSubmit={pageLogic.handleBatchSubmit}
               onCancel={pageLogic.handleCancel}
+              batchForm={pageLogic.batchForm}
             />
           )}
         </CardContent>

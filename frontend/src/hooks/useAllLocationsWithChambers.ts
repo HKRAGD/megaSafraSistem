@@ -88,7 +88,10 @@ const processApiLocations = (apiLocations: any[]): LocationWithChamber[] => {
 export const useAllLocationsWithChambers = (
   options: UseAllLocationsWithChambersOptions = {}
 ): UseAllLocationsWithChambersReturn => {
-  const { autoFetch = true, initialFilters = {} } = options;
+  const { autoFetch = true, initialFilters: propInitialFilters = {} } = options;
+
+  // Estabilizar initialFilters para evitar loops infinitos
+  const stableInitialFilters = useMemo(() => propInitialFilters, [propInitialFilters]);
 
   // ============================================================================
   // ESTADO LOCAL
@@ -242,9 +245,8 @@ export const useAllLocationsWithChambers = (
    * Atualizar todos os dados
    */
   const refreshData = useCallback(async (): Promise<void> => {
-    await fetchAllLocationsWithChambers(initialFilters);
-  }, []); // ✅ CORREÇÃO: Remover todas as dependências para evitar loops
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    await fetchAllLocationsWithChambers();
+  }, [fetchAllLocationsWithChambers]);
 
   // ============================================================================
   // EFEITOS
@@ -252,10 +254,9 @@ export const useAllLocationsWithChambers = (
 
   useEffect(() => {
     if (autoFetch) {
-      fetchAllLocationsWithChambers(initialFilters);
+      fetchAllLocationsWithChambers(stableInitialFilters);
     }
-  }, [autoFetch]); // ✅ CORREÇÃO: Remover dependências que causam loop infinito
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, fetchAllLocationsWithChambers, stableInitialFilters]);
 
   // ============================================================================
   // RETURN

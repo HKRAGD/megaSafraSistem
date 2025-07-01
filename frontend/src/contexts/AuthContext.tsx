@@ -293,7 +293,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [state.user?.role, state.isAuthenticated]);
 
   const canLocateProduct = useCallback((): boolean => {
-    return state.user?.role === 'OPERATOR' && state.isAuthenticated;
+    return (state.user?.role === 'OPERATOR' || state.user?.role === 'ADMIN') && state.isAuthenticated;
   }, [state.user?.role, state.isAuthenticated]);
 
   const canMoveProduct = useCallback((): boolean => {

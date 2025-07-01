@@ -25,6 +25,7 @@ const SettingsPage = React.lazy(() => import('./pages/Settings/SettingsPage').th
 const ReportsPage = React.lazy(() => import('./pages/Reports/ReportsPage'));
 const WithdrawalRequestsPage = React.lazy(() => import('./pages/WithdrawalRequests').then(module => ({ default: module.WithdrawalRequestsPage })));
 const ProductAllocationPage = React.lazy(() => import('./pages/ProductAllocation').then(module => ({ default: module.ProductAllocationPage })));
+const ProductGroupDetailPage = React.lazy(() => import('./pages/ProductAllocation/ProductGroupDetailPage'));
 
 // Tema Material-UI aprimorado
 const theme = createTheme({
@@ -218,6 +219,19 @@ function App() {
                     <AppLayout>
                       <Suspense fallback={<Loading variant="cards" text="Carregando produtos para alocação..." />}>
                         <ProductAllocationPage />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/product-allocation/group/:batchId" 
+                element={
+                  <ProtectedRoute requiredRole="OPERATOR">
+                    <AppLayout>
+                      <Suspense fallback={<Loading variant="page" text="Carregando detalhes do grupo..." />}>
+                        <ProductGroupDetailPage />
                       </Suspense>
                     </AppLayout>
                   </ProtectedRoute>

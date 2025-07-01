@@ -79,7 +79,7 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
     error: locationsError,
     refreshData: refreshLocations
   } = useLocationsWithChambers({
-    autoFetch: true,
+    autoFetch: false, // Controlar manualmente para evitar requisições desnecessárias
     initialFilters: {}
   });
 
@@ -90,9 +90,10 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
   const { 
     allLocationsWithChambers,
     loading: allLocationsLoading,
-    error: allLocationsError
+    error: allLocationsError,
+    refreshData: refreshAllLocations
   } = useAllLocationsWithChambers({
-    autoFetch: true,
+    autoFetch: false, // Controlar manualmente para evitar requisições desnecessárias
     initialFilters: {}
   });
 
@@ -139,6 +140,22 @@ export const ProductMove: React.FC<ProductMoveProps> = ({
   ];
 
   const currentOperation = operationOptions.find(op => op.value === operationType);
+
+  // Carregar dados necessários apenas uma vez quando o componente monta
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          refreshLocations(),
+          refreshAllLocations()
+        ]);
+      } catch (error) {
+        console.error('Erro ao carregar dados para movimentação:', error);
+      }
+    };
+    
+    loadData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset campos quando muda tipo de operação
   useEffect(() => {

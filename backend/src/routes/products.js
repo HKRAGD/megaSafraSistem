@@ -54,6 +54,30 @@ router.post('/generate-code',
   productController.generateProductCode
 );
 
+// Buscar produtos aguardando locação
+router.get('/pending-location', 
+  canLocateProduct, // Apenas OPERATOR precisa ver isso
+  productController.getProductsPendingLocation
+);
+
+// Buscar produtos aguardando locação, agrupados por lote
+router.get('/pending-allocation-grouped', 
+  canLocateProduct, // Apenas OPERATOR precisa ver isso
+  productController.getProductsPendingAllocationGrouped
+);
+
+// Buscar produtos de um lote específico (para página de detalhes)
+router.get('/by-batch/:batchId', 
+  canLocateProduct, // Apenas OPERATOR precisa ver isso
+  productController.getProductsByBatch
+);
+
+// Buscar produtos aguardando retirada
+router.get('/pending-withdrawal', 
+  authorizeRole(['ADMIN', 'OPERATOR']), // Ambos podem ver
+  productController.getProductsPendingWithdrawal
+);
+
 // Rota específica por ID - SEMPRE POR ÚLTIMO
 router.get('/:id', productController.getProduct);
 
@@ -103,24 +127,6 @@ router.post('/:id/locate',
 router.post('/:id/request-withdrawal', 
   canRequestWithdrawal, // Apenas ADMIN pode solicitar retiradas
   productController.requestWithdrawal
-);
-
-// Buscar produtos aguardando locação
-router.get('/pending-location', 
-  canLocateProduct, // Apenas OPERATOR precisa ver isso
-  productController.getProductsPendingLocation
-);
-
-// Buscar produtos aguardando locação, agrupados por lote
-router.get('/pending-allocation-grouped', 
-  canLocateProduct, // Apenas OPERATOR precisa ver isso
-  productController.getProductsPendingAllocationGrouped
-);
-
-// Buscar produtos aguardando retirada
-router.get('/pending-withdrawal', 
-  authorizeRole(['ADMIN', 'OPERATOR']), // Ambos podem ver
-  productController.getProductsPendingWithdrawal
 );
 
 // ============================================================================

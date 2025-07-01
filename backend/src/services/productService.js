@@ -23,7 +23,7 @@ const locationService = require('./locationService');
 const createProduct = async (productData, userId, options = {}) => {
   try {
     const {
-      autoFindLocation = true,
+      autoFindLocation = false,
       validateSeedType = true,
       generateTrackingCode = true,
       calculateOptimalExpiration = true,
@@ -61,6 +61,12 @@ const createProduct = async (productData, userId, options = {}) => {
     
     if (clientId === '') {
       clientId = undefined;
+    }
+    
+    // Tratar batchId vazio/undefined para evitar conversão para string 'undefined'
+    let batchId = productData.batchId;
+    if (batchId === '' || batchId === 'undefined') {
+      batchId = undefined;
     }
     
     let location = null;
@@ -113,6 +119,7 @@ const createProduct = async (productData, userId, options = {}) => {
       ...productData,
       locationId, // Pode ser undefined - o modelo definirá o status automaticamente
       clientId, // Pode ser undefined - cliente opcional
+      batchId, // Pode ser undefined - validado para evitar 'undefined' string
       totalWeight,
       entryDate: new Date(),
       metadata: {
@@ -1451,12 +1458,41 @@ const getProductsPendingWithdrawal = async (filters = {}) => {
  */
 const getProductsPendingAllocationGrouped = async () => {
   try {
-    const batches = await Product.aggregate([
+    const result = await Product.aggregate([
       { $match: { status: 'AGUARDANDO_LOCACAO' } },
+      {
+        $addFields: {
+          // Converter IDs para ObjectId com segurança, definindo null em caso de erro
+          seedTypeId_obj: {
+            $convert: {
+              input: "$seedTypeId",
+              to: "objectId",
+              onError: null,
+              onNull: null
+            }
+          },
+          clientId_obj: {
+            $convert: {
+              input: "$clientId", 
+              to: "objectId",
+              onError: null,
+              onNull: null
+            }
+          },
+          // Identificar se o produto é agrupado (batchId válido e não vazio/undefined)
+          isGroupedProduct: {
+            $and: [
+              { $ne: ["$batchId", null] },
+              { $ne: ["$batchId", ""] },
+              { $ne: ["$batchId", "undefined"] }
+            ]
+          }
+        }
+      },
       {
         $lookup: {
           from: 'seedtypes',
-          localField: 'seedTypeId',
+          localField: 'seedTypeId_obj',
           foreignField: '_id',
           as: 'seedTypeDetails'
         }
@@ -1470,7 +1506,7 @@ const getProductsPendingAllocationGrouped = async () => {
       {
         $lookup: {
           from: 'clients',
-          localField: 'clientId',
+          localField: 'clientId_obj',
           foreignField: '_id',
           as: 'clientDetails'
         }
@@ -1483,14 +1519,7 @@ const getProductsPendingAllocationGrouped = async () => {
       },
       {
         $addFields: {
-          _groupKey: {
-            $cond: {
-              if: { $ne: ["$batchId", null] },
-              then: "$batchId",
-              else: "$_id"
-            }
-          },
-          productForGroup: {
+          productData: {
             id: "$_id",
             name: "$name",
             lot: "$lot",
@@ -1505,45 +1534,239 @@ const getProductsPendingAllocationGrouped = async () => {
             storageType: "$storageType",
             weightPerUnit: "$weightPerUnit",
             locationId: "$locationId",
-            clientId: "$clientId",
+            clientId: "$clientDetails",
             batchId: "$batchId"
           }
         }
       },
       {
-        $group: {
-          _id: "$_groupKey",
-          batchId: { $first: "$batchId" },
-          clientId: { $first: "$clientDetails._id" },
-          clientName: { $first: "$clientDetails.name" },
-          productCount: { $sum: 1 },
-          createdAt: { $min: "$createdAt" },
-          products: { $push: "$productForGroup" }
+        $facet: {
+          groupedProducts: [
+            { $match: { isGroupedProduct: true } },
+            {
+              $group: {
+                _id: "$batchId",
+                batchId: { $first: "$batchId" },
+                clientId: { $first: "$clientDetails._id" },
+                clientName: { $first: "$clientDetails.name" },
+                productCount: { $sum: 1 },
+                createdAt: { $min: "$createdAt" },
+                products: { $push: "$productData" }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                batchId: 1,
+                clientId: 1,
+                clientName: 1,
+                productCount: 1,
+                createdAt: 1,
+                products: 1
+              }
+            },
+            { $sort: { createdAt: -1 } }
+          ],
+          individualProducts: [
+            { $match: { isGroupedProduct: false } },
+            {
+              $project: {
+                _id: 0,
+                id: "$productData.id",
+                name: "$productData.name",
+                lot: "$productData.lot",
+                status: "$productData.status",
+                quantity: "$productData.quantity",
+                totalWeight: "$productData.totalWeight",
+                seedTypeId: "$productData.seedTypeId",
+                expirationDate: "$productData.expirationDate",
+                createdAt: "$productData.createdAt",
+                tracking: "$productData.tracking",
+                notes: "$productData.notes",
+                storageType: "$productData.storageType",
+                weightPerUnit: "$productData.weightPerUnit",
+                locationId: "$productData.locationId",
+                clientId: "$productData.clientId",
+                batchId: "$productData.batchId"
+              }
+            },
+            { $sort: { createdAt: -1 } }
+          ]
         }
-      },
-      {
-        $project: {
-          _id: 0,
-          batchId: 1,
-          clientId: 1,
-          clientName: 1,
-          productCount: 1,
-          createdAt: 1,
-          products: 1
-        }
-      },
-      { $sort: { createdAt: -1 } }
+      }
     ]);
+
+    // Extrair os resultados do facet
+    const { groupedProducts, individualProducts } = result[0];
 
     return {
       success: true,
       data: {
-        batches: batches
+        groupedProducts: groupedProducts,
+        individualProducts: individualProducts,
+        totalGrouped: groupedProducts.length,
+        totalIndividual: individualProducts.length,
+        // Manter compatibilidade com código existente
+        batches: [...groupedProducts, ...individualProducts.map(product => ({
+          batchId: null,
+          clientId: product.clientId?._id || null,
+          clientName: product.clientId?.name || null,
+          productCount: 1,
+          createdAt: product.createdAt,
+          products: [product]
+        }))]
       }
     };
 
   } catch (error) {
     throw new Error(`Erro ao buscar produtos aguardando alocação agrupados: ${error.message}`);
+  }
+};
+
+/**
+ * Buscar produtos por batchId com dados relacionados populados
+ * @param {String} batchId - ID do lote
+ * @returns {Object} Detalhes do grupo de produtos do lote
+ */
+const getProductsByBatch = async (batchId) => {
+  try {
+    if (!batchId || batchId === '' || batchId === 'undefined') {
+      throw new Error('batchId é obrigatório');
+    }
+
+    const result = await Product.aggregate([
+      { $match: { batchId: batchId } },
+      {
+        $addFields: {
+          // Converter IDs para ObjectId com segurança
+          seedTypeId_obj: {
+            $convert: {
+              input: "$seedTypeId",
+              to: "objectId",
+              onError: null,
+              onNull: null
+            }
+          },
+          locationId_obj: {
+            $convert: {
+              input: "$locationId",
+              to: "objectId", 
+              onError: null,
+              onNull: null
+            }
+          },
+          clientId_obj: {
+            $convert: {
+              input: "$clientId",
+              to: "objectId",
+              onError: null,
+              onNull: null
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'seedtypes',
+          localField: 'seedTypeId_obj',
+          foreignField: '_id',
+          as: 'seedTypeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$seedTypeDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'locations',
+          localField: 'locationId_obj',
+          foreignField: '_id',
+          as: 'locationDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$locationDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'clients',
+          localField: 'clientId_obj',
+          foreignField: '_id',
+          as: 'clientDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$clientDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          id: "$_id",
+          name: 1,
+          lot: 1,
+          status: 1,
+          quantity: 1,
+          totalWeight: 1,
+          seedTypeId: "$seedTypeDetails",
+          locationId: "$locationDetails",
+          clientId: "$clientDetails", 
+          batchId: 1,
+          expirationDate: 1,
+          createdAt: 1,
+          entryDate: 1,
+          tracking: 1,
+          notes: 1,
+          storageType: 1,
+          weightPerUnit: 1
+        }
+      },
+      { $sort: { createdAt: 1 } }
+    ]);
+
+    if (result.length === 0) {
+      return {
+        success: false,
+        message: 'Nenhum produto encontrado para este lote'
+      };
+    }
+
+    // Agrupar por informações do cliente e calcular estatísticas
+    const firstProduct = result[0];
+    const clientId = firstProduct.clientId?._id || null;
+    const clientName = firstProduct.clientId?.name || null;
+    
+    // Calcular estatísticas
+    const totalProducts = result.length;
+    const allocatedProducts = result.filter(product => product.status === 'LOCADO').length;
+    
+    // Buscar a data de criação mais antiga do lote
+    const createdAt = result.reduce((earliest, product) => {
+      return product.createdAt < earliest ? product.createdAt : earliest;
+    }, result[0].createdAt);
+
+    return {
+      success: true,
+      data: {
+        batchId: batchId,
+        clientId: clientId,
+        clientName: clientName,
+        products: result,
+        totalProducts: totalProducts,
+        allocatedProducts: allocatedProducts,
+        createdAt: createdAt
+      }
+    };
+
+  } catch (error) {
+    throw new Error(`Erro ao buscar produtos do lote: ${error.message}`);
   }
 };
 
@@ -1556,35 +1779,90 @@ const getProductsPendingAllocationGrouped = async () => {
  * @returns {Object} Resultado da operação em lote.
  */
 const createProductsBatch = async (clientId, productsArray, userId, batchId) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
+  const { executeWithTransactionIfAvailable } = require('../utils/database');
+  
+  // Implementação da operação de criação em lote
+  const batchOperation = async ({ session, useTransactions }) => {
     const productsCreated = [];
-    for (const productData of productsArray) {
-      // Aplicar clientId e batchId comuns a cada produto
-      const productDataWithBatch = {
-        ...productData,
-        clientId: clientId,
-        batchId: batchId
-      };
+    const failedProducts = [];
+    
+    console.log(`[ProductService] Iniciando criação em lote de ${productsArray.length} produtos`, {
+      batchId,
+      clientId,
+      useTransactions,
+      userId
+    });
 
-      // Reutilizar a lógica de createProduct, passando a sessão
-      const result = await createProduct(productDataWithBatch, userId, { session });
-      productsCreated.push(result.data.product);
+    for (let i = 0; i < productsArray.length; i++) {
+      const productData = productsArray[i];
+      try {
+        // Aplicar clientId e batchId comuns a cada produto
+        const productDataWithBatch = {
+          ...productData,
+          clientId: clientId,
+          batchId: batchId
+        };
+
+        // Reutilizar a lógica de createProduct, passando a sessão
+        // CRÍTICO: Desabilitar autoFindLocation para produtos em lote (devem ficar AGUARDANDO_LOCACAO)
+        const result = await createProduct(productDataWithBatch, userId, { 
+          session, 
+          autoFindLocation: false 
+        });
+        productsCreated.push(result.data.product);
+        
+        console.log(`[ProductService] Produto ${i + 1}/${productsArray.length} criado:`, {
+          productId: result.data.product.id,
+          name: result.data.product.name,
+          lot: result.data.product.lot
+        });
+
+      } catch (error) {
+        console.error(`[ProductService] Erro ao criar produto ${i + 1}:`, error.message);
+        
+        if (!useTransactions) {
+          // Sem transações: registrar falha mas continuar
+          failedProducts.push({
+            index: i,
+            productData,
+            error: error.message
+          });
+        } else {
+          // Com transações: falhar imediatamente (rollback automático)
+          throw error;
+        }
+      }
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    // Se não estamos usando transações e houve falhas, implementar rollback manual
+    if (!useTransactions && failedProducts.length > 0) {
+      console.warn(`[ProductService] ${failedProducts.length} produtos falharam sem transações - executando rollback manual`);
+      
+      // Remover produtos criados com sucesso (rollback manual)
+      for (const createdProduct of productsCreated) {
+        try {
+          await removeProduct(createdProduct.id, userId, { skipValidation: true });
+          console.log(`[ProductService] Produto ${createdProduct.name} removido durante rollback`);
+        } catch (rollbackError) {
+          console.error(`[ProductService] Erro durante rollback do produto ${createdProduct.name}:`, rollbackError.message);
+        }
+      }
+      
+      // Throw error com detalhes das falhas
+      throw new Error(`Falha na criação em lote. Produtos com erro: ${failedProducts.map(f => f.index + 1).join(', ')}`);
+    }
 
     return {
       batchId,
       clientId,
-      productsCreated
+      productsCreated,
+      totalProducts: productsCreated.length
     };
+  };
 
+  try {
+    return await executeWithTransactionIfAvailable(batchOperation);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     throw new Error(`Erro ao criar produtos em lote: ${error.message}`);
   }
 };
@@ -1609,5 +1887,6 @@ module.exports = {
   getProductsPendingLocation,
   getProductsPendingWithdrawal,
   getProductsPendingAllocationGrouped,
+  getProductsByBatch,
   createProductsBatch
 }; 

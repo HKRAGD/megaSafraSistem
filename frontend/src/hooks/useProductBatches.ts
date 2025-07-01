@@ -47,7 +47,7 @@ export const useProductBatches = (): UseProductBatchesReturn => {
       setLoading(true);
       setError(null);
 
-      const response = await api.get('/api/products/pending-allocation-grouped');
+      const response = await api.get('/products/pending-allocation-grouped');
       
       if (response.data?.success && response.data?.data?.batches) {
         setBatches(response.data.data.batches);

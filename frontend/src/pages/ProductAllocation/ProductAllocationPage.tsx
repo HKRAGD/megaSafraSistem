@@ -9,18 +9,7 @@ import {
   Button,
   Chip,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
   Avatar,
-  IconButton,
-  Tooltip,
   Stack,
   ToggleButton,
   ToggleButtonGroup,
@@ -29,7 +18,6 @@ import {
   LocationOn as LocationIcon,
   Assignment as AssignmentIcon,
   Check as CheckIcon,
-  Info as InfoIcon,
   Refresh as RefreshIcon,
   Warning as WarningIcon,
   ViewList as ViewListIcon,
@@ -46,7 +34,7 @@ import { useProductBatches } from '../../hooks/useProductBatches';
 import { ProductWithRelations, LocationWithChamber } from '../../types';
 import { Loading } from '../../components/common/Loading';
 import Toast from '../../components/common/Toast';
-import { LocationTreeNavigation } from '../../components/ui/LocationTreeNavigation';
+import { ProductAllocationDialog } from '../../components/products/ProductAllocationDialog';
 import { ProductBatchCard } from '../../components/products/ProductBatchCard';
 
 export const ProductAllocationPage: React.FC = () => {
@@ -102,8 +90,11 @@ export const ProductAllocationPage: React.FC = () => {
 
   // As localizações serão filtradas pelo LocationMap3DAdvanced internamente
 
-  // Filtros para produtos aguardando locação
-  const pendingProductsFilters = { status: 'AGUARDANDO_LOCACAO' as const, limit: 50 };
+  // Filtros para produtos aguardando locação (memoizado para evitar loops de useEffect)
+  const pendingProductsFilters = useMemo(
+    () => ({ status: 'AGUARDANDO_LOCACAO' as const, limit: 50 }),
+    []
+  );
 
   useEffect(() => {
     // Carregar produtos individuais e grupos
@@ -443,107 +434,19 @@ export const ProductAllocationPage: React.FC = () => {
         )
       )}
       {/* Allocation Dialog */}
-      <Dialog
+      <ProductAllocationDialog
         open={showAllocationDialog}
         onClose={() => setShowAllocationDialog(false)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <LocationIcon color="primary" />
-            Alocar Produto: {selectedProduct?.name}
-          </Box>
-        </DialogTitle>
-        
-        <DialogContent dividers>
-          <Box sx={{ mb: 3 }}>
-            <Alert severity="info" icon={<InfoIcon />}>
-              Selecione uma localização na árvore hierárquica abaixo para alocar este produto. O produto passará para o status "Locado".
-            </Alert>
-          </Box>
-
-          <Grid container spacing={3}>
-            {/* Navegação em árvore ocupa toda a largura */}
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ 
-                border: '1px solid', 
-                borderColor: 'divider',
-                borderRadius: 1,
-                minHeight: 500,
-                backgroundColor: 'background.paper'
-              }}>
-                <LocationTreeNavigation
-                  onLocationSelect={handleTreeLocationSelect}
-                  selectedLocationId={selectedLocationId || undefined}
-                  showStats={true}
-                  allowModeToggle={false}
-                  hideViewToggle={true}
-                  filters={{
-                    status: 'available'
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* Feedback da localização selecionada */}
-            <Grid size={{ xs: 12 }}>
-              {selectedLocationId ? (
-                <Alert severity="success">
-                  <Typography variant="body2">
-                    Localização selecionada: {availableLocations.find(loc => loc.id === selectedLocationId)?.code || 'N/A'}
-                  </Typography>
-                </Alert>
-              ) : (
-                <Alert severity="info">
-                  <Typography variant="body2">
-                    Navegue pela árvore e clique em uma localização (andar) para selecioná-la.
-                  </Typography>
-                </Alert>
-              )}
-            </Grid>
-
-            {/* Campo de observações */}
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Observações da Alocação (opcional)"
-                multiline
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Digite observações sobre a alocação deste produto..."
-              />
-            </Grid>
-          </Grid>
-
-          {/* Aviso se não há localizações disponíveis */}
-          {availableLocations.length === 0 && !locationsLoading && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                Nenhuma localização disponível no sistema. Aguarde novas localizações serem liberadas ou contate o administrador.
-              </Typography>
-            </Alert>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button 
-            onClick={() => setShowAllocationDialog(false)}
-            disabled={isAllocating}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleAllocate}
-            variant="contained"
-            disabled={!selectedLocationId || isAllocating}
-            startIcon={isAllocating ? undefined : <CheckIcon />}
-          >
-            {isAllocating ? 'Alocando...' : 'Confirmar Alocação'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onAllocate={handleAllocate}
+        selectedProduct={selectedProduct}
+        selectedLocationId={selectedLocationId}
+        onLocationSelect={handleTreeLocationSelect}
+        notes={notes}
+        onNotesChange={setNotes}
+        isAllocating={isAllocating}
+        availableLocationsCount={availableLocations.length}
+        locationsLoading={locationsLoading}
+      />
       <Toast
         open={toastOpen}
         onClose={() => setToastOpen(false)}

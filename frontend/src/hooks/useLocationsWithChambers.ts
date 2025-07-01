@@ -181,24 +181,8 @@ export const useLocationsWithChambers = (
    * Atualizar todos os dados
    */
   const refreshData = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    clearError();
-
-    try {
-      // Usar limite alto para pegar todas as localizações
-      const locationsResponse = await locationService.getAvailable({ limit: 1000 });
-      const apiLocations = locationsResponse.data.locations || [];
-      
-      const processedLocations = processApiLocations(apiLocations);
-      setAvailableLocationsWithChambers(processedLocations);
-      console.log(`✅ RefreshData: ${processedLocations.length} localizações carregadas`);
-    } catch (error: any) {
-      handleError(error, 'atualizar localizações com câmaras');
-      setAvailableLocationsWithChambers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [clearError, handleError]);
+    await fetchAvailableLocations();
+  }, [fetchAvailableLocations]);
 
   // ============================================================================
   // EFEITO DE INICIALIZAÇÃO
@@ -208,7 +192,8 @@ export const useLocationsWithChambers = (
     if (autoFetch) {
       fetchAvailableLocations(stableInitialFilters);
     }
-  }, [autoFetch, fetchAvailableLocations, stableInitialFilters]);
+  }, [autoFetch, stableInitialFilters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // ============================================================================
   // COMPUTED VALUES

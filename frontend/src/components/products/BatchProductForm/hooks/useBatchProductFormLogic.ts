@@ -22,13 +22,7 @@ const getDefaultProductData = () => ({
   storageType: 'saco' as const,
   weightPerUnit: 50,
   expirationDate: null,
-  notes: '',
-  tracking: {
-    batchNumber: '',
-    origin: '',
-    supplier: '',
-    qualityGrade: 'A' as const,
-  },
+  notes: ''
 });
 
 export const useBatchProductFormLogic = ({

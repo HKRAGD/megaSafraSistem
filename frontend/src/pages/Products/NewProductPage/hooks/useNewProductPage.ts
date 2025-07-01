@@ -7,8 +7,7 @@ import { useSeedTypes } from '../../../../hooks/useSeedTypes';
 import { useChambers } from '../../../../hooks/useChambers';
 import { useToast } from '../../../../contexts/ToastContext';
 import { useLoading } from '../../../../components/common/LoadingState';
-import { BatchFormData } from '../../../../components/products/BatchProductForm/utils/batchFormValidation';
-import api from '../../../../services/api';
+import { useBatchProducts, BatchProductFormInput } from '../../../../hooks/useBatchProducts';
 
 export const useNewProductPage = () => {
   const navigate = useNavigate();
@@ -36,6 +35,17 @@ export const useNewProductPage = () => {
   // Estado da página
   const [selectedLocation, setSelectedLocation] = useState<LocationWithChamber | null>(null);
   const [allLocations, setAllLocations] = useState<LocationWithChamber[]>([]);
+
+  // Hook para cadastro em lote
+  const batchHook = useBatchProducts({
+    onSuccess: (products) => {
+      showSuccess(`Lote de ${products.length} produtos cadastrado com sucesso!`);
+      navigate('/products');
+    },
+    onError: (message) => {
+      showError(message);
+    }
+  });
 
   // ✅ CORREÇÃO: Removido useEffect duplicado que causava double-fetch
   // Os hooks individuais (useLocationsWithChambers, useSeedTypes, useChambers) 
@@ -88,23 +98,10 @@ export const useNewProductPage = () => {
   };
 
   // Handler para submissão do formulário em lote
-  const handleBatchSubmit = async (data: BatchFormData) => {
-    return withLoading(async () => {
-      try {
-        const response = await api.post('/products/batch', data);
-        
-        const { batchId, count } = response.data.data;
-        showSuccess(`Lote de ${count} produtos cadastrado com sucesso! ID do lote: ${batchId}`);
-        
-        // Navegar de volta para lista de produtos
-        navigate('/products');
-        
-      } catch (error: any) {
-        console.error('Erro ao criar lote de produtos:', error);
-        const errorMessage = error.response?.data?.message || 'Erro ao cadastrar lote de produtos. Verifique os dados e tente novamente.';
-        showError(errorMessage);
-      }
-    });
+  const handleBatchSubmit = () => {
+    // Este handler não é mais necessário pois o submitBatch do hook já faz tudo
+    // Mantido apenas para compatibilidade
+    return Promise.resolve();
   };
 
   // Handler para cancelar
@@ -132,7 +129,7 @@ export const useNewProductPage = () => {
     
     // Estados de loading
     isLoading,
-    formLoading,
+    formLoading: formLoading || batchHook.loading,
     hasRequiredData,
     hasError,
     isDataReady,
@@ -144,5 +141,8 @@ export const useNewProductPage = () => {
     handleSubmit,
     handleBatchSubmit,
     handleCancel,
+    
+    // Batch form
+    batchForm: batchHook,
   };
 }; 

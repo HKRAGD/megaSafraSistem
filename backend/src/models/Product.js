@@ -74,7 +74,21 @@ const productSchema = new mongoose.Schema({
   },
   batchId: {
     type: String,
-    required: false
+    required: false,
+    validate: {
+      validator: function(value) {
+        // Rejeitar explicitamente a string 'undefined'
+        return value !== 'undefined';
+      },
+      message: 'batchId não pode ser a string "undefined"'
+    },
+    set: function(value) {
+      // Converter strings problemáticas para undefined
+      if (value === 'undefined' || value === '') {
+        return undefined;
+      }
+      return value;
+    }
   },
   entryDate: {
     type: Date,

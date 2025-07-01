@@ -24,7 +24,9 @@ import {
   Inventory as InventoryIcon,
   CalendarToday as CalendarIcon,
   Warning as WarningIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ProductWithRelations } from '../../../types';
@@ -64,9 +66,16 @@ export const ProductBatchCard: React.FC<ProductBatchCardProps> = React.memo(({
   disabled = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
+  };
+
+  const handleViewDetails = () => {
+    if (batch.batchId) {
+      navigate(`/product-allocation/group/${batch.batchId}`);
+    }
   };
 
   const formatDate = (date: string): string => {
@@ -150,6 +159,23 @@ export const ProductBatchCard: React.FC<ProductBatchCardProps> = React.memo(({
               size="small"
               variant="outlined"
             />
+
+            {/* Botão Ver Detalhes - apenas para lotes reais */}
+            {!isIndividualProduct && batch.batchId && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<VisibilityIcon />}
+                onClick={handleViewDetails}
+                disabled={disabled}
+                sx={{ 
+                  minWidth: 120,
+                  textTransform: 'none'
+                }}
+              >
+                Ver Detalhes
+              </Button>
+            )}
             
             <IconButton
               onClick={handleExpandClick}

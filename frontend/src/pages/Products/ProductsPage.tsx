@@ -301,10 +301,7 @@ export const ProductsPage: React.FC = () => {
   const handleMove = () => {
     if (selectedProduct) {
       setShowMoveModal(true);
-      // Carregar localizações para movimentação se necessário
-      if (availableLocationsWithChambers.length === 0) {
-        refreshLocationsWithChambers();
-      }
+      // Não precisa carregar localizações aqui - o ProductMove fará isso internamente
     }
     handleMenuClose();
   };

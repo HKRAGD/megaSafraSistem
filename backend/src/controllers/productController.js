@@ -892,6 +892,26 @@ const getProductsPendingAllocationGrouped = asyncHandler(async (req, res, next) 
   });
 });
 
+/**
+ * @desc    Buscar produtos por lote específico
+ * @route   GET /api/products/by-batch/:batchId
+ * @access  Private (All authenticated users)
+ */
+const getProductsByBatch = asyncHandler(async (req, res, next) => {
+  const { batchId } = req.params;
+
+  if (!batchId) {
+    return next(new AppError('ID do lote é obrigatório', 400));
+  }
+
+  const result = await productService.getProductsByBatch(batchId);
+
+  res.status(200).json({
+    success: true,
+    data: result.data
+  });
+});
+
 module.exports = {
   getProducts,
   getProduct,
@@ -914,5 +934,6 @@ module.exports = {
   requestWithdrawal,
   getProductsPendingLocation,
   getProductsPendingWithdrawal,
-  getProductsPendingAllocationGrouped
+  getProductsPendingAllocationGrouped,
+  getProductsByBatch
 }; 

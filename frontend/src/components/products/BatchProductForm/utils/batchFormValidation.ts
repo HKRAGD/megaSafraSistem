@@ -3,7 +3,8 @@ import { productSchema } from '../../ProductForm/utils/productFormValidation';
 
 // Schema for a single product within the batch (reusing existing productSchema)
 // Client and Location are batch-level, so we omit them from individual products
-export const batchProductItemSchema = productSchema.omit(['clientId', 'locationId']);
+// Also omit tracking field as it's not supported by the backend for batch creation
+export const batchProductItemSchema = productSchema.omit(['clientId', 'locationId', 'tracking']);
 
 // Schema for the entire batch form
 export const batchFormSchema = yup.object({
