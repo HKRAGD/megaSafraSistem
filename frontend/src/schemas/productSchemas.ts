@@ -13,6 +13,10 @@ export const batchIndividualProductSchema = yup.object({
 
 export const batchFormSchema = yup.object({
   clientId: yup.string().required('Cliente é obrigatório para cadastro em lote'),
+  batchName: yup.string()
+    .min(3, 'Nome do grupo deve ter pelo menos 3 caracteres')
+    .max(100, 'Nome do grupo deve ter no máximo 100 caracteres')
+    .optional(),
   products: yup.array()
     .of(batchIndividualProductSchema)
     .min(1, 'É necessário adicionar pelo menos 1 produto ao lote')

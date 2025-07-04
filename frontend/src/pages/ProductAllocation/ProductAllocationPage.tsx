@@ -36,6 +36,7 @@ import { Loading } from '../../components/common/Loading';
 import Toast from '../../components/common/Toast';
 import { ProductAllocationDialog } from '../../components/products/ProductAllocationDialog';
 import { ProductBatchCard } from '../../components/products/ProductBatchCard';
+import { useToastNotification } from '../../hooks/useToastNotification';
 
 export const ProductAllocationPage: React.FC = () => {
   const { canLocateProduct } = usePermissions();
@@ -80,10 +81,8 @@ export const ProductAllocationPage: React.FC = () => {
   // Estado combinado de loading
   const isAllocating = allocationLoading;
   
-  // Toast state
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  // Toast notification
+  const { toastOpen, toastMessage, toastSeverity, showToast, handleCloseToast } = useToastNotification();
 
   // Filtrar apenas produtos aguardando locação
   const pendingProducts = products.filter(product => product.status === 'AGUARDANDO_LOCACAO');
@@ -109,11 +108,6 @@ export const ProductAllocationPage: React.FC = () => {
     clearError();
   }, [clearError]);
 
-  const showToast = (message: string, severity: 'success' | 'error' | 'warning' | 'info' = 'success') => {
-    setToastMessage(message);
-    setToastSeverity(severity);
-    setToastOpen(true);
-  };
 
   const handleAllocateClick = (product: ProductWithRelations) => {
     setSelectedProduct(product);
@@ -449,7 +443,7 @@ export const ProductAllocationPage: React.FC = () => {
       />
       <Toast
         open={toastOpen}
-        onClose={() => setToastOpen(false)}
+        onClose={handleCloseToast}
         message={toastMessage}
         severity={toastSeverity}
       />

@@ -5,7 +5,8 @@ import {
   Typography,
   Alert,
   Card,
-  CardContent
+  CardContent,
+  TextField
 } from '@mui/material';
 import { Controller } from 'react-hook-form';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -16,6 +17,7 @@ import { BatchProductFormInput, useBatchProducts, MAX_BATCH_PRODUCTS } from '../
 import { ClientSelector } from '../../ui/ClientSelector/ClientSelector';
 import { BatchProductItem } from '../BatchProductItem';
 import { BatchFormActionsActive } from './components/BatchFormActionsActive';
+import { BatchWeightDisplay } from './components/BatchWeightDisplay';
 
 interface SimpleBatchProductFormProps {
   seedTypes: SeedType[];
@@ -36,7 +38,7 @@ export const SimpleBatchProductForm: React.FC<SimpleBatchProductFormProps> = ({
   onCancel,
   batchForm
 }) => {
-  const { form, fields, addProduct, removeProduct, submitBatch, loading, error, totalProductsInBatch, totalBatchWeight } = 
+  const { form, fields, addProduct, removeProduct, submitBatch, loading, error, totalProductsInBatch } = 
     batchForm;
 
   return (
@@ -48,22 +50,46 @@ export const SimpleBatchProductForm: React.FC<SimpleBatchProductFormProps> = ({
           </Alert>
         )}
 
-        {/* Cliente Selector */}
+        {/* Cliente e Nome do Grupo */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Cliente do Lote
+              Informações do Lote
             </Typography>
+            
+            {/* Cliente Selector */}
+            <Box sx={{ mb: 3 }}>
+              <Controller
+                name="clientId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <ClientSelector
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                    required
+                  />
+                )}
+              />
+            </Box>
+
+            {/* Nome do Grupo */}
             <Controller
-              name="clientId"
+              name="batchName"
               control={form.control}
               render={({ field, fieldState }) => (
-                <ClientSelector
-                  value={field.value}
-                  onChange={field.onChange}
+                <TextField
+                  {...field}
+                  label="Nome do Grupo (Opcional)"
+                  placeholder="Ex: Fornecedor A - Pedido #123"
+                  fullWidth
+                  variant="outlined"
                   error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
-                  required
+                  helperText={fieldState.error?.message || 'Se não especificado, será usado um nome padrão'}
+                  inputProps={{
+                    maxLength: 100
+                  }}
                 />
               )}
             />
@@ -87,15 +113,20 @@ export const SimpleBatchProductForm: React.FC<SimpleBatchProductFormProps> = ({
         ))}
 
         {/* Ações do Formulário */}
-        <BatchFormActionsActive
-          loading={loading}
-          isFormValid={form.formState.isValid && fields.length > 0}
-          totalProducts={totalProductsInBatch}
-          totalBatchWeight={totalBatchWeight}
-          canAddProduct={fields.length < MAX_BATCH_PRODUCTS}
-          maxProducts={MAX_BATCH_PRODUCTS}
-          onAddProduct={addProduct}
-          onCancel={onCancel}
+        <BatchWeightDisplay
+          control={form.control}
+          render={(totalBatchWeight) => (
+            <BatchFormActionsActive
+              loading={loading}
+              isFormValid={form.formState.isValid && fields.length > 0}
+              totalProducts={totalProductsInBatch}
+              totalBatchWeight={totalBatchWeight}
+              canAddProduct={fields.length < MAX_BATCH_PRODUCTS}
+              maxProducts={MAX_BATCH_PRODUCTS}
+              onAddProduct={addProduct}
+              onCancel={onCancel}
+            />
+          )}
         />
       </Box>
     </LocalizationProvider>

@@ -9,6 +9,7 @@
 
 const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const Product = require('../models/Product');
+const ProductBatch = require('../models/ProductBatch');
 const Location = require('../models/Location');
 const SeedType = require('../models/SeedType');
 const Movement = require('../models/Movement');
@@ -385,8 +386,8 @@ const createProduct = asyncHandler(async (req, res, next) => {
  * @access  Private (Admin)
  */
 const createProductsBatch = asyncHandler(async (req, res, next) => {
-  const { clientId, products } = req.body;
-  const userId = req.user._id; // Assuming req.user is populated by auth middleware
+  const { clientId, products, batchName } = req.body;
+  const userId = req.user._id;
 
   if (!clientId) {
     return next(new AppError('O ID do cliente (clientId) é obrigatório para o cadastro em lote.', 400));
@@ -401,16 +402,16 @@ const createProductsBatch = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const batchId = uuidv4(); // Generate a unique batch ID
-
-    // Delegate to productService for batch creation logic, including transaction and individual product creation
-    const result = await productService.createProductsBatch(clientId, products, userId, batchId);
+    // Delegate to productService for batch creation logic, including transaction, ProductBatch creation, and individual product creation
+    // The service will now handle batchId generation and ProductBatch document creation.
+    const result = await productService.createProductsBatch(clientId, products, userId, batchName);
 
     res.status(201).json({
       success: true,
-      message: `Lote de produtos (ID: ${batchId}) cadastrado com sucesso.`,
+      message: `Lote "${result.batchName}" cadastrado com sucesso.`,
       data: {
         batchId: result.batchId,
+        batchName: result.batchName,
         clientId: result.clientId,
         productsCreated: result.productsCreated,
         count: result.productsCreated.length

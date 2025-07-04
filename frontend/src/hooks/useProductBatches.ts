@@ -4,6 +4,7 @@ import { URGENT_EXPIRATION_DAYS } from '../utils/constants';
 
 interface ProductBatch {
   batchId: string | null;
+  batchName?: string; // Nome personalizado do grupo
   clientId: string;
   clientName: string;
   productCount: number;

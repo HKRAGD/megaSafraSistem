@@ -34,6 +34,7 @@ import { URGENT_EXPIRATION_DAYS } from '../../../utils/constants';
 
 interface ProductBatch {
   batchId: string | null;
+  batchName?: string; // Nome personalizado do grupo
   clientId: string;
   clientName: string;
   productCount: number;
@@ -126,7 +127,7 @@ export const ProductBatchCard: React.FC<ProductBatchCardProps> = React.memo(({
               <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
                 {isIndividualProduct 
                   ? `Produto Individual`
-                  : `Lote de Produtos`
+                  : (batch.batchName || `Lote de Produtos`)
                 }
               </Typography>
               
@@ -136,6 +137,13 @@ export const ProductBatchCard: React.FC<ProductBatchCardProps> = React.memo(({
                   {batch.clientName}
                 </Typography>
               </Box>
+              
+              {/* Exibir ID do lote como informação secundária quando há nome personalizado */}
+              {!isIndividualProduct && batch.batchName && batch.batchId && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  ID: {batch.batchId.substring(0, 8)}...
+                </Typography>
+              )}
             </Box>
           </Box>
 

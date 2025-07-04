@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { SeedType, CreateSeedTypeFormData, UseDataState } from '../types';
 import { seedTypeService } from '../services/seedTypeService';
 
+interface UseSeedTypesOptions {
+  autoFetch?: boolean;
+}
+
 interface UseSeedTypesReturn extends UseDataState<SeedType> {
   selectedSeedType: SeedType | null;
   seedTypes: SeedType[]; // Getter conveniente para data
@@ -17,7 +21,8 @@ interface UseSeedTypesReturn extends UseDataState<SeedType> {
   refetch: () => Promise<void>;
 }
 
-export const useSeedTypes = (): UseSeedTypesReturn => {
+export const useSeedTypes = (options: UseSeedTypesOptions = {}): UseSeedTypesReturn => {
+  const { autoFetch = true } = options;
   const [data, setData] = useState<SeedType[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,8 +152,10 @@ export const useSeedTypes = (): UseSeedTypesReturn => {
   }, [fetchSeedTypes]);
 
   useEffect(() => {
-    fetchSeedTypes();
-  }, [fetchSeedTypes]);
+    if (autoFetch) {
+      fetchSeedTypes();
+    }
+  }, [autoFetch]);
 
   return {
     data,

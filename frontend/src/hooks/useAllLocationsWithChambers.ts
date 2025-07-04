@@ -91,7 +91,7 @@ export const useAllLocationsWithChambers = (
   const { autoFetch = true, initialFilters: propInitialFilters = {} } = options;
 
   // Estabilizar initialFilters para evitar loops infinitos
-  const stableInitialFilters = useMemo(() => propInitialFilters, [propInitialFilters]);
+  const stableInitialFilters = useMemo(() => propInitialFilters, [JSON.stringify(propInitialFilters)]);
 
   // ============================================================================
   // ESTADO LOCAL
@@ -239,7 +239,7 @@ export const useAllLocationsWithChambers = (
     } finally {
       setLoading(false);
     }
-  }, [clearError, handleError]);
+  }, []); // Removido clearError e handleError das dependências para evitar loop
 
   /**
    * Atualizar todos os dados
@@ -256,7 +256,7 @@ export const useAllLocationsWithChambers = (
     if (autoFetch) {
       fetchAllLocationsWithChambers(stableInitialFilters);
     }
-  }, [autoFetch, fetchAllLocationsWithChambers, stableInitialFilters]);
+  }, [autoFetch]); // Removido fetchAllLocationsWithChambers e stableInitialFilters para evitar loop
 
   // ============================================================================
   // RETURN

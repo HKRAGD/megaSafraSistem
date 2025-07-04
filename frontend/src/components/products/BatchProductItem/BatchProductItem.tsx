@@ -19,7 +19,7 @@ import { SeedType } from '../../../types';
 import { BatchProductFormInput } from '../../../hooks/useBatchProducts';
 
 interface BatchProductItemProps {
-  control: Control<BatchProductFormInput>;
+  control: Control<BatchProductFormInput, any>;
   productIndex: number;
   seedTypes: SeedType[];
   onRemove: (index: number) => void;

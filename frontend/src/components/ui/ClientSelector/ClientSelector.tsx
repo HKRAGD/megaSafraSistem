@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Autocomplete,
   TextField,
@@ -32,7 +32,7 @@ export interface ClientSelectorProps {
   size?: 'small' | 'medium';
 }
 
-export const ClientSelector: React.FC<ClientSelectorProps> = ({
+export const ClientSelector: React.FC<ClientSelectorProps> = React.memo(({
   value,
   onChange,
   label = 'Cliente',
@@ -49,50 +49,82 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
   const [searchResults, setSearchResults] = useState<Client[]>([]);
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
-  // Carregar clientes iniciais quando o componente abre
+  // Função estável para carregar clientes iniciais
+  const loadInitialClients = useCallback(async () => {
+    if (!hasInitialLoad) {
+      try {
+        await fetchClients({ limit: 50, isActive: true });
+        setHasInitialLoad(true);
+      } catch (error) {
+        console.error('Erro ao carregar clientes iniciais:', error);
+      }
+    }
+  }, [hasInitialLoad, fetchClients]);
+
+  // Carregar clientes quando o componente abre
   useEffect(() => {
     if (open && clients.length === 0) {
-      fetchClients({ limit: 50, isActive: true });
+      loadInitialClients();
     }
-  }, [open, clients.length, fetchClients]);
+  }, [open, clients.length, loadInitialClients]);
 
-  // Buscar clientes quando o usuário digita
-  useEffect(() => {
-    const searchAsync = async () => {
-      if (searchTerm && searchTerm.length >= 2) {
-        setSearching(true);
-        try {
-          const results = await searchClients(searchTerm);
-          setSearchResults(results);
-        } catch (error) {
-          console.error('Erro ao buscar clientes:', error);
-          setSearchResults([]);
-        } finally {
-          setSearching(false);
-        }
-      } else {
+  // Função estável para busca
+  const performSearch = useCallback(async (term: string) => {
+    if (term && term.length >= 2) {
+      setSearching(true);
+      try {
+        const results = await searchClients(term);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
         setSearchResults([]);
+      } finally {
         setSearching(false);
       }
-    };
+    } else {
+      setSearchResults([]);
+      setSearching(false);
+    }
+  }, [searchClients]);
 
-    const timeoutId = setTimeout(searchAsync, 300);
+  // Buscar clientes quando o usuário digita (com debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch(searchTerm);
+    }, 300);
+    
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, searchClients]);
+  }, [searchTerm, performSearch]);
 
   // Combinar clientes carregados com resultados da busca
   const availableClients = useMemo(() => {
     const allClients = searchTerm ? searchResults : clients;
     
-    // Filtrar apenas clientes ativos e remover duplicatas
-    const activeClients = allClients.filter(client => client.isActive);
-    const uniqueClients = activeClients.filter((client, index, self) => 
-      index === self.findIndex(c => c.id === client.id)
-    );
+    if (!Array.isArray(allClients)) return [];
+    
+    const activeClients = allClients.filter(client => client && client.isActive);
+
+    // Use um Map para garantir performance e unicidade (O(n))
+    const clientMap = new Map<string, Client>();
+    activeClients.forEach(client => {
+      clientMap.set(client.id, client);
+    });
+
+    // Garante que o cliente selecionado (pelo `value`) esteja sempre nas opções,
+    // mesmo que não esteja nos resultados da busca atual.
+    if (value && !clientMap.has(value)) {
+      const selectedInFullList = clients.find(c => c.id === value);
+      if (selectedInFullList) {
+        clientMap.set(selectedInFullList.id, selectedInFullList);
+      }
+    }
+
+    const uniqueClients = Array.from(clientMap.values());
 
     return uniqueClients.sort((a, b) => a.name.localeCompare(b.name));
-  }, [clients, searchResults, searchTerm]);
+  }, [searchResults, searchTerm, clients, value]);
 
   // Encontrar cliente selecionado
   const selectedClient = useMemo(() => {
@@ -100,15 +132,46 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
     return availableClients.find(client => client.id === value) || null;
   }, [value, availableClients]);
 
-  const handleChange = (event: any, newValue: Client | null) => {
+  // Handlers estáveis
+  const handleChange = useCallback((event: any, newValue: Client | null) => {
     onChange(newValue ? newValue.id : null);
-  };
+  }, [onChange]);
 
-  const handleInputChange = (event: any, newInputValue: string) => {
+  const handleInputChange = useCallback((event: any, newInputValue: string) => {
     setSearchTerm(newInputValue);
-  };
+  }, []);
 
-  const renderOption = (props: any, client: Client) => (
+  const handleOpen = useCallback(() => setOpen(true), []);
+  const handleClose = useCallback(() => setOpen(false), []);
+
+  // Funções estáveis para o Autocomplete - CORREÇÃO LOOP INFINITO
+  const renderInput = useCallback((params: any) => (
+    <TextField
+      {...params}
+      label={required ? `${label} *` : label}
+      placeholder={placeholder}
+      error={error}
+      helperText={helperText}
+      InputProps={{
+        ...params.InputProps,
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon color={error ? 'error' : 'action'} />
+          </InputAdornment>
+        ),
+        endAdornment: (
+          <>
+            {(loading || searching) ? (
+              <CircularProgress color="inherit" size={20} />
+            ) : null}
+            {params.InputProps.endAdornment}
+          </>
+        ),
+      }}
+    />
+  ), [required, label, placeholder, error, helperText, loading, searching]);
+
+  const renderOption = useCallback((props: any, client: Client) => (
     <Box component="li" {...props} key={client.id}>
       <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
         {client.documentType === 'CPF' ? (
@@ -135,9 +198,9 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
         />
       </Box>
     </Box>
-  );
+  ), []);
 
-  const renderTags = (tagValue: Client[], getTagProps: any) =>
+  const renderTags = useCallback((tagValue: Client[], getTagProps: any) =>
     tagValue.map((client, index) => (
       <Chip
         {...getTagProps({ index })}
@@ -146,15 +209,19 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
         icon={client.documentType === 'CPF' ? <PersonIcon /> : <BusinessIcon />}
         size={size}
       />
-    ));
+    )), [size]);
+
+  const isOptionEqualToValue = useCallback((option: Client, value: Client) => 
+    option.id === value.id, 
+  []);
 
   return (
     <Autocomplete
       value={selectedClient}
       onChange={handleChange}
       onInputChange={handleInputChange}
-      onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
+      onOpen={handleOpen}
+      onClose={handleClose}
       options={availableClients}
       getOptionLabel={(client) => client.name}
       renderOption={renderOption}
@@ -170,35 +237,11 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
           : 'Nenhuma opção'
       }
       loadingText="Carregando clientes..."
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={required ? `${label} *` : label}
-          placeholder={placeholder}
-          error={error}
-          helperText={helperText}
-          InputProps={{
-            ...params.InputProps,
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color={error ? 'error' : 'action'} />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <>
-                {(loading || searching) ? (
-                  <CircularProgress color="inherit" size={20} />
-                ) : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
+      renderInput={renderInput}
       renderTags={renderTags}
-      isOptionEqualToValue={(option, value) => option.id === value.id}
+      isOptionEqualToValue={isOptionEqualToValue}
     />
   );
-};
+});
 
 export default ClientSelector;

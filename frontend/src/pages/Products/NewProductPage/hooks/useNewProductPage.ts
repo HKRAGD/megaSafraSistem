@@ -20,17 +20,20 @@ export const useNewProductPage = () => {
     availableLocationsWithChambers: availableLocations, 
     loading: locationsLoading, 
     refreshData: fetchLocations 
-  } = useLocationsWithChambers();
+  } = useLocationsWithChambers({
+    autoFetch: false,
+    initialFilters: {}
+  });
   const { 
     seedTypes, 
     loading: seedTypesLoading, 
     fetchSeedTypes 
-  } = useSeedTypes();
+  } = useSeedTypes({ autoFetch: false });
   const { 
     data: chambers, 
     loading: chambersLoading, 
     refetch: fetchChambers 
-  } = useChambers();
+  } = useChambers({ autoFetch: false });
 
   // Estado da página
   const [selectedLocation, setSelectedLocation] = useState<LocationWithChamber | null>(null);
@@ -47,9 +50,22 @@ export const useNewProductPage = () => {
     }
   });
 
-  // ✅ CORREÇÃO: Removido useEffect duplicado que causava double-fetch
-  // Os hooks individuais (useLocationsWithChambers, useSeedTypes, useChambers) 
-  // já têm seus próprios useEffect para carregar dados automaticamente
+  // ✅ CORREÇÃO: Carregamento único no mount para todos os dados necessários
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        await Promise.all([
+          fetchSeedTypes(),
+          fetchChambers(),
+          fetchLocations()
+        ]);
+      } catch (error) {
+        console.error('Erro ao carregar dados iniciais:', error);
+      }
+    };
+
+    loadInitialData();
+  }, []); // Apenas no mount, sem dependências
 
   // Handler para seleção de localização
   const handleLocationSelect = (location: LocationWithChamber | null) => {

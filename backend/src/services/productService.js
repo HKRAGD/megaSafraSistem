@@ -7,11 +7,13 @@
 
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
+const ProductBatch = require('../models/ProductBatch');
 const Location = require('../models/Location');
 const SeedType = require('../models/SeedType');
 const Client = require('../models/Client');
 const Movement = require('../models/Movement');
 const locationService = require('./locationService');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * Criação inteligente de produto com validações completas
@@ -1454,6 +1456,7 @@ const getProductsPendingWithdrawal = async (filters = {}) => {
 
 /**
  * Busca e agrupa produtos com status 'AGUARDANDO_LOCACAO' por batchId ou individualmente.
+ * Inclui nomes personalizados de ProductBatch quando disponíveis.
  * @returns {Object} Objeto contendo os lotes de produtos agrupados.
  */
 const getProductsPendingAllocationGrouped = async () => {
@@ -1518,6 +1521,20 @@ const getProductsPendingAllocationGrouped = async () => {
         }
       },
       {
+        $lookup: {
+          from: 'productbatches',
+          localField: 'batchId',
+          foreignField: '_id',
+          as: 'batchDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$batchDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
         $addFields: {
           productData: {
             id: "$_id",
@@ -1547,6 +1564,11 @@ const getProductsPendingAllocationGrouped = async () => {
               $group: {
                 _id: "$batchId",
                 batchId: { $first: "$batchId" },
+                batchName: { 
+                  $first: { 
+                    $ifNull: ["$batchDetails.name", "Lote de Produtos"] 
+                  } 
+                },
                 clientId: { $first: "$clientDetails._id" },
                 clientName: { $first: "$clientDetails.name" },
                 productCount: { $sum: 1 },
@@ -1558,6 +1580,7 @@ const getProductsPendingAllocationGrouped = async () => {
               $project: {
                 _id: 0,
                 batchId: 1,
+                batchName: 1,
                 clientId: 1,
                 clientName: 1,
                 productCount: 1,
@@ -1775,10 +1798,10 @@ const getProductsByBatch = async (batchId) => {
  * @param {String} clientId - ID do cliente comum para todos os produtos.
  * @param {Array<Object>} productsArray - Array de dados de produtos.
  * @param {String} userId - ID do usuário criador.
- * @param {String} batchId - ID do lote comum para todos os produtos.
+ * @param {String} batchName - Nome personalizado do lote (opcional).
  * @returns {Object} Resultado da operação em lote.
  */
-const createProductsBatch = async (clientId, productsArray, userId, batchId) => {
+const createProductsBatch = async (clientId, productsArray, userId, batchName) => {
   const { executeWithTransactionIfAvailable } = require('../utils/database');
   
   // Implementação da operação de criação em lote
@@ -1786,8 +1809,55 @@ const createProductsBatch = async (clientId, productsArray, userId, batchId) => 
     const productsCreated = [];
     const failedProducts = [];
     
+    // 1. Gerar batchId único
+    const batchId = uuidv4();
+    
+    // 2. Criar ProductBatch primeiro
+    let productBatch = null;
+    
+    // ✅ CORREÇÃO: Debug e validação mais robusta do batchName
+    console.log(`[ProductService] batchName recebido:`, { 
+      batchName, 
+      type: typeof batchName, 
+      length: batchName?.length,
+      trimmed: batchName?.trim?.()
+    });
+    
+    // Validação mais robusta para preservar nomes personalizados
+    let resolvedBatchName;
+    if (batchName && typeof batchName === 'string' && batchName.trim().length > 0) {
+      resolvedBatchName = batchName.trim();
+      console.log(`[ProductService] Usando nome personalizado: "${resolvedBatchName}"`);
+    } else {
+      resolvedBatchName = `Lote de Produtos - ${new Date().toLocaleDateString('pt-BR')}`;
+      console.log(`[ProductService] Usando nome automático: "${resolvedBatchName}"`);
+    }
+    try {
+      const batchData = {
+        _id: batchId, // Usar batchId como _id para compatibilidade
+        name: resolvedBatchName,
+        clientId: clientId,
+        description: `Lote criado com ${productsArray.length} produtos`,
+        metadata: {
+          createdBy: userId,
+          lastModifiedBy: userId,
+          totalProducts: productsArray.length,
+          totalWeight: 0 // Será calculado após criação dos produtos
+        }
+      };
+
+      productBatch = new ProductBatch(batchData);
+      await productBatch.save(session ? { session } : {});
+      
+      console.log(`[ProductService] ProductBatch criado: ${resolvedBatchName} (ID: ${batchId})`);
+    } catch (error) {
+      console.error(`[ProductService] Erro ao criar ProductBatch:`, error.message);
+      throw new Error(`Erro ao criar lote: ${error.message}`);
+    }
+    
     console.log(`[ProductService] Iniciando criação em lote de ${productsArray.length} produtos`, {
       batchId,
+      batchName: resolvedBatchName,
       clientId,
       useTransactions,
       userId
@@ -1852,8 +1922,15 @@ const createProductsBatch = async (clientId, productsArray, userId, batchId) => 
       throw new Error(`Falha na criação em lote. Produtos com erro: ${failedProducts.map(f => f.index + 1).join(', ')}`);
     }
 
+    // 3. Atualizar estatísticas do ProductBatch
+    if (productBatch && productsCreated.length > 0) {
+      const totalWeight = productsCreated.reduce((sum, product) => sum + (product.totalWeight || 0), 0);
+      await productBatch.updateStatistics(productsCreated.length, totalWeight);
+    }
+
     return {
       batchId,
+      batchName: resolvedBatchName,
       clientId,
       productsCreated,
       totalProducts: productsCreated.length

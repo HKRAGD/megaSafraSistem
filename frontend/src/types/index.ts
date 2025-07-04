@@ -646,6 +646,7 @@ export interface CreateProductFormData {
 // Batch Products API Types
 export type CreateBatchProductsPayload = {
   clientId: string;
+  batchName?: string;
   products: Array<Omit<CreateProductFormData, 'locationId' | 'clientId'>>;
 };
 

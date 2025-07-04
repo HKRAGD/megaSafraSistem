@@ -1,46 +1,89 @@
-Compiled with problems:
-×
-ERROR in ./src/hooks/useProductGroupDetails.ts 22:27-37
-export 'apiRequest' (imported as 'apiRequest') was not found in '../services/api' (possible exports: apiDelete, apiGet, apiPatch, apiPost, apiPut, default, extractErrorMessage, isAuthError, isForbiddenError, isServerError, isValidationError, setAuthToken, setLogoutCallback, setRefreshTokenCallback)
-ERROR in ./src/hooks/useProductGroupDetails.ts 32:42-50
-export 'ApiError' (imported as 'ApiError') was not found in '../services/api' (possible exports: apiDelete, apiGet, apiPatch, apiPost, apiPut, default, extractErrorMessage, isAuthError, isForbiddenError, isServerError, isValidationError, setAuthToken, setLogoutCallback, setRefreshTokenCallback)
-ERROR in src/hooks/useProductGroupDetails.ts:3:10
-TS2614: Module '"../services/api"' has no exported member 'apiRequest'. Did you mean to use 'import apiRequest from "../services/api"' instead?
-    1 | import { useState, useEffect, useCallback } from 'react';
-    2 | import { ProductWithRelations } from '../types';
-  > 3 | import { apiRequest, ApiError } from '../services/api';
-      |          ^^^^^^^^^^
-    4 |
-    5 | interface ProductGroupDetails {
-    6 |   batchId: string;
-ERROR in src/hooks/useProductGroupDetails.ts:3:22
-TS2614: Module '"../services/api"' has no exported member 'ApiError'. Did you mean to use 'import ApiError from "../services/api"' instead?
-    1 | import { useState, useEffect, useCallback } from 'react';
-    2 | import { ProductWithRelations } from '../types';
-  > 3 | import { apiRequest, ApiError } from '../services/api';
-      |                      ^^^^^^^^
-    4 |
-    5 | interface ProductGroupDetails {
-    6 |   batchId: string;
-ERROR in src/hooks/useProductGroupDetails.ts:57:11
-TS18046: 'err' is of type 'unknown'.
-    55 |     } catch (err) {
-    56 |       const errorMessage = err instanceof ApiError 
-  > 57 |         ? err.message 
-       |           ^^^
-    58 |         : err instanceof Error 
-    59 |           ? err.message 
-    60 |           : 'Erro desconhecido ao carregar detalhes do grupo';
-ERROR in src/pages/ProductAllocation/ProductGroupDetailPage.tsx:424:29
-TS2769: No overload matches this call.
-  Overload 1 of 2, '(props: { component: ElementType<any, keyof IntrinsicElements>; } & TypographyOwnProps & CommonProps & Omit<any, "className" | ... 112 more ... | "variantMapping">): Element | null', gave the following error.
-    Type '{ id: string; code: string; maxCapacityKg: number; currentWeightKg: number; chamberId?: { id: string; name: string; } | undefined; }' is not assignable to type 'ReactNode'.
-  Overload 2 of 2, '(props: DefaultComponentProps<TypographyTypeMap<{}, "span">>): Element | null', gave the following error.
-    Type '{ id: string; code: string; maxCapacityKg: number; currentWeightKg: number; chamberId?: { id: string; name: string; } | undefined; }' is not assignable to type 'ReactNode'.
-    422 |                           <Typography variant="body2" sx={{ fontWeight: 500, color: 'success.dark' }}>
-    423 |                             {/* TODO: Exibir código da localização */}
-  > 424 |                             {product.locationId}
-        |                             ^^^^^^^^^^^^^^^^^^^^
-    425 |                           </Typography>
-    426 |                         </Grid>
-    427 |                       )}
+ 🚀 POST /products/batch
+{
+    "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NTZmM2VmMTU1Y2IxMTIxMDRlZDcwYSIsImVtYWlsIjoiYWRtaW5Ac2lzdGVtYS1zZW1lbnRlcy5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NTE2MzAzMDAsImV4cCI6MTc1MjIzNTEwMH0.xgU15PnSONc0usKD_DMKuOTkHYWHD-UjanNltFKpLCQ"
+    },
+    "data": {
+        "clientId": "68602580c5d9e65ab04c6dc7",
+        "batchName": "Teste de nome de grupo",
+        "products": [
+            {
+                "notes": "Teste 1",
+                "expirationDate": "2025-07-30T03:00:00.000Z",
+                "weightPerUnit": 50,
+                "storageType": "saco",
+                "quantity": 2,
+                "seedTypeId": "6859457fe1ddbed37571d12c",
+                "lot": "Teste 1",
+                "name": "Teste 1"
+            }
+        ]
+    }
+}
+
+✅ POST /products/batch
+{
+    "status": 201,
+    "data": {
+        "success": true,
+        "message": "Lote \"Lote de Produtos - 04/07/2025\" cadastrado com sucesso.",
+        "data": {
+            "batchId": "148ee76e-a3db-42c4-a4da-a97bd45ce578",
+            "batchName": "Lote de Produtos - 04/07/2025",
+            "clientId": "68602580c5d9e65ab04c6dc7",
+            "productsCreated": [
+                {
+                    "metadata": {
+                        "lastMovementDate": "2025-07-04T12:55:20.510Z",
+                        "createdBy": {
+                            "_id": "6856f3ef155cb112104ed70a",
+                            "name": "Administrador Sistema",
+                            "email": "admin@sistema-sementes.com",
+                            "displayName": "Administrador Sistema",
+                            "id": "6856f3ef155cb112104ed70a"
+                        },
+                        "lastModifiedBy": "6856f3ef155cb112104ed70a"
+                    },
+                    "_id": "6867cf387eb0f6da6035c80c",
+                    "name": "Teste 1",
+                    "lot": "Teste 1",
+                    "seedTypeId": {
+                        "_id": "6859457fe1ddbed37571d12c",
+                        "name": "Nugrain",
+                        "optimalTemperature": 18,
+                        "optimalHumidity": 60,
+                        "maxStorageTimeDays": 365,
+                        "status": "Inativo",
+                        "optimalConditions": {
+                            "temperature": 18,
+                            "humidity": 60,
+                            "maxDays": 365
+                        },
+                        "id": "6859457fe1ddbed37571d12c"
+                    },
+                    "quantity": 2,
+                    "storageType": "saco",
+                    "weightPerUnit": 50,
+                    "totalWeight": 100,
+                    "clientId": "68602580c5d9e65ab04c6dc7",
+                    "batchId": "148ee76e-a3db-42c4-a4da-a97bd45ce578",
+                    "entryDate": "2025-07-04T12:55:20.510Z",
+                    "expirationDate": "2025-07-30T03:00:00.000Z",
+                    "status": "AGUARDANDO_LOCACAO",
+                    "notes": "Teste 1",
+                    "version": 0,
+                    "createdAt": "2025-07-04T12:55:20.511Z",
+                    "updatedAt": "2025-07-04T12:55:20.511Z",
+                    "calculatedTotalWeight": 100,
+                    "isNearExpiration": true,
+                    "expirationStatus": "warning",
+                    "storageTimeDays": 0,
+                    "id": "6867cf387eb0f6da6035c80c"
+                }
+            ],
+            "count": 1
+        }
+    }
+}

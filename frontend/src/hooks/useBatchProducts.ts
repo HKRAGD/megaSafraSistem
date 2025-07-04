@@ -27,9 +27,10 @@ export const useBatchProducts = ({
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<BatchProductFormInput>({
-    resolver: yupResolver(batchFormSchema),
+    resolver: yupResolver(batchFormSchema) as any,
     defaultValues: defaultValues || {
       clientId: '',
+      batchName: '',
       products: [
         { // Initial empty product for the form
           name: '',
@@ -88,7 +89,7 @@ export const useBatchProducts = ({
 
     clearError();
     return true;
-  }, [form, clearError]);
+  }, [clearError, form]);
 
   // Submission handler
   const submitBatch = useCallback(async (data: BatchProductFormInput) => {
@@ -98,6 +99,7 @@ export const useBatchProducts = ({
     try {
       const payload: CreateBatchProductsPayload = {
         clientId: data.clientId,
+        batchName: data.batchName || undefined,
         products: data.products.map(product => ({
           ...product,
           expirationDate: product.expirationDate ? product.expirationDate.toISOString() : undefined
@@ -120,7 +122,7 @@ export const useBatchProducts = ({
     } finally {
       setLoading(false);
     }
-  }, [onSuccess, onError, form, defaultValues]);
+  }, [onSuccess, onError, defaultValues, form]);
 
   // Calculate individual product weight (internal utility)
   const calculateProductTotalWeight = useCallback((index: number) => {
@@ -132,15 +134,7 @@ export const useBatchProducts = ({
   // Expose total products in the batch
   const totalProductsInBatch = useMemo(() => fields.length, [fields.length]);
 
-  // Calculate total batch weight
-  const totalBatchWeight = useMemo(() => {
-    const products = form.watch('products') || [];
-    return products.reduce((total, product) => {
-      const quantity = product?.quantity || 0;
-      const weightPerUnit = product?.weightPerUnit || 0;
-      return total + (quantity * weightPerUnit);
-    }, 0);
-  }, [form]);
+  // Note: totalBatchWeight moved to dedicated component to prevent infinite loops
 
   return {
     form,
@@ -149,12 +143,11 @@ export const useBatchProducts = ({
     removeProduct,
     updateProduct,
     validateBatch,
-    submitBatch: form.handleSubmit(submitBatch),
+    submitBatch: form.handleSubmit(submitBatch as any),
     loading,
     error,
     clearError,
     totalProductsInBatch,
-    totalBatchWeight,
     formState: form.formState
   };
 };
