@@ -15,6 +15,7 @@ const SeedType = require('../models/SeedType');
 const Movement = require('../models/Movement');
 const productService = require('../services/productService');
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 
 // Constantes de configuração
 const MAX_PRODUCTS_PER_BATCH = 50;
@@ -33,11 +34,19 @@ const getProducts = asyncHandler(async (req, res, next) => {
     status,
     seedTypeId,
     locationId,
+    chamberId,    // NOVO: Filtro por câmara
+    quadra,       // NOVO: Filtro por quadra
     expirationStatus,
     qualityGrade,
     minWeight,
     maxWeight
   } = req.query;
+
+  // DEBUG: Log dos filtros recebidos
+  console.log('🔍 [ProductController] Filtros recebidos:', {
+    search, status, seedTypeId, locationId, chamberId, quadra,
+    expirationStatus, qualityGrade, minWeight, maxWeight
+  });
 
   // 1. Construir filtros
   const filter = {};
@@ -56,11 +65,21 @@ const getProducts = asyncHandler(async (req, res, next) => {
   }
   
   if (seedTypeId) {
-    filter.seedTypeId = seedTypeId;
+    // CORREÇÃO: Converter para ObjectId se for uma string válida
+    if (mongoose.Types.ObjectId.isValid(seedTypeId)) {
+      filter.seedTypeId = new mongoose.Types.ObjectId(seedTypeId);
+    } else {
+      filter.seedTypeId = seedTypeId; // Manter como está se não for ObjectId válido
+    }
   }
   
   if (locationId) {
-    filter.locationId = locationId;
+    // CORREÇÃO: Converter para ObjectId se for uma string válida
+    if (mongoose.Types.ObjectId.isValid(locationId)) {
+      filter.locationId = new mongoose.Types.ObjectId(locationId);
+    } else {
+      filter.locationId = locationId; // Manter como está se não for ObjectId válido
+    }
   }
   
   if (qualityGrade) {
@@ -72,6 +91,37 @@ const getProducts = asyncHandler(async (req, res, next) => {
     if (minWeight) filter.totalWeight.$gte = parseFloat(minWeight);
     if (maxWeight) filter.totalWeight.$lte = parseFloat(maxWeight);
   }
+
+  // CORREÇÃO: Separar filtros de localização para tratar de forma diferente
+  // chamberId será tratado na pipeline principal, apenas quadra precisa de lookup especial
+  let needsLocationLookup = false;
+  const locationFilters = {};
+  let chamberFilter = null;
+  
+  if (chamberId) {
+    // CORREÇÃO: Câmara será filtrada na pipeline principal, não no lookup inicial
+    if (mongoose.Types.ObjectId.isValid(chamberId)) {
+      chamberFilter = new mongoose.Types.ObjectId(chamberId);
+    } else {
+      chamberFilter = chamberId;
+    }
+    console.log('🏢 [ProductController] Filtro de câmara será aplicado na pipeline principal:', chamberFilter);
+  }
+  
+  if (quadra) {
+    // Quadra precisa de lookup pois requer acesso a coordinates
+    if (chamberId) {
+      locationFilters.chamberId = chamberFilter;
+    }
+    locationFilters['coordinates.quadra'] = parseInt(quadra);
+    needsLocationLookup = true;
+    console.log('🔢 [ProductController] Filtro de quadra requer lookup:', locationFilters);
+  }
+
+  // DEBUG: Log do filtro final construído
+  console.log('📋 [ProductController] Filtro MongoDB construído:', filter);
+  console.log('🏢 [ProductController] needsLocationLookup:', needsLocationLookup);
+  console.log('🏗️ [ProductController] locationFilters:', locationFilters);
 
   // Filtro especial por status de expiração
   if (expirationStatus) {
@@ -126,13 +176,52 @@ const getProducts = asyncHandler(async (req, res, next) => {
     }
   ];
 
-  // 3. Executar consulta com agregação para priorização
+  // 3. Construir pipeline de agregação
+  let aggregationPipeline = [
+    { $match: filter }
+  ];
+
+  // Adicionar lookup para location se necessário para filtros de câmara/quadra
+  if (needsLocationLookup) {
+    aggregationPipeline.push(
+      {
+        $lookup: {
+          from: 'locations',
+          localField: 'locationId',
+          foreignField: '_id',
+          as: 'locationForFilter'
+        }
+      },
+      {
+        // CORREÇÃO CRÍTICA: Aplicar filtros de localização APENAS a produtos que TÊM localização
+        // e onde a localização corresponde aos critérios. Produtos sem locationId NÃO devem
+        // ser incluídos quando câmara/quadra está sendo filtrada.
+        $match: {
+          locationId: { $ne: null, $exists: true }, // Garantir que produto tem localização
+          'locationForFilter': { $elemMatch: locationFilters }
+        }
+      },
+      {
+        $project: {
+          locationForFilter: 0 // Remover campo temporário
+        }
+      }
+    );
+  }
+
+  // Adicionar pipeline de ordenação
+  aggregationPipeline.push(...sortPipeline);
+  
+  // Adicionar paginação  
+  aggregationPipeline.push(
+    { $skip: skip },
+    { $limit: parseInt(limit) }
+  );
+
+  // 4. Executar consulta com agregação para priorização
   const [productsResult, total] = await Promise.all([
     Product.aggregate([
-      { $match: filter },
-      ...sortPipeline,
-      { $skip: skip },
-      { $limit: parseInt(limit) },
+      ...aggregationPipeline,
       {
         $lookup: {
           from: 'seedtypes',
@@ -171,6 +260,16 @@ const getProducts = asyncHandler(async (req, res, next) => {
           pipeline: [{ $project: { name: 1, contactPerson: 1 } }]
         }
       },
+      // CORREÇÃO: Adicionar filtro de câmara após lookup de locations
+      ...(chamberFilter ? [{
+        $match: {
+          $or: [
+            { locationId: { $exists: false } }, // Produtos sem localização (aguardando locação)
+            { locationId: null },
+            { 'location.chamberId': chamberFilter } // Produtos da câmara especificada
+          ]
+        }
+      }] : []),
       {
         $addFields: {
           seedTypeId: { $arrayElemAt: ['$seedType', 0] },
@@ -187,7 +286,49 @@ const getProducts = asyncHandler(async (req, res, next) => {
         }
       }
     ]),
-    Product.countDocuments(filter)
+    // Calcular total com os mesmos filtros (localização + câmara) se aplicável
+    (needsLocationLookup || chamberFilter) ? 
+      Product.aggregate([
+        { $match: filter },
+        // Lookup de locations se necessário
+        ...(needsLocationLookup ? [{
+          $lookup: {
+            from: 'locations',
+            localField: 'locationId',
+            foreignField: '_id',
+            as: 'locationForFilter'
+          }
+        }] : []),
+        // Lookup para câmara se necessário
+        ...(!needsLocationLookup && chamberFilter ? [{
+          $lookup: {
+            from: 'locations',
+            localField: 'locationId',
+            foreignField: '_id',
+            as: 'location',
+            pipeline: [{ $project: { chamberId: 1 } }]
+          }
+        }] : []),
+        // Aplicar filtros específicos
+        ...(needsLocationLookup ? [{
+          $match: {
+            locationId: { $ne: null, $exists: true },
+            'locationForFilter': { $elemMatch: locationFilters }
+          }
+        }] : []),
+        // Filtro de câmara se não houve lookup de quadra
+        ...(!needsLocationLookup && chamberFilter ? [{
+          $match: {
+            $or: [
+              { locationId: { $exists: false } },
+              { locationId: null },
+              { 'location.chamberId': chamberFilter }
+            ]
+          }
+        }] : []),
+        { $count: "total" }
+      ]).then(result => result[0]?.total || 0) :
+      Product.countDocuments(filter)
   ]);
 
   // Ajustar estrutura para compatibilidade com população

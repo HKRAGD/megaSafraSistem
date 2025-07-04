@@ -714,6 +714,7 @@ export interface ProductFilters {
   seedTypeId?: string;
   locationId?: string;
   chamberId?: string;
+  quadra?: number; // NOVO: Filtro por quadra
   clientId?: string;
   status?: ProductStatus;
   storageType?: ProductStorageType;

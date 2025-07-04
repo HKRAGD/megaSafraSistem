@@ -95,6 +95,22 @@ export const locationService = {
 
   update: async (id: string, data: Partial<Location>): Promise<ApiResponse<Location>> => {
     return apiPut<ApiResponse<Location>>(`/locations/${id}`, data);
+  },
+
+  /**
+   * Buscar quadras disponíveis por câmara
+   * GET /api/locations/quadras-by-chamber/:chamberId
+   */
+  getQuadrasByChamber: async (chamberId: string): Promise<ApiResponse<number[]>> => {
+    try {
+      console.log(`🔍 Buscando quadras para câmara: ${chamberId}`);
+      const response = await apiGet<ApiResponse<number[]>>(`/locations/quadras-by-chamber/${chamberId}`);
+      console.log(`✅ ${response.data.length} quadras encontradas:`, response.data);
+      return response;
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar quadras por câmara:', error);
+      throw error;
+    }
   }
 };
 

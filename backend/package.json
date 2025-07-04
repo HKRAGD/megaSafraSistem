@@ -4,7 +4,7 @@
   "description": "Backend do Sistema de Gerenciamento de Câmaras Refrigeradas de Sementes Agrícolas",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server.js NODE_ENV=production",
     "dev": "nodemon server.js NODE_ENV=development",
     "test": "jest",
     "test:watch": "jest --watch",

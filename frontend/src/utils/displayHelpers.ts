@@ -244,4 +244,55 @@ export const formatWeightCompact = (weightInKg: number | string | null | undefin
   
   console.log('📊 Mantido em kg:', formattedWeight, 'kg');
   return `${formattedWeight} kg`;
+};
+
+/**
+ * Formata informações completas de localização de forma legível
+ * @param location Objeto de localização com informações de câmara e coordenadas
+ * @param compact Se true, retorna versão mais compacta
+ */
+export const formatLocationInfo = (location: any, compact: boolean = false): string => {
+  if (!location) return 'N/A';
+
+  // Se é apenas um ID string
+  if (typeof location === 'string') {
+    return location;
+  }
+
+  const code = location.code || 'N/A';
+  const chamberName = location.chamber?.name || location.chamberId?.name || 'Câmara N/A';
+  
+  if (!location.coordinates) {
+    return compact ? `${code}` : `${code} - ${chamberName}`;
+  }
+
+  const { quadra, lado, fila, andar } = location.coordinates;
+  
+  if (compact) {
+    return `${code} (Q${quadra}L${lado}F${fila}A${andar})`;
+  }
+  
+  return `${code} - ${chamberName} (Quadra ${quadra}, Lado ${lado}, Fila ${fila}, Andar ${andar})`;
+};
+
+/**
+ * Formata localização usando apenas o ID e uma lista de localizações para busca
+ * @param locationId ID da localização
+ * @param allLocations Array de todas as localizações disponíveis
+ * @param compact Se true, retorna versão mais compacta
+ */
+export const formatLocationById = (
+  locationId: string, 
+  allLocations: any[], 
+  compact: boolean = false
+): string => {
+  if (!locationId) return 'N/A';
+  
+  const location = allLocations.find(loc => loc.id === locationId || loc._id === locationId);
+  
+  if (!location) {
+    return `Localização ${locationId}`;
+  }
+  
+  return formatLocationInfo(location, compact);
 }; 

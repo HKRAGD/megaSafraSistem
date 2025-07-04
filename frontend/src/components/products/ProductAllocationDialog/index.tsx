@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,6 +18,8 @@ import {
 } from '@mui/icons-material';
 import { ProductWithRelations } from '../../../types';
 import { LocationTreeNavigation } from '../../ui/LocationTreeNavigation';
+import { useAllLocationsWithChambers } from '../../../hooks/useAllLocationsWithChambers';
+import { formatLocationById } from '../../../utils/displayHelpers';
 
 interface ProductAllocationDialogProps {
   open: boolean;
@@ -56,6 +58,15 @@ export const ProductAllocationDialog: React.FC<ProductAllocationDialogProps> = (
   availableLocationsCount,
   locationsLoading,
 }) => {
+  // Hook para obter todas as localizações com informações de câmara
+  const { allLocationsWithChambers } = useAllLocationsWithChambers();
+
+  // Função para formatar a localização selecionada de forma legível
+  const formattedLocationDisplay = useMemo(() => {
+    if (!selectedLocationId) return null;
+    return formatLocationById(selectedLocationId, allLocationsWithChambers);
+  }, [selectedLocationId, allLocationsWithChambers]);
+
   const handleAllocate = () => {
     if (!selectedLocationId) {
       return;
@@ -112,7 +123,8 @@ export const ProductAllocationDialog: React.FC<ProductAllocationDialogProps> = (
             {selectedLocationId ? (
               <Alert severity="success">
                 <Typography variant="body2">
-                  Localização selecionada: {selectedLocationId}
+                  <strong>Localização selecionada:</strong><br />
+                  {formattedLocationDisplay}
                 </Typography>
               </Alert>
             ) : (

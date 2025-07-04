@@ -25,6 +25,9 @@ export const productService = {
    */
   getAll: async (filters?: ProductFilters): Promise<ApiResponse<ProductsResponse>> => {
     try {
+      // DEBUG: Log dos filtros sendo enviados
+      console.log('🚀 [ProductService] Enviando filtros para API:', filters);
+      
       const response = await apiGet<ApiResponse<ProductsResponse>>('/products', {
         params: filters
       });

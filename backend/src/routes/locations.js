@@ -29,6 +29,9 @@ router.get('/chamber/:chamberId', locationController.getLocationsByChamber);
 router.get('/available', locationController.getAvailableLocations);
 router.get('/stats', locationController.getLocationStats);
 
+// Nova rota para buscar quadras por câmara (ANTES de /:id)
+router.get('/quadras-by-chamber/:chamberId', locationController.getQuadrasByChamber);
+
 // Rotas de análise avançada (admin e operador)
 router.get('/occupancy-analysis', 
   authorizeRole(['ADMIN', 'OPERATOR']), 

@@ -10,6 +10,7 @@ const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const Location = require('../models/Location');
 const Chamber = require('../models/Chamber');
 const locationService = require('../services/locationService');
+const mongoose = require('mongoose');
 
 /**
  * @desc    Listar localizações (com filtros)
@@ -499,6 +500,45 @@ const getLocationStats = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Buscar quadras disponíveis por câmara
+ * @route   GET /api/locations/quadras-by-chamber/:chamberId
+ * @access  Private (All authenticated users)
+ * 
+ * NOVO ENDPOINT: Retorna lista de quadras existentes para uma câmara específica
+ */
+const getQuadrasByChamber = asyncHandler(async (req, res, next) => {
+  const { chamberId } = req.params;
+  
+  if (!chamberId) {
+    return next(new AppError('chamberId é obrigatório', 400));
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(chamberId)) {
+    return next(new AppError('chamberId deve ser um ObjectId válido', 400));
+  }
+
+  try {
+    // Buscar quadras distintas para a câmara especificada
+    const quadras = await Location.aggregate([
+      { $match: { chamberId: new mongoose.Types.ObjectId(chamberId) } },
+      { $group: { _id: '$coordinates.quadra' } },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, quadra: '$_id' } }
+    ]);
+
+    const quadraNumbers = quadras.map(q => q.quadra).filter(q => q != null);
+
+    res.status(200).json({
+      success: true,
+      data: quadraNumbers
+    });
+  } catch (error) {
+    console.error('Erro ao buscar quadras por câmara:', error);
+    return next(new AppError('Erro interno do servidor', 500));
+  }
+});
+
 module.exports = {
   getLocations,
   getLocationsByChamber,
@@ -510,5 +550,6 @@ module.exports = {
   generateLocations,
   validateLocationCapacity,
   getOccupancyAnalysis,
-  getAdjacentLocations
+  getAdjacentLocations,
+  getQuadrasByChamber // NOVO ENDPOINT
 }; 

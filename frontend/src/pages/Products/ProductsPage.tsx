@@ -49,6 +49,7 @@ import ProductEdit from '../../components/products/ProductEdit';
 import ProductMove from '../../components/products/ProductMove';
 import Toast from '../../components/common/Toast';
 import { ProductWithRelations, ProductFilters, CreateProductFormData } from '../../types';
+import { locationService } from '../../services/locationService';
 
 interface ProductActionsMenuProps {
   product: ProductWithRelations;
@@ -185,6 +186,10 @@ export const ProductsPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('success');
 
+  // Estado para quadras dinâmicas
+  const [availableQuadras, setAvailableQuadras] = useState<number[]>([]);
+  const [loadingQuadras, setLoadingQuadras] = useState(false);
+
   // ============================================================================
   // PRODUTOS (PRIORIZAÇÃO É FEITA NO BACKEND)
   // ============================================================================
@@ -229,7 +234,7 @@ export const ProductsPage: React.FC = () => {
   const memoizedFilters = useMemo(() => ({
     ...filters,
     search: debouncedSearch
-  }), [filters.page, filters.limit, filters.sort, filters.sortOrder, filters.status, filters.seedTypeId, filters.chamberId, debouncedSearch]);
+  }), [filters.page, filters.limit, filters.sort, filters.sortOrder, filters.status, filters.seedTypeId, filters.chamberId, filters.quadra, debouncedSearch]);
 
   // Carregar produtos apenas quando filtros memoizados mudarem
   useEffect(() => {
@@ -251,10 +256,25 @@ export const ProductsPage: React.FC = () => {
       [field]: value,
       page: 1, // Reset page when filtering
     }));
+
+    // Se mudou a câmara, carregar quadras disponíveis e limpar filtro de quadra
+    if (field === 'chamberId') {
+      if (value) {
+        loadQuadrasForChamber(value);
+      } else {
+        setAvailableQuadras([]);
+        // Limpar filtro de quadra se câmara foi desmarcada
+        setFilters(prev => ({ ...prev, quadra: undefined }));
+      }
+    }
   };
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
+  };
+
+  const handleRowsPerPageChange = (limit: number) => {
+    setFilters(prev => ({ ...prev, limit, page: 1 })); // Reset page quando mudar itens por página
   };
 
   const handleSortChange = (sort: string, sortOrder: 'asc' | 'desc') => {
@@ -269,6 +289,23 @@ export const ProductsPage: React.FC = () => {
       sort: 'createdAt',
       sortOrder: 'desc',
     });
+    // Limpar quadras quando limpar filtros
+    setAvailableQuadras([]);
+  };
+
+  // Função para carregar quadras por câmara
+  const loadQuadrasForChamber = async (chamberId: string) => {
+    try {
+      setLoadingQuadras(true);
+      const response = await locationService.getQuadrasByChamber(chamberId);
+      setAvailableQuadras(response.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar quadras:', error);
+      setAvailableQuadras([]);
+      showToast('Erro ao carregar quadras da câmara', 'error');
+    } finally {
+      setLoadingQuadras(false);
+    }
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, product: ProductWithRelations) => {
@@ -642,7 +679,7 @@ export const ProductsPage: React.FC = () => {
             <Grid
               size={{
                 xs: 12,
-                md: 3
+                md: 2
               }}>
               <TextField
                 fullWidth
@@ -678,6 +715,33 @@ export const ProductsPage: React.FC = () => {
                 {Array.isArray(chambers) && chambers.map((chamber) => (
                   <MenuItem key={chamber.id} value={chamber.id}>
                     {chamber.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
+                md: 1
+              }}>
+              <TextField
+                fullWidth
+                select
+                label="Quadra"
+                value={filters.quadra || ''}
+                onChange={(e) => handleFilterChange('quadra', e.target.value ? Number(e.target.value) : undefined)}
+                disabled={!filters.chamberId || loadingQuadras}
+                helperText={
+                  !filters.chamberId ? 'Selecione uma câmara primeiro' :
+                  loadingQuadras ? 'Carregando...' :
+                  availableQuadras.length === 0 && filters.chamberId ? 'Nenhuma quadra encontrada' : ''
+                }
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {availableQuadras.map((quadra) => (
+                  <MenuItem key={quadra} value={quadra}>
+                    {quadra}
                   </MenuItem>
                 ))}
               </TextField>
@@ -730,7 +794,9 @@ export const ProductsPage: React.FC = () => {
               totalItems={totalItems}
               totalPages={totalPages}
               currentPage={currentPage}
+              rowsPerPage={filters.limit}
               onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
               onSort={(field) => handleSortChange(field, filters.sortOrder === 'asc' ? 'desc' : 'asc')}
               sortBy={filters.sort}
               sortOrder={filters.sortOrder}
