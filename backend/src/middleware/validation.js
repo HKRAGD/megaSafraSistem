@@ -287,6 +287,10 @@ const productSchemas = {
       'any.required': 'O ID do cliente é obrigatório para o cadastro em lote.',
       'string.empty': 'O ID do cliente não pode ser vazio.'
     }),
+    batchName: Joi.string().trim().min(3).max(100).optional().allow('').messages({
+      'string.min': 'Nome do lote deve ter pelo menos 3 caracteres.',
+      'string.max': 'Nome do lote não pode exceder 100 caracteres.'
+    }),
     products: Joi.array().items(Joi.object({
       name: Joi.string().trim().min(2).max(200).required().messages({
         'any.required': 'Nome do produto é obrigatório.',
